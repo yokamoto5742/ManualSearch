@@ -19,8 +19,8 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHB
     QTextEdit, QFileDialog, QListWidget, QListWidgetItem, QMessageBox, QCheckBox, QComboBox, QInputDialog
 from PyQt5.QtWidgets import QStyleFactory
 
-VERSION = "0.0.0"
-LAST_UPDATED = "2024/09/12"
+VERSION = "0.0.1"
+LAST_UPDATED = "2024/09/19"
 
 
 class ConfigManager:
