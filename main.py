@@ -146,17 +146,22 @@ class FileSearcher(QThread):
 
     def search_pdf(self, file_path):
         results = []
-        with open(file_path, 'rb') as file:
-            reader = PyPDF2.PdfReader(file)
-            for page_num, page in enumerate(reader.pages):
-                text = page.extract_text()
-                if self.match_search_terms(text):
-                    for search_term in self.search_terms:
-                        for match in re.finditer(search_term, text, re.IGNORECASE):
-                            start = max(0, match.start() - 50)
-                            end = min(len(text), match.end() + 50)
-                            context = text[start:end]
-                            results.append((page_num + 1, context))  # Page numbers start from 1
+        try:
+            with open(file_path, 'rb') as file:
+                reader = PyPDF2.PdfReader(file)
+                for page_num, page in enumerate(reader.pages):
+                    text = page.extract_text()
+                    if self.match_search_terms(text):
+                        for search_term in self.search_terms:
+                            for match in re.finditer(search_term, text, re.IGNORECASE):
+                                start = max(0, match.start() - 50)
+                                end = min(len(text), match.end() + 50)
+                                context = text[start:end]
+                                results.append((page_num + 1, context))
+                    if len(results) >= 100:  # 結果の数を制限
+                        break
+        except Exception as e:
+            print(f"PDFの処理中にエラーが発生しました: {file_path} - {str(e)}")
         return (file_path, results) if results else None
 
     def search_text(self, file_path):
