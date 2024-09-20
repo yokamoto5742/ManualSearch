@@ -13,9 +13,11 @@ import fitz
 import markdown
 import psutil
 import pyautogui
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QTextEdit, QFileDialog, QListWidget, QListWidgetItem, QMessageBox, QCheckBox, QComboBox, QInputDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, \
+    QTextEdit, QFileDialog, QListWidget, QListWidgetItem, QMessageBox, QCheckBox, QComboBox, QInputDialog, \
+    QProgressDialog, QLabel
 from PyQt5.QtWidgets import QStyleFactory
 import socket
 
@@ -93,6 +95,32 @@ class ConfigManager:
         self.save_config()
 
 
+class AutoCloseMessage(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent, Qt.Window | Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.setStyleSheet("""
+            background-color: #f0f0f0;
+            border: 1px solid #cccccc;
+            border-radius: 5px;
+        """)
+        self.layout = QVBoxLayout(self)
+        self.label = QLabel(self)
+        self.label.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(self.label)
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.close)
+
+    def show_message(self, message, duration=1000):
+        self.label.setText(message)
+        self.adjustSize()
+        parent = self.parent()
+        if parent:
+            geometry = parent.geometry()
+            self.move(geometry.center() - self.rect().center())
+        self.show()
+        self.timer.start(duration)
+
+
 def is_network_file(file_path):
     return file_path.startswith('\\\\') or ':' in file_path[:2]
 
@@ -109,6 +137,8 @@ def check_file_accessibility(file_path, timeout=5):
 
 class FileSearcher(QThread):
     result_found = pyqtSignal(str, list)
+    progress_update = pyqtSignal(int)
+    search_completed = pyqtSignal()
 
     def __init__(self, directory, search_terms, include_subdirs, search_type, file_extensions):
         super().__init__()
@@ -117,28 +147,46 @@ class FileSearcher(QThread):
         self.include_subdirs = include_subdirs
         self.search_type = search_type
         self.file_extensions = file_extensions
+        self.cancel_flag = False
+
+    def run(self):
+        total_files = sum([len(files) for _, _, files in os.walk(self.directory)])
+        processed_files = 0
+
+        with ThreadPoolExecutor() as executor:
+            if self.include_subdirs:
+                for root, _, files in os.walk(self.directory):
+                    if self.cancel_flag:
+                        break
+                    self.process_files(executor, root, files)
+                    processed_files += len(files)
+                    self.progress_update.emit(int((processed_files / total_files) * 100))
+            else:
+                files = [f for f in os.listdir(self.directory) if os.path.isfile(os.path.join(self.directory, f))]
+                self.process_files(executor, self.directory, files)
+                self.progress_update.emit(100)
+
+        self.search_completed.emit()
 
     def process_files(self, executor, root, files):
         futures = []
         for file in files:
+            if self.cancel_flag:
+                break
             if any(file.endswith(ext) for ext in self.file_extensions):
                 future = executor.submit(self.search_file, os.path.join(root, file))
                 futures.append(future)
         for future in futures:
+            if self.cancel_flag:
+                break
             result = future.result()
             if result:
                 file_path, matches = result
                 self.result_found.emit(file_path, matches)
 
-    def run(self):
-        with ThreadPoolExecutor() as executor:
-            if self.include_subdirs:
-                for root, _, files in os.walk(self.directory):
-                    self.process_files(executor, root, files)
-            else:
-                files = [f for f in os.listdir(self.directory) if os.path.isfile(os.path.join(self.directory, f))]
-                self.process_files(executor, self.directory, files)
-        self.finished.emit()  # 検索終了を通知
+    def cancel_search(self):
+        self.cancel_flag = True
+
 
     def search_file(self, file_path):
         if not check_file_accessibility(file_path):
@@ -298,6 +346,8 @@ class MainWindow(QMainWindow):
         self.current_file_path = None
         self.current_position = None
         self.acrobat_path = self.config_manager.get_acrobat_path()
+        self.progress_dialog = None
+        self.auto_close_message = AutoCloseMessage(self)
 
     def add_directory(self):
         directory = QFileDialog.getExistingDirectory(self, "フォルダを選択")
@@ -359,7 +409,31 @@ class MainWindow(QMainWindow):
         file_extensions = self.config_manager.get_file_extensions()
         self.searcher = FileSearcher(directory, search_terms, include_subdirs, search_type, file_extensions)
         self.searcher.result_found.connect(self.add_result)
+        self.searcher.progress_update.connect(self.update_progress)
+        self.searcher.search_completed.connect(self.search_completed)
+
+        # 進捗ダイアログの設定
+        self.progress_dialog = QProgressDialog("検索中...", "キャンセル", 0, 100, self)
+        self.progress_dialog.setWindowTitle("検索進捗")
+        self.progress_dialog.setWindowModality(Qt.WindowModal)
+        self.progress_dialog.canceled.connect(self.cancel_search)
+        self.progress_dialog.show()
+
         self.searcher.start()
+
+    def update_progress(self, value):
+        if self.progress_dialog:
+            self.progress_dialog.setValue(value)
+
+    def cancel_search(self):
+        if self.searcher:
+            self.searcher.cancel_search()
+
+    def search_completed(self):
+        if self.progress_dialog:
+            self.progress_dialog.close()
+
+        self.auto_close_message.show_message("ファイル検索が完了しました")
 
     def add_result(self, file_path, results):
         for i, (position, context) in enumerate(results):
