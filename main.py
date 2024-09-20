@@ -15,9 +15,9 @@ import psutil
 import pyautogui
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, \
-    QTextEdit, QFileDialog, QListWidget, QListWidgetItem, QMessageBox, QCheckBox, QComboBox, QInputDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QTextEdit, QFileDialog, QListWidget, QListWidgetItem, QMessageBox, QCheckBox, QComboBox, QInputDialog
 from PyQt5.QtWidgets import QStyleFactory
+import socket
 
 VERSION = "0.0.1"
 LAST_UPDATED = "2024/09/19"
@@ -93,6 +93,20 @@ class ConfigManager:
         self.save_config()
 
 
+def is_network_file(file_path):
+    return file_path.startswith('\\\\') or ':' in file_path[:2]
+
+
+def check_file_accessibility(file_path, timeout=5):
+    if is_network_file(file_path):
+        try:
+            with socket.create_connection(("8.8.8.8", 53), timeout=timeout):
+                return os.path.exists(file_path)
+        except (socket.error, OSError):
+            return False
+    return os.path.exists(file_path)
+
+
 class FileSearcher(QThread):
     result_found = pyqtSignal(str, list)
 
@@ -127,6 +141,10 @@ class FileSearcher(QThread):
         self.finished.emit()  # 検索終了を通知
 
     def search_file(self, file_path):
+        if not check_file_accessibility(file_path):
+            print(f"ファイルにアクセスできません: {file_path}")
+            return None
+
         try:
             file_extension = os.path.splitext(file_path)[1].lower()
 
