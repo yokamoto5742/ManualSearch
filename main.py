@@ -124,14 +124,25 @@ class FileSearcher(QThread):
             else:
                 files = [f for f in os.listdir(self.directory) if os.path.isfile(os.path.join(self.directory, f))]
                 self.process_files(executor, self.directory, files)
+        self.finished.emit()  # 検索終了を通知
 
     def search_file(self, file_path):
-        file_extension = os.path.splitext(file_path)[1].lower()
+        try:
+            file_extension = os.path.splitext(file_path)[1].lower()
 
-        if file_extension == '.pdf':
-            return self.search_pdf(file_path)
-        elif file_extension in ['.txt', '.md']:
-            return self.search_text(file_path)
+            if file_extension == '.pdf':
+                return self.search_pdf(file_path)
+            elif file_extension in ['.txt', '.md']:
+                return self.search_text(file_path)
+            else:
+                raise ValueError(f"サポートされていないファイル形式: {file_extension}")
+
+        except (IOError, OSError) as e:
+            print(f"ファイルアクセスエラー: {file_path} - {str(e)}")
+            return None
+        except Exception as e:
+            print(f"予期せぬエラー: {file_path} - {str(e)}")
+            return None
 
     def search_pdf(self, file_path):
         results = []
