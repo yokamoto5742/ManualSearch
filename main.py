@@ -11,6 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 import PyPDF2
 import fitz
 import markdown
+import random
 import psutil
 import pyautogui
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
@@ -399,7 +400,7 @@ class MainWindow(QMainWindow):
         self.open_file_button.setEnabled(False)
 
         directory = self.dir_combo.currentText()
-        search_terms = [term.strip() for term in re.split('[,、]', self.search_input.text())]
+        search_terms = [term.strip() for term in re.split('[,、]', self.search_input.text()) if term.strip()]
         include_subdirs = self.include_subdirs_checkbox.isChecked()
         search_type = 'AND' if self.search_type_combo.currentText() == "AND検索" else 'OR'
 
@@ -463,10 +464,12 @@ class MainWindow(QMainWindow):
 
     def highlight_content(self, content, search_terms):
         highlighted = content
-        for term in search_terms:
+        colors = ['yellow', 'lightgreen', 'lightblue', 'lightsalmon', 'lightpink']
+        for i, term in enumerate(search_terms):
+            color = colors[i % len(colors)]
             highlighted = re.sub(
-                f'({re.escape(term)})',
-                r'<span style="background-color: yellow;">\1</span>',
+                f'({re.escape(term.strip())})',
+                f'<span style="background-color: {color};">\\1</span>',
                 highlighted,
                 flags=re.IGNORECASE
             )
@@ -488,7 +491,8 @@ class MainWindow(QMainWindow):
 
     def open_pdf(self):
         try:
-            highlighted_pdf_path = self.highlight_pdf(self.current_file_path, self.search_input.text())
+            search_terms = [term.strip() for term in re.split('[,、]', self.search_input.text()) if term.strip()]
+            highlighted_pdf_path = self.highlight_pdf(self.current_file_path, search_terms)
 
             process = subprocess.Popen([self.acrobat_path, highlighted_pdf_path])
 
@@ -533,22 +537,27 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print(f"ページ移動中にエラーが発生しました: {str(e)}")
 
-    def highlight_pdf(self, pdf_path, search_term):
-        # 一時ファイルを作成
+    def highlight_pdf(self, pdf_path, search_terms):
         with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
             tmp_path = tmp_file.name
 
-        # PDFを開く
         doc = fitz.open(pdf_path)
+        colors = [
+            (1, 1, 0),  # yellow
+            (0.5, 1, 0.5),  # light green
+            (0.5, 0.7, 1),  # light blue
+            (1, 0.6, 0.4),  # light salmon
+            (1, 0.7, 0.7)   # light pink
+        ]
 
-        # 各ページで検索語を探してハイライト
         for page in doc:
-            text_instances = page.search_for(search_term)
-            for inst in text_instances:
-                highlight = page.add_highlight_annot(inst)
-                highlight.update()
+            for i, term in enumerate(search_terms):
+                text_instances = page.search_for(term.strip())
+                for inst in text_instances:
+                    highlight = page.add_highlight_annot(inst)
+                    highlight.set_colors(stroke=colors[i % len(colors)])
+                    highlight.update()
 
-        # 変更を保存
         doc.save(tmp_path)
         doc.close()
 
@@ -556,8 +565,8 @@ class MainWindow(QMainWindow):
 
     def open_text_file(self):
         try:
-            # 検索語をハイライトしたHTMLを作成
-            highlighted_html_path = self.highlight_text_file(self.current_file_path, self.search_input.text())
+            search_terms = [term.strip() for term in re.split('[,、]', self.search_input.text()) if term.strip()]
+            highlighted_html_path = self.highlight_text_file(self.current_file_path, search_terms)
 
             # デフォルトのブラウザで開く
             webbrowser.open(f'file://{highlighted_html_path}')
@@ -565,24 +574,24 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.warning(self, "エラー", f"テキストファイルを開けませんでした: {str(e)}")
 
-    def highlight_text_file(self, file_path, search_term):
+    def highlight_text_file(self, file_path, search_terms):
         with open(file_path, 'r', encoding='utf-8') as file:
             content = file.read()
 
         file_extension = os.path.splitext(file_path)[1].lower()
         if file_extension == '.md':
-            # Markdownをレンダリング
             content = markdown.markdown(content)
 
-        # 検索語をハイライト
-        highlighted_content = re.sub(
-            f'({re.escape(search_term)})',
-            r'<span style="background-color: yellow;">\1</span>',
-            content,
-            flags=re.IGNORECASE
-        )
+        colors = ['yellow', 'lightgreen', 'lightblue', 'lightsalmon', 'lightpink']
+        for i, term in enumerate(search_terms):
+            color = colors[i % len(colors)]
+            content = re.sub(
+                f'({re.escape(term.strip())})',
+                f'<span style="background-color: {color};">\\1</span>',
+                content,
+                flags=re.IGNORECASE
+            )
 
-        # HTMLテンプレート
         html_template = f'''
         <!DOCTYPE html>
         <html lang="ja">
@@ -598,13 +607,12 @@ class MainWindow(QMainWindow):
         <body>
             <h1>{os.path.basename(file_path)}</h1>
             {'<pre>' if file_extension == '.txt' else ''}
-            {highlighted_content}
+            {content}
             {'</pre>' if file_extension == '.txt' else ''}
         </body>
         </html>
         '''
 
-        # 一時HTMLファイルを作成
         with tempfile.NamedTemporaryFile(delete=False, suffix='.html', mode='w', encoding='utf-8') as tmp_file:
             tmp_file.write(html_template)
             return tmp_file.name
