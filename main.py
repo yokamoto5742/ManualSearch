@@ -43,7 +43,7 @@ class ConfigManager:
         return self.config.get('FileTypes', 'extensions', fallback='.pdf,.txt,.md').split(',')
 
     def get_window_geometry(self):
-        geometry = self.config.get('WindowSettings', 'geometry', fallback='100,100,800,600')
+        geometry = self.config.get('WindowSettings', 'geometry', fallback='100,100,900,800')
         return [int(x) for x in geometry.split(',')]
 
     def get_font_size(self):
