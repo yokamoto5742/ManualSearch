@@ -15,7 +15,7 @@ import random
 import psutil
 import pyautogui
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, \
     QTextEdit, QFileDialog, QListWidget, QListWidgetItem, QMessageBox, QCheckBox, QComboBox, QInputDialog, \
     QProgressDialog, QLabel
@@ -328,6 +328,8 @@ class MainWindow(QMainWindow):
         dir_layout.addLayout(dir_buttons_layout)
         layout.addLayout(dir_layout)
 
+        self.search_term_colors = {}
+
         # 結果リスト
         self.results_list = QListWidget()
         self.results_list.itemClicked.connect(self.show_result)
@@ -401,6 +403,10 @@ class MainWindow(QMainWindow):
 
         directory = self.dir_combo.currentText()
         search_terms = [term.strip() for term in re.split('[,、]', self.search_input.text()) if term.strip()]
+
+        # 検索語と色のマッピングを作成
+        colors = ['yellow', 'lightgreen', 'lightblue', 'lightsalmon', 'lightpink']
+        self.search_term_colors = {term: colors[i % len(colors)] for i, term in enumerate(search_terms)}
         include_subdirs = self.include_subdirs_checkbox.isChecked()
         search_type = 'AND' if self.search_type_combo.currentText() == "AND検索" else 'OR'
 
@@ -445,17 +451,42 @@ class MainWindow(QMainWindow):
                 item = f"{file_name} (行: {position}, 一致: {i + 1})"
             list_item = QListWidgetItem(item)
             list_item.setData(Qt.UserRole, (file_path, position, context))
+
+            # 検索語に応じてアイテムの背景色を設定
+            bg_color = self.get_result_background_color(context)
+            list_item.setBackground(bg_color)
+
             self.results_list.addItem(list_item)
+
+    def get_result_background_color(self, context):
+        # コンテキスト内の検索語の出現回数を数える
+        term_counts = {term: context.lower().count(term.lower()) for term in self.search_term_colors.keys()}
+
+        # 最も出現回数の多い検索語を見つける
+        max_term = max(term_counts, key=term_counts.get)
+
+        # 対応する色を返す（薄い色にする）
+        color = QColor(self.search_term_colors[max_term])
+        color.setAlpha(40)  # 透明度を設定（0-255の範囲、値が小さいほど透明）
+        return color
 
     def show_result(self, item):
         file_path, position, context = item.data(Qt.UserRole)
-        highlighted_content = self.highlight_content(context, self.search_input.text().split(','))
+        search_terms = [term.strip() for term in re.split('[,、]', self.search_input.text()) if term.strip()]
+        highlighted_content = self.highlight_content(context, search_terms)
         result_html = f"<h3>ファイル: {os.path.basename(file_path)}</h3>"
         if file_path.lower().endswith('.pdf'):
             result_html += f"<p>ページ: {position}</p>"
         else:
             result_html += f"<p>行: {position}</p>"
         result_html += f"<p>{highlighted_content}</p>"
+
+        # 検索語と色の凡例を追加
+        result_html += "<h4>検索語の色分け:</h4><ul>"
+        for term, color in self.search_term_colors.items():
+            result_html += f'<li><span style="background-color: {color};">{term}</span></li>'
+        result_html += "</ul>"
+
         self.result_display.setHtml(result_html)
 
         self.current_file_path = file_path
@@ -464,11 +495,9 @@ class MainWindow(QMainWindow):
 
     def highlight_content(self, content, search_terms):
         highlighted = content
-        colors = ['yellow', 'lightgreen', 'lightblue', 'lightsalmon', 'lightpink']
-        for i, term in enumerate(search_terms):
-            color = colors[i % len(colors)]
+        for term, color in self.search_term_colors.items():
             highlighted = re.sub(
-                f'({re.escape(term.strip())})',
+                f'({re.escape(term)})',
                 f'<span style="background-color: {color};">\\1</span>',
                 highlighted,
                 flags=re.IGNORECASE
