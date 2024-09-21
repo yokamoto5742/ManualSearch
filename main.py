@@ -11,7 +11,6 @@ from concurrent.futures import ThreadPoolExecutor
 import PyPDF2
 import fitz
 import markdown
-import random
 import psutil
 import pyautogui
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
@@ -95,6 +94,15 @@ class ConfigManager:
         self.config['Directories']['last_directory'] = directory
         self.save_config()
 
+    def get_context_length(self):
+        return self.config.getint('SearchSettings', 'context_length', fallback=50)
+
+    def set_context_length(self, length):
+        if 'SearchSettings' not in self.config:
+            self.config['SearchSettings'] = {}
+        self.config['SearchSettings']['context_length'] = str(length)
+        self.save_config()
+
 
 class AutoCloseMessage(QWidget):
     def __init__(self, parent=None):
@@ -141,14 +149,16 @@ class FileSearcher(QThread):
     progress_update = pyqtSignal(int)
     search_completed = pyqtSignal()
 
-    def __init__(self, directory, search_terms, include_subdirs, search_type, file_extensions):
+    def __init__(self, directory, search_terms, include_subdirs, search_type, file_extensions, context_length):
         super().__init__()
         self.directory = directory
         self.search_terms = search_terms
         self.include_subdirs = include_subdirs
         self.search_type = search_type
         self.file_extensions = file_extensions
+        self.context_length = context_length
         self.cancel_flag = False
+
 
     def run(self):
         total_files = sum([len(files) for _, _, files in os.walk(self.directory)])
@@ -221,8 +231,8 @@ class FileSearcher(QThread):
                     if self.match_search_terms(text):
                         for search_term in self.search_terms:
                             for match in re.finditer(search_term, text, re.IGNORECASE):
-                                start = max(0, match.start() - 50)
-                                end = min(len(text), match.end() + 50)
+                                start = max(0, match.start() - self.context_length)
+                                end = min(len(text), match.end() + self.context_length)
                                 context = text[start:end]
                                 results.append((page_num + 1, context))
                     if len(results) >= 100:  # 結果の数を制限
@@ -238,8 +248,8 @@ class FileSearcher(QThread):
             if self.match_search_terms(content):
                 for search_term in self.search_terms:
                     for match in re.finditer(search_term, content, re.IGNORECASE):
-                        start = max(0, match.start() - 50)
-                        end = min(len(content), match.end() + 50)
+                        start = max(0, match.start() - self.context_length)
+                        end = min(len(content), match.end() + self.context_length)
                         context = content[start:end]
                         line_number = content.count('\n', 0, match.start()) + 1
                         results.append((line_number, context))
@@ -414,7 +424,8 @@ class MainWindow(QMainWindow):
             return
 
         file_extensions = self.config_manager.get_file_extensions()
-        self.searcher = FileSearcher(directory, search_terms, include_subdirs, search_type, file_extensions)
+        context_length = self.config_manager.get_context_length()
+        self.searcher = FileSearcher(directory, search_terms, include_subdirs, search_type, file_extensions, context_length)
         self.searcher.result_found.connect(self.add_result)
         self.searcher.progress_update.connect(self.update_progress)
         self.searcher.search_completed.connect(self.search_completed)
