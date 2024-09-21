@@ -399,7 +399,7 @@ class MainWindow(QMainWindow):
         self.open_file_button.setEnabled(False)
 
         directory = self.dir_combo.currentText()
-        search_terms = [term.strip() for term in re.split('[,、]', self.search_input.text())]
+        search_terms = [term.strip() for term in self.search_input.text().split(',')]
         include_subdirs = self.include_subdirs_checkbox.isChecked()
         search_type = 'AND' if self.search_type_combo.currentText() == "AND検索" else 'OR'
 
