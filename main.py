@@ -451,11 +451,6 @@ class MainWindow(QMainWindow):
                 item = f"{file_name} (行: {position}, 一致: {i + 1})"
             list_item = QListWidgetItem(item)
             list_item.setData(Qt.UserRole, (file_path, position, context))
-
-            # 検索語に応じてアイテムの背景色を設定
-            bg_color = self.get_result_background_color(context)
-            list_item.setBackground(bg_color)
-
             self.results_list.addItem(list_item)
 
     def get_result_background_color(self, context):
@@ -480,12 +475,6 @@ class MainWindow(QMainWindow):
         else:
             result_html += f"<p>行: {position}</p>"
         result_html += f"<p>{highlighted_content}</p>"
-
-        # 検索語と色の凡例を追加
-        result_html += "<h4>検索語の色分け:</h4><ul>"
-        for term, color in self.search_term_colors.items():
-            result_html += f'<li><span style="background-color: {color};">{term}</span></li>'
-        result_html += "</ul>"
 
         self.result_display.setHtml(result_html)
 
