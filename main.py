@@ -112,6 +112,15 @@ class ConfigManager:
         self.config['UISettings']['filename_font_size'] = str(size)
         self.save_config()
 
+    def get_result_detail_font_size(self):
+        return self.config.getint('UISettings', 'result_detail_font_size', fallback=12)
+
+    def set_result_detail_font_size(self, size):
+        if 'UISettings' not in self.config:
+            self.config['UISettings'] = {}
+        self.config['UISettings']['result_detail_font_size'] = str(size)
+        self.save_config()
+
 
 class AutoCloseMessage(QWidget):
     def __init__(self, parent=None):
@@ -358,9 +367,14 @@ class MainWindow(QMainWindow):
         self.filename_font = QFont()
         self.filename_font.setPointSize(self.config_manager.get_filename_font_size())
 
+        # 結果詳細のフォントサイズを設定
+        self.result_detail_font = QFont()
+        self.result_detail_font.setPointSize(self.config_manager.get_result_detail_font_size())
+
         # 結果表示
         self.result_display = QTextEdit()
         self.result_display.setReadOnly(True)
+        self.result_display.setFont(self.result_detail_font)
         layout.addWidget(self.result_display)
 
         # ファイルを開くボタン
@@ -494,12 +508,15 @@ class MainWindow(QMainWindow):
         file_path, position, context = item.data(Qt.UserRole)
         search_terms = [term.strip() for term in re.split('[,、]', self.search_input.text()) if term.strip()]
         highlighted_content = self.highlight_content(context, search_terms)
-        result_html = f"<h3>ファイル: {os.path.basename(file_path)}</h3>"
+
+        result_html = f'<span style="font-size:{self.result_detail_font.pointSize()}pt;">'
+        result_html += f"<h3>ファイル: {os.path.basename(file_path)}</h3>"
         if file_path.lower().endswith('.pdf'):
             result_html += f"<p>ページ: {position}</p>"
         else:
             result_html += f"<p>行: {position}</p>"
         result_html += f"<p>{highlighted_content}</p>"
+        result_html += '</span>'
 
         self.result_display.setHtml(result_html)
 
