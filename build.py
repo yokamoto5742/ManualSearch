@@ -11,7 +11,7 @@ def build_executable():
         "pyinstaller",
         "--name=ManualSearch",
         "--windowed",
-        "--icon=assets/GroqWhisper.ico",
+        "--icon=assets/ManualSearch.ico",
         "main.py"
     ])
 
