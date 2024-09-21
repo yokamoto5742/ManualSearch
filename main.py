@@ -103,6 +103,15 @@ class ConfigManager:
         self.config['SearchSettings']['context_length'] = str(length)
         self.save_config()
 
+    def get_filename_font_size(self):
+        return self.config.getint('UISettings', 'filename_font_size', fallback=12)
+
+    def set_filename_font_size(self, size):
+        if 'UISettings' not in self.config:
+            self.config['UISettings'] = {}
+        self.config['UISettings']['filename_font_size'] = str(size)
+        self.save_config()
+
 
 class AutoCloseMessage(QWidget):
     def __init__(self, parent=None):
@@ -345,6 +354,10 @@ class MainWindow(QMainWindow):
         self.results_list.itemClicked.connect(self.show_result)
         layout.addWidget(self.results_list)
 
+        # ファイル名のフォントサイズを設定
+        self.filename_font = QFont()
+        self.filename_font.setPointSize(self.config_manager.get_filename_font_size())
+
         # 結果表示
         self.result_display = QTextEdit()
         self.result_display.setReadOnly(True)
@@ -462,6 +475,7 @@ class MainWindow(QMainWindow):
                 item = f"{file_name} (行: {position}, 一致: {i + 1})"
             list_item = QListWidgetItem(item)
             list_item.setData(Qt.UserRole, (file_path, position, context))
+            list_item.setFont(self.filename_font)
             self.results_list.addItem(list_item)
 
     def get_result_background_color(self, context):
