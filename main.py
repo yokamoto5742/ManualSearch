@@ -246,9 +246,9 @@ class FileSearcher(QThread):
 
     def match_search_terms(self, text):
         if self.search_type == 'AND':
-            return all(re.search(term, text, re.IGNORECASE) for term in self.search_terms)
+            return all(re.search(re.escape(term), text, re.IGNORECASE) for term in self.search_terms)
         elif self.search_type == 'OR':
-            return any(re.search(term, text, re.IGNORECASE) for term in self.search_terms)
+            return any(re.search(re.escape(term), text, re.IGNORECASE) for term in self.search_terms)
 
 
 class MainWindow(QMainWindow):
@@ -277,7 +277,7 @@ class MainWindow(QMainWindow):
         # 検索入力とボタン
         search_layout = QHBoxLayout()
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("検索語を入力 ( , 区切りで複数語検索)")
+        self.search_input.setPlaceholderText("検索語を入力 ( , または 、区切りで複数語検索)")
         self.search_input.returnPressed.connect(self.start_search)
         search_button = QPushButton("検索")
         search_button.clicked.connect(self.start_search)
@@ -399,7 +399,7 @@ class MainWindow(QMainWindow):
         self.open_file_button.setEnabled(False)
 
         directory = self.dir_combo.currentText()
-        search_terms = [term.strip() for term in self.search_input.text().split(',')]
+        search_terms = [term.strip() for term in re.split('[,、]', self.search_input.text())]
         include_subdirs = self.include_subdirs_checkbox.isChecked()
         search_type = 'AND' if self.search_type_combo.currentText() == "AND検索" else 'OR'
 
