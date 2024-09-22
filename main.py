@@ -177,7 +177,6 @@ class FileSearcher(QThread):
         self.context_length = context_length
         self.cancel_flag = False
 
-
     def run(self):
         total_files = sum([len(files) for _, _, files in os.walk(self.directory)])
         processed_files = 0
@@ -248,7 +247,7 @@ class FileSearcher(QThread):
                     text = page.extract_text()
                     if self.match_search_terms(text):
                         for search_term in self.search_terms:
-                            for match in re.finditer(search_term, text, re.IGNORECASE):
+                            for match in re.finditer(re.escape(search_term), text, re.IGNORECASE):
                                 start = max(0, match.start() - self.context_length)
                                 end = min(len(text), match.end() + self.context_length)
                                 context = text[start:end]
@@ -265,7 +264,7 @@ class FileSearcher(QThread):
             content = file.read()
             if self.match_search_terms(content):
                 for search_term in self.search_terms:
-                    for match in re.finditer(search_term, content, re.IGNORECASE):
+                    for match in re.finditer(re.escape(search_term), content, re.IGNORECASE):
                         start = max(0, match.start() - self.context_length)
                         end = min(len(content), match.end() + self.context_length)
                         context = content[start:end]
@@ -275,9 +274,9 @@ class FileSearcher(QThread):
 
     def match_search_terms(self, text):
         if self.search_type == 'AND':
-            return all(re.search(re.escape(term), text, re.IGNORECASE) for term in self.search_terms)
+            return all(term.lower() in text.lower() for term in self.search_terms)
         elif self.search_type == 'OR':
-            return any(re.search(re.escape(term), text, re.IGNORECASE) for term in self.search_terms)
+            return any(term.lower() in text.lower() for term in self.search_terms)
 
 
 class MainWindow(QMainWindow):
@@ -445,7 +444,7 @@ class MainWindow(QMainWindow):
         colors = ['yellow', 'lightgreen', 'lightblue', 'lightsalmon', 'lightpink']
         self.search_term_colors = {term: colors[i % len(colors)] for i, term in enumerate(search_terms)}
         include_subdirs = self.include_subdirs_checkbox.isChecked()
-        search_type = 'AND' if self.search_type_combo.currentText() == "AND検索" else 'OR'
+        search_type = 'AND' if self.search_type_combo.currentText().startswith("AND") else 'OR'
 
         if not directory or not search_terms:
             return
