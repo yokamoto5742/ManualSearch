@@ -148,18 +148,28 @@ class AutoCloseMessage(QWidget):
         self.timer.start(duration)
 
 
+def normalize_path(file_path):
+    # バックスラッシュをフォワードスラッシュに変換
+    normalized_path = file_path.replace('\\', '/')
+    # 連続するスラッシュを単一のスラッシュに置換
+    normalized_path = re.sub('/+', '/', normalized_path)
+    return normalized_path
+
+
 def is_network_file(file_path):
-    return file_path.startswith('\\\\') or ':' in file_path[:2]
+    normalized_path = normalize_path(file_path)
+    return normalized_path.startswith('//') or ':' in normalized_path[:2]
 
 
 def check_file_accessibility(file_path, timeout=5):
-    if is_network_file(file_path):
+    normalized_path = normalize_path(file_path)
+    if is_network_file(normalized_path):
         try:
             with socket.create_connection(("8.8.8.8", 53), timeout=timeout):
-                return os.path.exists(file_path)
+                return os.path.exists(normalized_path)
         except (socket.error, OSError):
             return False
-    return os.path.exists(file_path)
+    return os.path.exists(normalized_path)
 
 
 class FileSearcher(QThread):
@@ -217,25 +227,26 @@ class FileSearcher(QThread):
 
 
     def search_file(self, file_path):
-        if not check_file_accessibility(file_path):
-            print(f"ファイルにアクセスできません: {file_path}")
+        normalized_path = normalize_path(file_path)
+        if not check_file_accessibility(normalized_path):
+            print(f"ファイルにアクセスできません: {normalized_path}")
             return None
 
         try:
-            file_extension = os.path.splitext(file_path)[1].lower()
+            file_extension = os.path.splitext(normalized_path)[1].lower()
 
             if file_extension == '.pdf':
-                return self.search_pdf(file_path)
+                return self.search_pdf(normalized_path)
             elif file_extension in ['.txt', '.md']:
-                return self.search_text(file_path)
+                return self.search_text(normalized_path)
             else:
                 raise ValueError(f"サポートされていないファイル形式: {file_extension}")
 
         except (IOError, OSError) as e:
-            print(f"ファイルアクセスエラー: {file_path} - {str(e)}")
+            print(f"ファイルアクセスエラー: {normalized_path} - {str(e)}")
             return None
         except Exception as e:
-            print(f"予期せぬエラー: {file_path} - {str(e)}")
+            print(f"予期せぬエラー: {normalized_path} - {str(e)}")
             return None
 
     def search_pdf(self, file_path):
