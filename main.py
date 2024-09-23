@@ -21,8 +21,8 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHB
 from PyQt5.QtWidgets import QStyleFactory
 import socket
 
-VERSION = "1.0.2"
-LAST_UPDATED = "2024/09/22"
+VERSION = "1.0.3"
+LAST_UPDATED = "2024/09/23"
 
 
 class ConfigManager:
@@ -224,7 +224,6 @@ class FileSearcher(QThread):
 
     def cancel_search(self):
         self.cancel_flag = True
-
 
     def search_file(self, file_path):
         normalized_path = normalize_path(file_path)
@@ -517,7 +516,7 @@ class MainWindow(QMainWindow):
     def show_result(self, item):
         file_path, position, context = item.data(Qt.UserRole)
         search_terms = [term.strip() for term in re.split('[,、]', self.search_input.text()) if term.strip()]
-        highlighted_content = self.highlight_content(context, search_terms)
+        highlighted_content = self.highlight_content(context)
 
         result_html = f'<span style="font-size:{self.result_detail_font.pointSize()}pt;">'
         result_html += f"<h3>ファイル: {os.path.basename(file_path)}</h3>"
@@ -534,7 +533,7 @@ class MainWindow(QMainWindow):
         self.current_position = position
         self.open_file_button.setEnabled(True)
 
-    def highlight_content(self, content, search_terms):
+    def highlight_content(self, content):
         highlighted = content
         for term, color in self.search_term_colors.items():
             highlighted = re.sub(
