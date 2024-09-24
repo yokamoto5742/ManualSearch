@@ -33,10 +33,16 @@ class ConfigManager:
 
     def load_config(self):
         if os.path.exists(self.config_file):
-            self.config.read(self.config_file)
+            try:
+                with open(self.config_file, 'r', encoding='utf-8') as configfile:
+                    self.config.read_file(configfile)
+            except UnicodeDecodeError:
+                # UTF-8で失敗した場合、他のエンコーディングを試す
+                content = read_file_with_auto_encoding(self.config_file)
+                self.config.read_string(content)
 
     def save_config(self):
-        with open(self.config_file, 'w') as configfile:
+        with open(self.config_file, 'w', encoding='utf-8') as configfile:
             self.config.write(configfile)
 
     def get_file_extensions(self):
@@ -149,17 +155,15 @@ class AutoCloseMessage(QWidget):
 
 
 def normalize_path(file_path):
-    # バックスラッシュをフォワードスラッシュに変換
-    normalized_path = file_path.replace('\\', '/')
+    # バックスラッシュをフォワードスラッシュに変換し、パスを正規化
+    normalized_path = os.path.normpath(file_path.replace('\\', '/'))
     # 連続するスラッシュを単一のスラッシュに置換
     normalized_path = re.sub('/+', '/', normalized_path)
     return normalized_path
 
-
 def is_network_file(file_path):
     normalized_path = normalize_path(file_path)
     return normalized_path.startswith('//') or ':' in normalized_path[:2]
-
 
 def check_file_accessibility(file_path, timeout=5):
     normalized_path = normalize_path(file_path)
@@ -170,6 +174,16 @@ def check_file_accessibility(file_path, timeout=5):
         except (socket.error, OSError):
             return False
     return os.path.exists(normalized_path)
+
+def read_file_with_auto_encoding(file_path):
+    encodings = ['utf-8', 'shift_jis', 'cp932', 'euc-jp', 'iso2022_jp']
+    for encoding in encodings:
+        try:
+            with open(file_path, 'r', encoding=encoding) as file:
+                return file.read()
+        except UnicodeDecodeError:
+            continue
+    raise ValueError(f"Unable to decode the file: {file_path}")
 
 
 class FileSearcher(QThread):
@@ -270,8 +284,8 @@ class FileSearcher(QThread):
 
     def search_text(self, file_path):
         results = []
-        with open(file_path, 'r', encoding='utf-8') as file:
-            content = file.read()
+        try:
+            content = read_file_with_auto_encoding(file_path)
             if self.match_search_terms(content):
                 for search_term in self.search_terms:
                     for match in re.finditer(re.escape(search_term), content, re.IGNORECASE):
@@ -280,7 +294,10 @@ class FileSearcher(QThread):
                         context = content[start:end]
                         line_number = content.count('\n', 0, match.start()) + 1
                         results.append((line_number, context))
+        except ValueError as e:
+            print(f"ファイルの読み込みに失敗しました: {file_path} - {str(e)}")
         return (file_path, results) if results else None
+
 
     def match_search_terms(self, text):
         if self.search_type == 'AND':
@@ -644,47 +661,49 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "エラー", f"テキストファイルを開けませんでした: {str(e)}")
 
     def highlight_text_file(self, file_path, search_terms):
-        with open(file_path, 'r', encoding='utf-8') as file:
-            content = file.read()
+        try:
+            content = read_file_with_auto_encoding(file_path)
 
-        file_extension = os.path.splitext(file_path)[1].lower()
-        if file_extension == '.md':
-            content = markdown.markdown(content)
+            file_extension = os.path.splitext(file_path)[1].lower()
+            if file_extension == '.md':
+                content = markdown.markdown(content)
 
-        colors = ['yellow', 'lightgreen', 'lightblue', 'lightsalmon', 'lightpink']
-        for i, term in enumerate(search_terms):
-            color = colors[i % len(colors)]
-            content = re.sub(
-                f'({re.escape(term.strip())})',
-                f'<span style="background-color: {color};">\\1</span>',
-                content,
-                flags=re.IGNORECASE
-            )
+            colors = ['yellow', 'lightgreen', 'lightblue', 'lightsalmon', 'lightpink']
+            for i, term in enumerate(search_terms):
+                color = colors[i % len(colors)]
+                content = re.sub(
+                    f'({re.escape(term.strip())})',
+                    f'<span style="background-color: {color};">\\1</span>',
+                    content,
+                    flags=re.IGNORECASE
+                )
 
-        html_template = f'''
-        <!DOCTYPE html>
-        <html lang="ja">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>{os.path.basename(file_path)}</title>
-            <style>
-                body {{ font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }}
-                pre {{ background-color: #f4f4f4; padding: 10px; border-radius: 5px; }}
-            </style>
-        </head>
-        <body>
-            <h1>{os.path.basename(file_path)}</h1>
-            {'<pre>' if file_extension == '.txt' else ''}
-            {content}
-            {'</pre>' if file_extension == '.txt' else ''}
-        </body>
-        </html>
-        '''
+            html_template = f'''
+            <!DOCTYPE html>
+            <html lang="ja">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>{os.path.basename(file_path)}</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }}
+                    pre {{ background-color: #f4f4f4; padding: 10px; border-radius: 5px; }}
+                </style>
+            </head>
+            <body>
+                <h1>{os.path.basename(file_path)}</h1>
+                {'<pre>' if file_extension == '.txt' else ''}
+                {content}
+                {'</pre>' if file_extension == '.txt' else ''}
+            </body>
+            </html>
+            '''
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.html', mode='w', encoding='utf-8') as tmp_file:
-            tmp_file.write(html_template)
-            return tmp_file.name
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.html', mode='w', encoding='utf-8') as tmp_file:
+                tmp_file.write(html_template)
+                return tmp_file.name
+        except ValueError as e:
+            raise ValueError(f"ファイルの読み込みに失敗しました: {file_path} - {str(e)}")
 
     def closeEvent(self, event):
         geometry = self.geometry()
