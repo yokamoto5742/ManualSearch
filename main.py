@@ -725,15 +725,59 @@ class MainWindow(QMainWindow):
                         background-color: #f4f4f4; 
                         padding: 10px; 
                         border-radius: 5px; 
-                        font-size: {self.html_font_size}px;
+                        white-space: pre-wrap;
+                        word-wrap: break-word;
+                    }}
+                    #content {{
+                        max-width: 100%;
+                        overflow-x: auto;
+                    }}
+                    #controls {{
+                        position: fixed;
+                        top: 10px;
+                        right: 10px;
+                        background-color: rgba(255, 255, 255, 0.8);
+                        padding: 10px;
+                        border-radius: 5px;
                     }}
                 </style>
             </head>
             <body>
+                <div id="controls">
+                    <button onclick="changeFontSize(1)">文字を大きく</button>
+                    <button onclick="changeFontSize(-1)">文字を小さく</button>
+                    <button onclick="toggleWordWrap()">文字の折り返し</button>
+                </div>
                 <h1>{os.path.basename(file_path)}</h1>
-                {'<pre>' if file_extension == '.txt' else ''}
-                {content}
-                {'</pre>' if file_extension == '.txt' else ''}
+                <div id="content">
+                    {'<pre>' if file_extension == '.txt' else ''}
+                    {content}
+                    {'</pre>' if file_extension == '.txt' else ''}
+                </div>
+                <script>
+                    var currentFontSize = {self.html_font_size};
+
+                    function changeFontSize(delta) {{
+                        currentFontSize += delta;
+                        if (currentFontSize < 8) currentFontSize = 8;  // 最小フォントサイズ
+                        if (currentFontSize > 32) currentFontSize = 32;  // 最大フォントサイズ
+                        document.body.style.fontSize = currentFontSize + 'px';
+                    }}
+
+                    function toggleWordWrap() {{
+                        var content = document.getElementById('content');
+                        var pre = content.querySelector('pre');
+                        if (pre) {{
+                            if (pre.style.whiteSpace === 'pre-wrap') {{
+                                pre.style.whiteSpace = 'pre';
+                                pre.style.overflowX = 'auto';
+                            }} else {{
+                                pre.style.whiteSpace = 'pre-wrap';
+                                pre.style.overflowX = 'hidden';
+                            }}
+                        }}
+                    }}
+                </script>
             </body>
             </html>
             '''
