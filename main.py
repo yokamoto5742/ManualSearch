@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHB
 from PyQt5.QtWidgets import QStyleFactory
 import socket
 
-VERSION = "1.0.4"
+VERSION = "1.0.5"
 LAST_UPDATED = "2024/09/24"
 
 
