@@ -413,11 +413,18 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.result_display)
         self.html_font_size = self.config_manager.get_html_font_size()
 
-        # ファイルを開くボタン
+        button_layout = QHBoxLayout()
         self.open_file_button = QPushButton("ファイルを開く")
         self.open_file_button.clicked.connect(self.open_file)
         self.open_file_button.setEnabled(False)
-        layout.addWidget(self.open_file_button)
+        button_layout.addWidget(self.open_file_button)
+
+        self.open_folder_button = QPushButton("フォルダを開く")
+        self.open_folder_button.clicked.connect(self.open_folder)
+        self.open_folder_button.setEnabled(False)
+        button_layout.addWidget(self.open_folder_button)
+
+        layout.addLayout(button_layout)
 
         self.current_file_path = None
         self.current_position = None
@@ -559,6 +566,18 @@ class MainWindow(QMainWindow):
         self.current_file_path = file_path
         self.current_position = position
         self.open_file_button.setEnabled(True)
+        self.open_folder_button.setEnabled(True)  # フォルダを開くボタンを有効化
+
+    def open_folder(self):
+        if not self.current_file_path or not os.path.exists(self.current_file_path):
+            QMessageBox.warning(self, "エラー", "ファイルが存在しません。")
+            return
+
+        folder_path = os.path.dirname(self.current_file_path)
+        try:
+            os.startfile(folder_path)
+        except Exception as e:
+            QMessageBox.warning(self, "エラー", f"フォルダを開けませんでした: {str(e)}")
 
     def highlight_content(self, content):
         highlighted = content
