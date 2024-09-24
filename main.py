@@ -21,8 +21,8 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHB
 from PyQt5.QtWidgets import QStyleFactory
 import socket
 
-VERSION = "1.0.3"
-LAST_UPDATED = "2024/09/23"
+VERSION = "1.0.4"
+LAST_UPDATED = "2024/09/24"
 
 
 class ConfigManager:
