@@ -127,6 +127,15 @@ class ConfigManager:
         self.config['UISettings']['result_detail_font_size'] = str(size)
         self.save_config()
 
+    def get_html_font_size(self):
+        return self.config.getint('UISettings', 'html_font_size', fallback=16)
+
+    def set_html_font_size(self, size):
+        if 'UISettings' not in self.config:
+            self.config['UISettings'] = {}
+        self.config['UISettings']['html_font_size'] = str(size)
+        self.save_config()
+
 
 class AutoCloseMessage(QWidget):
     def __init__(self, parent=None):
@@ -402,6 +411,7 @@ class MainWindow(QMainWindow):
         self.result_display.setReadOnly(True)
         self.result_display.setFont(self.result_detail_font)
         layout.addWidget(self.result_display)
+        self.html_font_size = self.config_manager.get_html_font_size()
 
         # ファイルを開くボタン
         self.open_file_button = QPushButton("ファイルを開く")
@@ -686,8 +696,18 @@ class MainWindow(QMainWindow):
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>{os.path.basename(file_path)}</title>
                 <style>
-                    body {{ font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }}
-                    pre {{ background-color: #f4f4f4; padding: 10px; border-radius: 5px; }}
+                    body {{ 
+                        font-family: Arial, sans-serif; 
+                        line-height: 1.6; 
+                        padding: 20px; 
+                        font-size: {self.html_font_size}px;
+                    }}
+                    pre {{ 
+                        background-color: #f4f4f4; 
+                        padding: 10px; 
+                        border-radius: 5px; 
+                        font-size: {self.html_font_size}px;
+                    }}
                 </style>
             </head>
             <body>
@@ -708,6 +728,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         geometry = self.geometry()
         self.config_manager.set_window_geometry(geometry.x(), geometry.y(), geometry.width(), geometry.height())
+        self.config_manager.set_html_font_size(self.html_font_size)
         super().closeEvent(event)
 
 
