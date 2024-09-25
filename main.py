@@ -749,11 +749,7 @@ class MainWindow(QMainWindow):
                     <button onclick="toggleWordWrap()">文字の折り返し</button>
                 </div>
                 <h1>{os.path.basename(file_path)}</h1>
-                <div id="content">
-                    {'<pre>' if file_extension == '.txt' else ''}
-                    {content}
-                    {'</pre>' if file_extension == '.txt' else ''}
-                </div>
+                <div id="content">{'<pre>' if file_extension == '.txt' else ''}{content}{'</pre>' if file_extension == '.txt' else ''}</div>
                 <script>
                     var currentFontSize = {self.html_font_size};
 
