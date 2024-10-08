@@ -2,6 +2,7 @@ import configparser
 import os
 import sys
 from typing import List, Tuple
+import chardet
 
 class ConfigManager:
     def __init__(self, config_file: str = 'config.ini'):
@@ -42,6 +43,23 @@ class ConfigManager:
         except IOError as e:
             print(f"設定ファイルの保存中にエラーが発生しました: {e}")
             raise
+
+    def read_file_with_auto_encoding(self, file_path: str) -> str:
+        with open(file_path, 'rb') as file:
+            raw_data = file.read()
+
+        result = chardet.detect(raw_data)
+        encoding = result['encoding']
+
+        try:
+            return raw_data.decode(encoding)
+        except UnicodeDecodeError:
+            # エンコーディング検出に失敗した場合、UTF-8を試してみる
+            try:
+                return raw_data.decode('utf-8')
+            except UnicodeDecodeError:
+                # UTF-8でも失敗した場合、CP932（Shift-JIS）を試す
+                return raw_data.decode('cp932')
 
     @property
     def file_extensions(self) -> List[str]:

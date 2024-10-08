@@ -332,7 +332,15 @@ class MainWindow(QMainWindow):
             search_terms = [term.strip() for term in re.split('[,、]', self.search_input.text()) if term.strip()]
             highlighted_pdf_path = self.highlight_pdf(self.current_file_path, search_terms)
 
-            process = subprocess.Popen([self.acrobat_path, highlighted_pdf_path])
+            # acrobat_pathを設定から取得
+            acrobat_path = self.config_manager.acrobat_path
+
+            # Acrobat.exeが存在するか確認
+            if not os.path.exists(acrobat_path):
+                QMessageBox.warning(self, "エラー", f"Adobe Acrobat が見つかりません: {acrobat_path}")
+                return
+
+            process = subprocess.Popen([acrobat_path, highlighted_pdf_path])
 
             self.wait_for_acrobat(process.pid)
 
@@ -340,6 +348,7 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             QMessageBox.warning(self, "エラー", f"PDFを開けませんでした: {str(e)}")
+
 
     def wait_for_acrobat(self, pid: int, timeout: int = 30) -> bool:
         start_time = time.time()
