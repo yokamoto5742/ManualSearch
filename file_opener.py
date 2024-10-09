@@ -1,9 +1,21 @@
 import os
-import subprocess
 from PyQt5.QtWidgets import QMessageBox
 from config_manager import ConfigManager
 from pdf_handler import PDFHandler
 from text_file_handler import TextFileHandler
+
+
+def open_folder(file_path: str):
+    if not file_path or not os.path.exists(file_path):
+        QMessageBox.warning(None, "エラー", "ファイルが存在しません。")
+        return
+
+    folder_path = os.path.dirname(file_path)
+    try:
+        os.startfile(folder_path)
+    except Exception as e:
+        QMessageBox.warning(None, "エラー", f"フォルダを開けませんでした: {str(e)}")
+
 
 class FileOpener:
     def __init__(self, config_manager: ConfigManager):
@@ -36,14 +48,3 @@ class FileOpener:
             self.text_file_handler.open_text_file(file_path)
         except Exception as e:
             QMessageBox.warning(None, "エラー", f"テキストファイルを開けませんでした: {str(e)}")
-
-    def open_folder(self, file_path: str):
-        if not file_path or not os.path.exists(file_path):
-            QMessageBox.warning(None, "エラー", "ファイルが存在しません。")
-            return
-
-        folder_path = os.path.dirname(file_path)
-        try:
-            os.startfile(folder_path)
-        except Exception as e:
-            QMessageBox.warning(None, "エラー", f"フォルダを開けませんでした: {str(e)}")

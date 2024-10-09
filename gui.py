@@ -105,7 +105,7 @@ class MainWindow(QMainWindow):
 
     def open_folder(self):
         # フォルダを開く処理（FileOpenerに委譲）
-        self.file_opener.open_folder(self.search_manager.current_file_path)
+        open_folder(self.search_manager.current_file_path)
 
     def closeEvent(self, event):
         # 設定の保存
