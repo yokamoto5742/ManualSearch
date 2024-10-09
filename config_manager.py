@@ -127,7 +127,7 @@ class ConfigManager:
 
     @property
     def filename_font_size(self) -> int:
-        return self.config.getint('UISettings', 'filename_font_size', fallback=12)
+        return self.config.getint('UISettings', 'filename_font_size', fallback=14)
 
     @filename_font_size.setter
     def filename_font_size(self, value: int) -> None:
@@ -136,7 +136,7 @@ class ConfigManager:
 
     @property
     def result_detail_font_size(self) -> int:
-        return self.config.getint('UISettings', 'result_detail_font_size', fallback=12)
+        return self.config.getint('UISettings', 'result_detail_font_size', fallback=14)
 
     @result_detail_font_size.setter
     def result_detail_font_size(self, value: int) -> None:
