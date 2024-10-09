@@ -1,5 +1,4 @@
 import subprocess
-import shutil
 from version_manager import update_version, update_main_py
 
 
@@ -12,11 +11,9 @@ def build_executable():
         "--name=ManualSearch",
         "--windowed",
         "--icon=assets/ManualSearch.ico",
+        "--add-data", "config.ini:.",
         "main.py"
     ])
-
-    # # 必要なファイルをdistフォルダにコピー
-    shutil.copy("config.ini", "dist/ManualSearch")
 
     print(f"Executable built successfully. Version: {new_version}")
 
