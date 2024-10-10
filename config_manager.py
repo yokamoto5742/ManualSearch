@@ -1,9 +1,22 @@
 import configparser
 import os
+import sys
 from utils import read_file_with_auto_encoding
 
+def get_config_path():
+    if getattr(sys, 'frozen', False):
+        # PyInstallerでビルドされた実行ファイルの場合
+        base_path = sys._MEIPASS
+    else:
+        # 通常のPythonスクリプトとして実行される場合
+        base_path = os.path.dirname(__file__)
+
+    return os.path.join(base_path, 'config.ini')
+
+CONFIG_PATH = get_config_path()
+
 class ConfigManager:
-    def __init__(self, config_file='config.ini'):
+    def __init__(self, config_file=CONFIG_PATH):
         self.config_file = config_file
         self.config = configparser.ConfigParser()
         self.load_config()
