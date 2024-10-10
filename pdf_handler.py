@@ -5,9 +5,8 @@ import psutil
 import pyautogui
 import fitz
 
-def open_pdf(file_path, acrobat_path, current_position):
+def open_pdf(file_path, acrobat_path, current_position, search_terms):
     try:
-        search_terms = [term.strip() for term in file_path.split('/')[-1].split('.')[0].split('_')]
         highlighted_pdf_path = highlight_pdf(file_path, search_terms)
 
         process = subprocess.Popen([acrobat_path, highlighted_pdf_path])

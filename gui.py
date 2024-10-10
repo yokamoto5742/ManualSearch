@@ -325,15 +325,15 @@ class MainWindow(QMainWindow):
             return
 
         file_extension = os.path.splitext(self.current_file_path)[1].lower()
+        search_terms = [term.strip() for term in re.split('[,、]', self.search_input.text()) if term.strip()]
 
         if file_extension == '.pdf':
             try:
-                open_pdf(self.current_file_path, self.acrobat_path, self.current_position)
+                open_pdf(self.current_file_path, self.acrobat_path, self.current_position, search_terms)
             except Exception as e:
                 QMessageBox.warning(self, "エラー", str(e))
         elif file_extension in ['.txt', '.md']:
             try:
-                search_terms = [term.strip() for term in re.split('[,、]', self.search_input.text()) if term.strip()]
                 open_text_file(self.current_file_path, search_terms, self.config_manager.get_html_font_size())
             except Exception as e:
                 QMessageBox.warning(self, "エラー", str(e))
@@ -353,6 +353,7 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             QMessageBox.warning(self, "エラー", f"PDFを開けませんでした: {str(e)}")
+
 
     def wait_for_acrobat(self, pid, timeout=30):
         start_time = time.time()
