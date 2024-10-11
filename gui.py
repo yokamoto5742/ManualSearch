@@ -12,11 +12,7 @@ from text_handler import open_text_file
 from utils import read_file_with_auto_encoding
 import markdown
 import subprocess
-import psutil
-import pyautogui
-import time
 import tempfile
-import fitz
 
 
 class AutoCloseMessage(QWidget):
