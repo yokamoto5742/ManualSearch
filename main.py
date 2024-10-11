@@ -8,8 +8,8 @@ LAST_UPDATED = "2024/09/24"
 
 def main():
     app = QApplication(sys.argv)
-    config_manager = ConfigManager()  # ConfigManager のインスタンスを作成
-    window = MainWindow(config_manager)  # ConfigManager のインスタンスを MainWindow に渡す
+    config_manager = ConfigManager()
+    window = MainWindow(config_manager)
     window.show()
     sys.exit(app.exec_())
 
