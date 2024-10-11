@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLin
     QTextEdit, QFileDialog, QListWidget, QListWidgetItem, QMessageBox, QCheckBox, QComboBox, QInputDialog, \
     QProgressDialog, QLabel, QStyleFactory, QApplication
 from file_searcher import FileSearcher
-from pdf_handler import open_pdf
+from pdf_handler import open_pdf, wait_for_acrobat, navigate_to_page, highlight_pdf
 from text_handler import open_text_file
 from utils import read_file_with_auto_encoding
 import markdown
@@ -43,6 +43,7 @@ class AutoCloseMessage(QWidget):
             self.move(geometry.center() - self.rect().center())
         self.show()
         self.timer.start(duration)
+
 
 class MainWindow(QMainWindow):
     def __init__(self, config_manager):
@@ -278,7 +279,7 @@ class MainWindow(QMainWindow):
 
     def show_result(self, item):
         file_path, position, context = item.data(Qt.UserRole)
-        search_terms = [term.strip() for term in re.split('[,、]', self.search_input.text()) if term.strip()]
+        # search_terms = [term.strip() for term in re.split('[,、]', self.search_input.text()) if term.strip()]
         highlighted_content = self.highlight_content(context)
 
         result_html = f'<span style="font-size:{self.result_detail_font.pointSize()}pt;">'
@@ -343,77 +344,16 @@ class MainWindow(QMainWindow):
     def open_pdf(self):
         try:
             search_terms = [term.strip() for term in re.split('[,、]', self.search_input.text()) if term.strip()]
-            highlighted_pdf_path = self.highlight_pdf(self.current_file_path, search_terms)
+            highlighted_pdf_path = highlight_pdf(self.current_file_path, search_terms)
 
             process = subprocess.Popen([self.acrobat_path, highlighted_pdf_path])
 
-            self.wait_for_acrobat(process.pid)
+            wait_for_acrobat(process.pid)
 
-            self.navigate_to_page(self.current_position)
+            navigate_to_page(self.current_position)
 
         except Exception as e:
             QMessageBox.warning(self, "エラー", f"PDFを開けませんでした: {str(e)}")
-
-
-    def wait_for_acrobat(self, pid, timeout=30):
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            try:
-                process = psutil.Process(pid)
-                if process.status() == psutil.STATUS_RUNNING:
-                    time.sleep(2)
-                    if "Acrobat" in pyautogui.getActiveWindowTitle():
-                        return True
-            except psutil.NoSuchProcess:
-                return False
-            time.sleep(0.5)
-        return False
-
-    def navigate_to_page(self, page_number):
-        # ページ数が1の場合は何もせずに関数を終了
-        if page_number == 1:
-            return
-
-        try:
-            # Ctrl+Shift+Nを押してページ移動ダイアログを開く
-            pyautogui.hotkey('ctrl', 'shift', 'n')
-            time.sleep(0.5)
-
-            # ページ番号を入力
-            pyautogui.write(str(page_number))
-            time.sleep(0.5)
-
-            # Enterを押してページに移動
-            pyautogui.press('enter')
-
-        except Exception as e:
-            print(f"ページ移動中にエラーが発生しました: {str(e)}")
-
-    def highlight_pdf(self, pdf_path, search_terms):
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
-            tmp_path = tmp_file.name
-
-        doc = fitz.open(pdf_path)
-        colors = [
-            (1, 1, 0),  # yellow
-            (0.5, 1, 0.5),  # light green
-            (0.5, 0.7, 1),  # light blue
-            (1, 0.6, 0.4),  # light salmon
-            (1, 0.7, 0.7)   # light pink
-        ]
-
-        for page in doc:
-            for i, term in enumerate(search_terms):
-                text_instances = page.search_for(term.strip())
-                for inst in text_instances:
-                    highlight = page.add_highlight_annot(inst)
-                    highlight.set_colors(stroke=colors[i % len(colors)])
-                    highlight.update()
-
-        doc.save(tmp_path)
-        doc.close()
-
-        return tmp_path
 
     def open_text_file(self):
         try:
