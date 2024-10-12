@@ -19,7 +19,8 @@ def highlight_text_file(file_path, search_terms, html_font_size):
 
         file_extension = os.path.splitext(file_path)[1].lower()
         if file_extension == '.md':
-            content = markdown.markdown(content)
+            # nl2br拡張を使用してマークダウンをHTMLに変換
+            content = markdown.markdown(content, extensions=['nl2br'])
 
         colors = ['yellow', 'lightgreen', 'lightblue', 'lightsalmon', 'lightpink']
         for i, term in enumerate(search_terms):
