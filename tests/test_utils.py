@@ -1,34 +1,69 @@
-import os
-import re
+import pytest
 import socket
+from unittest.mock import patch, mock_open
+from utils import check_file_accessibility, read_file_with_auto_encoding, read_file_with_auto_encoding
+import pytest
+import chardet
+from io import BytesIO
+from unittest.mock import patch, mock_open
 
-def normalize_path(file_path):
-    # バックスラッシュをフォワードスラッシュに変換し、パスを正規化
-    normalized_path = os.path.normpath(file_path.replace('\\', '/'))
-    # 連続するスラッシュを単一のスラッシュに置換
-    normalized_path = re.sub('/+', '/', normalized_path)
-    return normalized_path
 
-def is_network_file(file_path):
-    normalized_path = normalize_path(file_path)
-    return normalized_path.startswith('//') or ':' in normalized_path[:2]
+@pytest.mark.parametrize("file_path, expected_result", [
+    ('/home/user/file.txt', True),
+    ('//server/share/file.txt', True),
+    ('Z:/network_drive/file.txt', True),
+    ('/nonexistent/file.txt', False),
+])
 
-def check_file_accessibility(file_path, timeout=5):
-    normalized_path = normalize_path(file_path)
-    if is_network_file(normalized_path):
-        try:
-            with socket.create_connection(("8.8.8.8", 53), timeout=timeout):
-                return os.path.exists(normalized_path)
-        except (socket.error, OSError):
-            return False
-    return os.path.exists(normalized_path)
+def test_check_file_accessibility(file_path, expected_result):
+    with patch('os.path.exists', return_value=expected_result):
+        with patch('socket.create_connection') as mock_connection:
+            mock_connection.return_value.__enter__.return_value = None
+            assert check_file_accessibility(file_path) == expected_result
 
-def read_file_with_auto_encoding(file_path):
-    encodings = ['utf-8', 'shift_jis', 'cp932', 'euc-jp', 'iso2022_jp']
-    for encoding in encodings:
-        try:
-            with open(file_path, 'r', encoding=encoding) as file:
-                return file.read()
-        except UnicodeDecodeError:
-            continue
-    raise ValueError(f"Unable to decode the file: {file_path}")
+def test_check_file_accessibility_network_error():
+    with patch('socket.create_connection', side_effect=socket.error):
+        assert check_file_accessibility('//server/share/file.txt') == False
+
+
+@pytest.mark.parametrize("file_content, encoding", [
+    ("こんにちは", "utf-8"),
+    ("Hello", "ascii"),
+    ("Здравствуйте", "utf-8"),
+])
+def test_read_file_with_auto_encoding(file_content, encoding):
+    # 文字列をバイト列にエンコード
+    encoded_content = file_content.encode(encoding)
+
+    # ファイルの読み込みをモック
+    mock_file = mock_open(read_data=encoded_content)
+
+    # chardet.detect の戻り値をモック
+    mock_detect = {'encoding': encoding, 'confidence': 0.99}
+
+    with patch('builtins.open', mock_file), \
+            patch('chardet.detect', return_value=mock_detect):
+        result = read_file_with_auto_encoding('test.txt')
+
+    assert result == file_content
+
+
+def test_unknown_encoding():
+    with patch('builtins.open', mock_open(read_data=b'test data')):
+        with patch('chardet.detect', return_value={'encoding': None}):
+            with pytest.raises(ValueError, match="Unable to detect encoding for file: test.txt"):
+                read_file_with_auto_encoding('test.txt')
+
+
+def test_decoding_error():
+    invalid_data = b'\xff\xfe\xfd'  # 無効なUTF-8シーケンス
+
+    with patch('builtins.open', mock_open(read_data=invalid_data)):
+        with patch('chardet.detect', return_value={'encoding': 'utf-8'}):
+            with pytest.raises(ValueError, match="Unable to decode the file: test.txt"):
+                read_file_with_auto_encoding('test.txt')
+
+
+def test_file_not_found():
+    with pytest.raises(FileNotFoundError):
+        read_file_with_auto_encoding('non_existent_file.txt')

@@ -1,6 +1,7 @@
 import os
 import re
 import socket
+import chardet
 
 def normalize_path(file_path):
     # バックスラッシュをフォワードスラッシュに変換し、パスを正規化
@@ -23,12 +24,18 @@ def check_file_accessibility(file_path, timeout=5):
             return False
     return os.path.exists(normalized_path)
 
+
 def read_file_with_auto_encoding(file_path):
-    encodings = ['utf-8', 'shift_jis', 'cp932', 'euc-jp', 'iso2022_jp']
-    for encoding in encodings:
-        try:
-            with open(file_path, 'r', encoding=encoding) as file:
-                return file.read()
-        except UnicodeDecodeError:
-            continue
-    raise ValueError(f"Unable to decode the file: {file_path}")
+    with open(file_path, 'rb') as file:
+        raw_data = file.read()
+
+    result = chardet.detect(raw_data)
+    encoding = result['encoding']
+
+    if encoding is None:
+        raise ValueError(f"Unable to detect encoding for file: {file_path}")
+
+    try:
+        return raw_data.decode(encoding)
+    except UnicodeDecodeError:
+        raise ValueError(f"Unable to decode the file: {file_path}")

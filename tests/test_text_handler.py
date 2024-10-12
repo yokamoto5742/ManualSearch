@@ -1,109 +1,90 @@
+import pytest
 import os
-import re
 import tempfile
-import webbrowser
-import markdown
-from utils import read_file_with_auto_encoding
+from unittest.mock import patch
+from text_handler import open_text_file, highlight_text_file
 
-def open_text_file(file_path, search_terms, html_font_size):
-    try:
-        highlighted_html_path = highlight_text_file(file_path, search_terms, html_font_size)
-        # デフォルトのブラウザで開く
-        webbrowser.open(f'file://{highlighted_html_path}')
-    except Exception as e:
-        raise Exception(f"テキストファイルを開けませんでした: {str(e)}")
 
-def highlight_text_file(file_path, search_terms, html_font_size):
-    try:
-        content = read_file_with_auto_encoding(file_path)
+@pytest.fixture
+def sample_text_file():
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as tmp:
+        tmp.write("This is a sample text file.\nIt contains some test content.")
+    yield tmp.name
+    os.unlink(tmp.name)
 
-        file_extension = os.path.splitext(file_path)[1].lower()
-        if file_extension == '.md':
-            content = markdown.markdown(content)
 
-        colors = ['yellow', 'lightgreen', 'lightblue', 'lightsalmon', 'lightpink']
-        for i, term in enumerate(search_terms):
-            color = colors[i % len(colors)]
-            content = re.sub(
-                f'({re.escape(term.strip())})',
-                f'<span style="background-color: {color};">\\1</span>',
-                content,
-                flags=re.IGNORECASE
-            )
+@pytest.fixture
+def sample_md_file():
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.md') as tmp:
+        tmp.write("# Sample Markdown\n\nThis is a **bold** text.")
+    yield tmp.name
+    os.unlink(tmp.name)
 
-        html_template = f'''
-        <!DOCTYPE html>
-        <html lang="ja">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>{os.path.basename(file_path)}</title>
-            <style>
-                body {{ 
-                    font-family: Arial, sans-serif; 
-                    line-height: 1.6; 
-                    padding: 20px; 
-                    font-size: {html_font_size}px;
-                }}
-                pre {{ 
-                    background-color: #f4f4f4; 
-                    padding: 10px; 
-                    border-radius: 5px; 
-                    white-space: pre-wrap;
-                    word-wrap: break-word;
-                }}
-                #content {{
-                    max-width: 100%;
-                    overflow-x: auto;
-                }}
-                #controls {{
-                    position: fixed;
-                    top: 10px;
-                    right: 10px;
-                    background-color: rgba(255, 255, 255, 0.8);
-                    padding: 10px;
-                    border-radius: 5px;
-                }}
-            </style>
-        </head>
-        <body>
-            <div id="controls">
-                <button onclick="changeFontSize(1)">文字を大きく</button>
-                <button onclick="changeFontSize(-1)">文字を小さく</button>
-                <button onclick="toggleWordWrap()">文字の折り返し</button>
-            </div>
-            <h1>{os.path.basename(file_path)}</h1>
-            <div id="content">{'<pre>' if file_extension == '.txt' else ''}{content}{'</pre>' if file_extension == '.txt' else ''}</div>
-            <script>
-                var currentFontSize = {html_font_size};
 
-                function changeFontSize(delta) {{
-                    currentFontSize += delta;
-                    if (currentFontSize < 8) currentFontSize = 8;  // 最小フォントサイズ
-                    if (currentFontSize > 32) currentFontSize = 32;  // 最大フォントサイズ
-                    document.body.style.fontSize = currentFontSize + 'px';
-                }}
+def test_open_text_file(sample_text_file):
+    with patch('webbrowser.open') as mock_open:
+        open_text_file(sample_text_file, ['sample', 'test'], 16)
+        mock_open.assert_called_once()
+        called_url = mock_open.call_args[0][0]
+        assert called_url.startswith('file://')
+        assert called_url.endswith('.html')
 
-                function toggleWordWrap() {{
-                    var content = document.getElementById('content');
-                    var pre = content.querySelector('pre');
-                    if (pre) {{
-                        if (pre.style.whiteSpace === 'pre-wrap') {{
-                            pre.style.whiteSpace = 'pre';
-                            pre.style.overflowX = 'auto';
-                        }} else {{
-                            pre.style.whiteSpace = 'pre-wrap';
-                            pre.style.overflowX = 'hidden';
-                        }}
-                    }}
-                }}
-            </script>
-        </body>
-        </html>
-        '''
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.html', mode='w', encoding='utf-8') as tmp_file:
-            tmp_file.write(html_template)
-            return tmp_file.name
-    except ValueError as e:
-        raise ValueError(f"ファイルの読み込みに失敗しました: {file_path} - {str(e)}")
+def test_highlight_text_file_txt(sample_text_file):
+    result = highlight_text_file(sample_text_file, ['sample', 'test'], 16)
+
+    with open(result, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    assert '<span style="background-color: yellow;">sample</span>' in content
+    assert '<span style="background-color: lightgreen;">test</span>' in content
+    assert 'font-size: 16px;' in content
+
+    os.unlink(result)
+
+
+def test_highlight_text_file_md(sample_md_file):
+    result = highlight_text_file(sample_md_file, ['Sample', 'bold'], 16)
+
+    with open(result, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    assert '<h1><span style="background-color: yellow;">Sample</span> Markdown</h1>' in content
+    assert '<strong><span style="background-color: lightgreen;">bold</span></strong>' in content
+    assert 'font-size: 16px;' in content
+
+    os.unlink(result)
+
+
+@pytest.mark.parametrize("file_extension", ['.txt', '.md'])
+def test_highlight_text_file_different_extensions(file_extension):
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=file_extension) as tmp:
+        tmp.write("Test content")
+
+    result = highlight_text_file(tmp.name, ['Test'], 16)
+
+    with open(result, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    if file_extension == '.txt':
+        assert '<pre>' in content
+    else:
+        assert '<pre>' not in content
+
+    os.unlink(tmp.name)
+    os.unlink(result)
+
+
+def test_open_text_file_exception():
+    with pytest.raises(Exception) as exc_info:
+        open_text_file('non_existent_file.txt', [], 16)
+    assert "テキストファイルを開けませんでした" in str(exc_info.value)
+
+
+@patch('text_handler.read_file_with_auto_encoding')
+def test_highlight_text_file_encoding_error(mock_read_file):
+    mock_read_file.side_effect = ValueError("エンコーディングエラー")
+
+    with pytest.raises(ValueError) as exc_info:
+        highlight_text_file('test.txt', [], 16)
+    assert "ファイルの読み込みに失敗しました" in str(exc_info.value)
