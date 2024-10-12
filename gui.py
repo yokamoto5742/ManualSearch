@@ -286,7 +286,7 @@ class MainWindow(QMainWindow):
         self.current_file_path = file_path
         self.current_position = position
         self.open_file_button.setEnabled(True)
-        self.open_folder_button.setEnabled(True)  # フォルダを開くボタンを有効化
+        self.open_folder_button.setEnabled(True)
 
     def highlight_content(self, content):
         highlighted = content
