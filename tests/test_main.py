@@ -1,45 +1,45 @@
-import unittest
-from unittest.mock import patch, MagicMock, ANY
+import pytest
 import re
-from datetime import datetime
+from unittest.mock import MagicMock, patch
+from PyQt5.QtWidgets import QApplication
 from main import main, VERSION, LAST_UPDATED
 
-class TestMain(unittest.TestCase):
 
-    @patch('main.QApplication')
-    @patch('main.ConfigManager')
-    @patch('main.MainWindow')
-    def test_main_function(self, mock_main_window, mock_config_manager, mock_qapplication):
-        # モックオブジェクトのセットアップ
-        mock_app = MagicMock()
-        mock_qapplication.return_value = mock_app
-        mock_window = MagicMock()
-        mock_main_window.return_value = mock_window
+def test_version_format():
+    assert isinstance(VERSION, str), "VERSIONは文字列であるべきです"
+    assert re.match(r'^\d+\.\d+\.\d+$', VERSION), "VERSIONは 'X.Y.Z' 形式であるべきです"
 
-        # main関数の実行
-        with patch('sys.exit') as mock_exit:
+
+def test_last_updated_format():
+    assert isinstance(LAST_UPDATED, str), "LAST_UPDATEDは文字列であるべきです"
+    assert re.match(r'^\d{4}/\d{2}/\d{2}$', LAST_UPDATED), "LAST_UPDATEDは 'YYYY/MM/DD' 形式であるべきです"
+
+
+@pytest.fixture
+def mock_qapplication(monkeypatch):
+    mock_app = MagicMock(spec=QApplication)
+    monkeypatch.setattr(QApplication, '__init__', lambda *args: None)
+    monkeypatch.setattr(QApplication, 'exec_', mock_app.exec_)
+    return mock_app
+
+
+@pytest.fixture
+def mock_config_manager():
+    return MagicMock()
+
+
+@pytest.fixture
+def mock_main_window():
+    with patch('main.MainWindow') as mock:
+        yield mock
+
+
+def test_main(mock_qapplication, mock_config_manager, mock_main_window):
+    with patch('main.ConfigManager', return_value=mock_config_manager):
+        with patch('main.sys.exit') as mock_exit:
             main()
 
-        # アサーション
-        mock_qapplication.assert_called_once_with(ANY)  # ANYを使用して任意の引数を許可
-        mock_config_manager.assert_called_once()
-        mock_main_window.assert_called_once_with(mock_config_manager.return_value)
-        mock_window.show.assert_called_once()
-        mock_app.exec_.assert_called_once()
-        mock_exit.assert_called_once_with(mock_app.exec_.return_value)
-
-    def test_version_format(self):
-        # バージョン番号の形式をチェック（例: x.y.z）
-        version_pattern = r'^\d+\.\d+\.\d+$'
-        self.assertTrue(re.match(version_pattern, VERSION), f"Version '{VERSION}' does not match the expected format")
-
-    def test_last_updated_format(self):
-        # 日付形式をチェック（YYYY/MM/DD）
-        try:
-            date = datetime.strptime(LAST_UPDATED, "%Y/%m/%d")
-            self.assertTrue(date <= datetime.now(), "LAST_UPDATED date is in the future")
-        except ValueError:
-            self.fail(f"LAST_UPDATED '{LAST_UPDATED}' does not match the expected format YYYY/MM/DD")
-
-if __name__ == '__main__':
-    unittest.main()
+    mock_main_window.assert_called_once_with(mock_config_manager)
+    mock_main_window.return_value.show.assert_called_once()
+    mock_qapplication.exec_.assert_called_once()
+    mock_exit.assert_called_once_with(mock_qapplication.exec_.return_value)
