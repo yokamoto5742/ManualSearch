@@ -1,10 +1,7 @@
 import pytest
 import socket
-from unittest.mock import patch, mock_open
-from utils import check_file_accessibility, read_file_with_auto_encoding, read_file_with_auto_encoding
+from utils import check_file_accessibility, read_file_with_auto_encoding
 import pytest
-import chardet
-from io import BytesIO
 from unittest.mock import patch, mock_open
 
 
