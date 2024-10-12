@@ -18,7 +18,8 @@ def highlight_text_file(file_path, search_terms, html_font_size):
         content = read_file_with_auto_encoding(file_path)
 
         file_extension = os.path.splitext(file_path)[1].lower()
-        if file_extension == '.md':
+        is_markdown = file_extension == '.md'
+        if is_markdown:
             # nl2br拡張を使用してマークダウンをHTMLに変換
             content = markdown.markdown(content, extensions=['nl2br'])
 
@@ -32,76 +33,78 @@ def highlight_text_file(file_path, search_terms, html_font_size):
                 flags=re.IGNORECASE
             )
 
-        html_template = f'''
-        <!DOCTYPE html>
-        <html lang="ja">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>{os.path.basename(file_path)}</title>
-            <style>
-                body {{ 
-                    font-family: Arial, sans-serif; 
-                    line-height: 1.0; 
-                    padding: 20px; 
-                    font-size: {html_font_size}px;
-                }}
-                pre {{ 
-                    background-color: #f4f4f4; 
-                    padding: 10px; 
-                    border-radius: 5px; 
-                    white-space: pre-wrap;
-                    word-wrap: break-word;
-                }}
-                #content {{
-                    max-width: 100%;
-                    overflow-x: auto;
-                }}
-                #controls {{
-                    position: fixed;
-                    top: 10px;
-                    right: 10px;
-                    background-color: rgba(255, 255, 255, 0.8);
-                    padding: 10px;
-                    border-radius: 5px;
-                }}
-            </style>
-        </head>
-        <body>
-            <div id="controls">
-                <button onclick="changeFontSize(1)">文字を大きく</button>
-                <button onclick="changeFontSize(-1)">文字を小さく</button>
-                <button onclick="toggleWordWrap()">文字の折り返し</button>
-            </div>
-            <h1>{os.path.basename(file_path)}</h1>
-            <div id="content">{'<pre>' if file_extension == '.txt' else ''}{content}{'</pre>' if file_extension == '.txt' else ''}</div>
-            <script>
-                var currentFontSize = {html_font_size};
+        html_template = f'''<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{os.path.basename(file_path)}</title>
+    <style>
+        body {{ 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            font-size: {html_font_size}px;
+        }}
+        pre {{ 
+            background-color: #f4f4f4; 
+            padding: 10px; 
+            border-radius: 5px; 
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 0.8;
+            margin: 0;
+        }}
+        .markdown-content {{
+            line-height: 1.2;
+        }}
+        #content {{
+            max-width: 100%;
+            overflow-x: auto;
+        }}
+        #controls {{
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+        }}
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <button onclick="changeFontSize(1)">文字を大きく</button>
+        <button onclick="changeFontSize(-1)">文字を小さく</button>
+        <button onclick="toggleWordWrap()">文字の折り返し</button>
+    </div>
+    <h1>{os.path.basename(file_path)}</h1>
+    <div id="content">{'<pre>' if not is_markdown else '<div class="markdown-content">'}{content}{'</pre>' if not is_markdown else '</div>'}</div>
+    <script>
+        var currentFontSize = {html_font_size};
 
-                function changeFontSize(delta) {{
-                    currentFontSize += delta;
-                    if (currentFontSize < 8) currentFontSize = 8;  // 最小フォントサイズ
-                    if (currentFontSize > 32) currentFontSize = 32;  // 最大フォントサイズ
-                    document.body.style.fontSize = currentFontSize + 'px';
-                }}
+        function changeFontSize(delta) {{
+            currentFontSize += delta;
+            if (currentFontSize < 8) currentFontSize = 8;
+            if (currentFontSize > 32) currentFontSize = 32;
+            document.body.style.fontSize = currentFontSize + 'px';
+        }}
 
-                function toggleWordWrap() {{
-                    var content = document.getElementById('content');
-                    var pre = content.querySelector('pre');
-                    if (pre) {{
-                        if (pre.style.whiteSpace === 'pre-wrap') {{
-                            pre.style.whiteSpace = 'pre';
-                            pre.style.overflowX = 'auto';
-                        }} else {{
-                            pre.style.whiteSpace = 'pre-wrap';
-                            pre.style.overflowX = 'hidden';
-                        }}
-                    }}
+        function toggleWordWrap() {{
+            var content = document.getElementById('content');
+            var pre = content.querySelector('pre');
+            if (pre) {{
+                if (pre.style.whiteSpace === 'pre-wrap') {{
+                    pre.style.whiteSpace = 'pre';
+                    pre.style.overflowX = 'auto';
+                }} else {{
+                    pre.style.whiteSpace = 'pre-wrap';
+                    pre.style.overflowX = 'hidden';
                 }}
-            </script>
-        </body>
-        </html>
-        '''
+            }}
+        }}
+    </script>
+</body>
+</html>'''
 
         with tempfile.NamedTemporaryFile(delete=False, suffix='.html', mode='w', encoding='utf-8') as tmp_file:
             tmp_file.write(html_template)
