@@ -1,78 +1,96 @@
+import pytest
 import subprocess
 import tempfile
 import time
 import psutil
 import pyautogui
 import fitz
+from unittest.mock import patch, MagicMock
+from pdf_handler import open_pdf, wait_for_acrobat, navigate_to_page, highlight_pdf
 
-def open_pdf(file_path, acrobat_path, current_position, search_terms):
-    try:
-        highlighted_pdf_path = highlight_pdf(file_path, search_terms)
 
-        process = subprocess.Popen([acrobat_path, highlighted_pdf_path])
+@pytest.fixture
+def mock_subprocess(monkeypatch):
+    mock = MagicMock()
+    monkeypatch.setattr(subprocess, 'Popen', mock)
+    return mock
 
-        wait_for_acrobat(process.pid)
 
-        navigate_to_page(current_position)
+@pytest.fixture
+def mock_psutil(monkeypatch):
+    mock = MagicMock()
+    monkeypatch.setattr(psutil, 'Process', mock)
+    return mock
 
-    except Exception as e:
-        raise Exception(f"PDFを開けませんでした: {str(e)}")
 
-def wait_for_acrobat(pid, timeout=30):
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        try:
-            process = psutil.Process(pid)
-            if process.status() == psutil.STATUS_RUNNING:
-                time.sleep(2)
-                if "Acrobat" in pyautogui.getActiveWindowTitle():
-                    return True
-        except psutil.NoSuchProcess:
-            return False
-        time.sleep(0.5)
-    return False
+@pytest.fixture
+def mock_pyautogui(monkeypatch):
+    mock = MagicMock()
+    monkeypatch.setattr(pyautogui, 'getActiveWindowTitle', mock)
+    monkeypatch.setattr(pyautogui, 'hotkey', mock.hotkey)
+    monkeypatch.setattr(pyautogui, 'write', mock.write)
+    monkeypatch.setattr(pyautogui, 'press', mock.press)
+    return mock
 
-def navigate_to_page(page_number):
-    if page_number == 1:
-        return
 
-    try:
-        # Ctrl+Shift+Nを押してページ移動ダイアログを開く
-        pyautogui.hotkey('ctrl', 'shift', 'n')
-        time.sleep(0.5)
+@pytest.fixture
+def mock_fitz(monkeypatch):
+    mock = MagicMock()
+    monkeypatch.setattr(fitz, 'open', mock)
+    return mock
 
-        # ページ番号を入力
-        pyautogui.write(str(page_number))
-        time.sleep(0.5)
 
-        # Enterを押してページに移動
-        pyautogui.press('enter')
+def test_open_pdf(mock_subprocess, mock_psutil, mock_pyautogui):
+    with patch('pdf_handler.highlight_pdf') as mock_highlight_pdf, \
+            patch('pdf_handler.wait_for_acrobat') as mock_wait_for_acrobat, \
+            patch('pdf_handler.navigate_to_page') as mock_navigate_to_page:
+        mock_highlight_pdf.return_value = '/path/to/highlighted.pdf'
+        mock_wait_for_acrobat.return_value = True
 
-    except Exception as e:
-        print(f"ページ移動中にエラーが発生しました: {str(e)}")
+        open_pdf('/path/to/file.pdf', '/path/to/acrobat', 5, ['test'])
 
-def highlight_pdf(pdf_path, search_terms):
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
-        tmp_path = tmp_file.name
+        mock_highlight_pdf.assert_called_once_with('/path/to/file.pdf', ['test'])
+        mock_subprocess.assert_called_once_with(['/path/to/acrobat', '/path/to/highlighted.pdf'])
+        mock_wait_for_acrobat.assert_called_once()
+        mock_navigate_to_page.assert_called_once_with(5)
 
-    doc = fitz.open(pdf_path)
-    colors = [
-        (1, 1, 0),  # yellow
-        (0.5, 1, 0.5),  # light green
-        (0.5, 0.7, 1),  # light blue
-        (1, 0.6, 0.4),  # light salmon
-        (1, 0.7, 0.7)   # light pink
-    ]
 
-    for page in doc:
-        for i, term in enumerate(search_terms):
-            text_instances = page.search_for(term.strip())
-            for inst in text_instances:
-                highlight = page.add_highlight_annot(inst)
-                highlight.set_colors(stroke=colors[i % len(colors)])
-                highlight.update()
+def test_wait_for_acrobat(mock_psutil, mock_pyautogui):
+    mock_process = mock_psutil.return_value
+    mock_process.status.return_value = psutil.STATUS_RUNNING
+    mock_pyautogui.return_value = "Acrobat"
 
-    doc.save(tmp_path)
-    doc.close()
+    assert wait_for_acrobat(12345, timeout=1)
 
-    return tmp_path
+    mock_psutil.assert_called_with(12345)
+    mock_process.status.assert_called()
+    mock_pyautogui.assert_called()
+
+
+def test_navigate_to_page(mock_pyautogui):
+    navigate_to_page(10)
+
+    mock_pyautogui.hotkey.assert_called_once_with('ctrl', 'shift', 'n')
+    mock_pyautogui.write.assert_called_once_with('10')
+    mock_pyautogui.press.assert_called_once_with('enter')
+
+
+def test_highlight_pdf(mock_fitz):
+    mock_doc = MagicMock()
+    mock_fitz.return_value = mock_doc
+    mock_page = MagicMock()
+    mock_doc.__iter__.return_value = [mock_page]
+    mock_highlight = MagicMock()
+    mock_page.add_highlight_annot.return_value = mock_highlight
+
+    with patch('tempfile.NamedTemporaryFile') as mock_temp_file:
+        mock_temp_file.return_value.__enter__.return_value.name = '/path/to/temp.pdf'
+        result = highlight_pdf('/path/to/file.pdf', ['test1', 'test2'])
+
+    assert isinstance(result, str)
+    assert result == '/path/to/temp.pdf'
+    mock_fitz.assert_called_once_with('/path/to/file.pdf')
+    mock_page.search_for.assert_any_call('test1')
+    mock_page.search_for.assert_any_call('test2')
+    mock_doc.save.assert_called()
+    mock_doc.close.assert_called()
