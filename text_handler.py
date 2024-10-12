@@ -41,7 +41,7 @@ def highlight_text_file(file_path, search_terms, html_font_size):
             <style>
                 body {{ 
                     font-family: Arial, sans-serif; 
-                    line-height: 1.6; 
+                    line-height: 1.0; 
                     padding: 20px; 
                     font-size: {html_font_size}px;
                 }}
