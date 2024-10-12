@@ -271,9 +271,7 @@ class MainWindow(QMainWindow):
 
     def show_result(self, item):
         file_path, position, context = item.data(Qt.UserRole)
-        # search_terms = [term.strip() for term in re.split('[,、]', self.search_input.text()) if term.strip()]
         highlighted_content = self.highlight_content(context)
-
         result_html = f'<span style="font-size:{self.result_detail_font.pointSize()}pt;">'
         result_html += f"<h3>ファイル: {os.path.basename(file_path)}</h3>"
         if file_path.lower().endswith('.pdf'):
@@ -290,17 +288,6 @@ class MainWindow(QMainWindow):
         self.open_file_button.setEnabled(True)
         self.open_folder_button.setEnabled(True)  # フォルダを開くボタンを有効化
 
-    def open_folder(self):
-        if not self.current_file_path or not os.path.exists(self.current_file_path):
-            QMessageBox.warning(self, "エラー", "ファイルが存在しません。")
-            return
-
-        folder_path = os.path.dirname(self.current_file_path)
-        try:
-            os.startfile(folder_path)
-        except Exception as e:
-            QMessageBox.warning(self, "エラー", f"フォルダを開けませんでした: {str(e)}")
-
     def highlight_content(self, content):
         highlighted = content
         for term, color in self.search_term_colors.items():
@@ -311,6 +298,17 @@ class MainWindow(QMainWindow):
                 flags=re.IGNORECASE
             )
         return highlighted
+
+    def open_folder(self):
+        if not self.current_file_path or not os.path.exists(self.current_file_path):
+            QMessageBox.warning(self, "エラー", "ファイルが存在しません。")
+            return
+
+        folder_path = os.path.dirname(self.current_file_path)
+        try:
+            os.startfile(folder_path)
+        except Exception as e:
+            QMessageBox.warning(self, "エラー", f"フォルダを開けませんでした: {str(e)}")
 
     def open_file(self):
         if not self.current_file_path or not os.path.exists(self.current_file_path):
