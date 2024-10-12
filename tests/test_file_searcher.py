@@ -1,125 +1,191 @@
+import pytest
 import os
-import re
-from concurrent.futures import ThreadPoolExecutor
-from PyQt5.QtCore import QThread, pyqtSignal
-import PyPDF2
-from utils import normalize_path, check_file_accessibility, read_file_with_auto_encoding
+from PyQt5.QtCore import QCoreApplication
+from file_searcher import FileSearcher
 
-class FileSearcher(QThread):
-    result_found = pyqtSignal(str, list)
-    progress_update = pyqtSignal(int)
-    search_completed = pyqtSignal()
 
-    def __init__(self, directory, search_terms, include_subdirs, search_type, file_extensions, context_length):
-        super().__init__()
-        self.directory = directory
-        self.search_terms = search_terms
-        self.include_subdirs = include_subdirs
-        self.search_type = search_type
-        self.file_extensions = file_extensions
-        self.context_length = context_length
-        self.cancel_flag = False
+@pytest.fixture(scope="module")
+def qapp():
+    return QCoreApplication([])
 
-    def run(self):
-        total_files = sum([len(files) for _, _, files in os.walk(self.directory)])
-        processed_files = 0
 
-        with ThreadPoolExecutor() as executor:
-            if self.include_subdirs:
-                for root, _, files in os.walk(self.directory):
-                    if self.cancel_flag:
-                        break
-                    self.process_files(executor, root, files)
-                    processed_files += len(files)
-                    self.progress_update.emit(int((processed_files / total_files) * 100))
-            else:
-                files = [f for f in os.listdir(self.directory) if os.path.isfile(os.path.join(self.directory, f))]
-                self.process_files(executor, self.directory, files)
-                self.progress_update.emit(100)
+@pytest.fixture
+def temp_directory(tmpdir):
+    # テスト用の一時ディレクトリとファイルを作成
+    test_file1 = tmpdir.join("test1.txt")
+    test_file1.write("This is a test file. It contains some test content.")
 
-        self.search_completed.emit()
+    test_file2 = tmpdir.join("test2.txt")
+    test_file2.write("Another test file with different content.")
 
-    def process_files(self, executor, root, files):
-        futures = []
-        for file in files:
-            if self.cancel_flag:
-                break
-            if any(file.endswith(ext) for ext in self.file_extensions):
-                future = executor.submit(self.search_file, os.path.join(root, file))
-                futures.append(future)
-        for future in futures:
-            if self.cancel_flag:
-                break
-            result = future.result()
-            if result:
-                file_path, matches = result
-                self.result_found.emit(file_path, matches)
+    subdir = tmpdir.mkdir("subdir")
+    test_file3 = subdir.join("test3.txt")
+    test_file3.write("This is a file in a subdirectory. It also contains test content.")
 
-    def cancel_search(self):
-        self.cancel_flag = True
+    return tmpdir
 
-    def search_file(self, file_path):
-        normalized_path = normalize_path(file_path)
-        if not check_file_accessibility(normalized_path):
-            print(f"ファイルにアクセスできません: {normalized_path}")
-            return None
 
-        try:
-            file_extension = os.path.splitext(normalized_path)[1].lower()
+def test_temp_directory_setup(temp_directory):
+    # テスト用ディレクトリの構造を確認
+    assert os.path.isfile(os.path.join(str(temp_directory), "test1.txt"))
+    assert os.path.isfile(os.path.join(str(temp_directory), "test2.txt"))
+    assert os.path.isfile(os.path.join(str(temp_directory), "subdir", "test3.txt"))
 
-            if file_extension == '.pdf':
-                return self.search_pdf(normalized_path)
-            elif file_extension in ['.txt', '.md']:
-                return self.search_text(normalized_path)
-            else:
-                raise ValueError(f"サポートされていないファイル形式: {file_extension}")
+    # ファイルの内容を確認
+    with open(os.path.join(str(temp_directory), "test1.txt"), "r") as f:
+        assert "This is a test file. It contains some test content." in f.read()
+    with open(os.path.join(str(temp_directory), "test2.txt"), "r") as f:
+        assert "Another test file with different content." in f.read()
+    with open(os.path.join(str(temp_directory), "subdir", "test3.txt"), "r") as f:
+        assert "This is a file in a subdirectory. It also contains test content." in f.read()
 
-        except (IOError, OSError) as e:
-            print(f"ファイルアクセスエラー: {normalized_path} - {str(e)}")
-            return None
-        except Exception as e:
-            print(f"予期せぬエラー: {normalized_path} - {str(e)}")
-            return None
 
-    def search_pdf(self, file_path):
-        results = []
-        try:
-            with open(file_path, 'rb') as file:
-                reader = PyPDF2.PdfReader(file)
-                for page_num, page in enumerate(reader.pages):
-                    text = page.extract_text()
-                    if self.match_search_terms(text):
-                        for search_term in self.search_terms:
-                            for match in re.finditer(re.escape(search_term), text, re.IGNORECASE):
-                                start = max(0, match.start() - self.context_length)
-                                end = min(len(text), match.end() + self.context_length)
-                                context = text[start:end]
-                                results.append((page_num + 1, context))
-                    if len(results) >= 100:  # 結果の数を制限
-                        break
-        except Exception as e:
-            print(f"PDFの処理中にエラーが発生しました: {file_path} - {str(e)}")
-        return (file_path, results) if results else None
+def test_file_searcher_basic(qapp, temp_directory):
+    searcher = FileSearcher(str(temp_directory), ["test"], True, "OR", [".txt"], 10)
 
-    def search_text(self, file_path):
-        results = []
-        try:
-            content = read_file_with_auto_encoding(file_path)
-            if self.match_search_terms(content):
-                for search_term in self.search_terms:
-                    for match in re.finditer(re.escape(search_term), content, re.IGNORECASE):
-                        start = max(0, match.start() - self.context_length)
-                        end = min(len(content), match.end() + self.context_length)
-                        context = content[start:end]
-                        line_number = content.count('\n', 0, match.start()) + 1
-                        results.append((line_number, context))
-        except ValueError as e:
-            print(f"ファイルの読み込みに失敗しました: {file_path} - {str(e)}")
-        return (file_path, results) if results else None
+    results = []
 
-    def match_search_terms(self, text):
-        if self.search_type == 'AND':
-            return all(term.lower() in text.lower() for term in self.search_terms)
-        elif self.search_type == 'OR':
-            return any(term.lower() in text.lower() for term in self.search_terms)
-    
+    def on_result_found(file_path, matches):
+        results.append((file_path, matches))
+        print(f"Found in file: {file_path}")
+        for match in matches:
+            print(f"  Match: {match}")
+
+    searcher.result_found.connect(on_result_found)
+    searcher.run()
+
+    print(f"Total results: {len(results)}")
+    assert len(results) == 3  # 3つのファイルすべてにマッチするはず
+
+
+def test_file_searcher_and_search(qapp, temp_directory):
+    searcher = FileSearcher(str(temp_directory), ["test", "content"], True, "AND", [".txt"], 10)
+
+    results = []
+
+    def on_result_found(file_path, matches):
+        results.append((file_path, matches))
+        print(f"Found in file: {file_path}")
+        for match in matches:
+            print(f"  Match: {match}")
+
+    searcher.result_found.connect(on_result_found)
+    searcher.run()
+
+    print(f"Total results: {len(results)}")
+    assert len(results) == 3  # "test1.txt", "test2.txt", "subdir/test3.txt"がマッチするはず
+
+    # 各ファイルが結果に含まれていることを確認
+    file_names = [os.path.basename(result[0]) for result in results]
+    assert "test1.txt" in file_names
+    assert "test2.txt" in file_names
+    assert "test3.txt" in file_names
+
+    # 各ファイルの内容が期待通りであることを確認
+    for file_path, matches in results:
+        if "test1.txt" in file_path:
+            assert any("test file" in match[1] for match in matches)
+            assert any("test content" in match[1] for match in matches)
+        elif "test2.txt" in file_path:
+            assert any("test file" in match[1] for match in matches)
+            assert any("content" in match[1] for match in matches)
+        elif "test3.txt" in file_path:
+            assert any("test content" in match[1] for match in matches)
+
+
+def test_file_searcher_no_subdirs(qapp, temp_directory):
+    searcher = FileSearcher(str(temp_directory), ["test"], False, "OR", [".txt"], 10)
+
+    results = []
+
+    def on_result_found(file_path, matches):
+        results.append((file_path, matches))
+        print(f"Found in file: {file_path}")
+
+    searcher.result_found.connect(on_result_found)
+    searcher.run()
+
+    print(f"Total results: {len(results)}")
+    assert len(results) == 2  # サブディレクトリを除外するので2つのファイルのみマッチするはず
+
+
+def test_file_searcher_file_extensions(qapp, temp_directory):
+    # 存在しない拡張子を指定
+    searcher = FileSearcher(str(temp_directory), ["test"], True, "OR", [".pdf"], 10)
+
+    results = []
+
+    def on_result_found(file_path, matches):
+        results.append((file_path, matches))
+        print(f"Found in file: {file_path}")
+
+    searcher.result_found.connect(on_result_found)
+    searcher.run()
+
+    print(f"Total results: {len(results)}")
+    assert len(results) == 0  # マッチするファイルがないはず
+
+
+def test_file_searcher_progress_update(qapp, temp_directory):
+    searcher = FileSearcher(str(temp_directory), ["test"], True, "OR", [".txt"], 10)
+
+    progress_values = []
+
+    def on_progress_update(value):
+        progress_values.append(value)
+        print(f"Progress: {value}%")
+
+    searcher.progress_update.connect(on_progress_update)
+    searcher.run()
+
+    print(f"Progress updates: {progress_values}")
+    assert len(progress_values) > 0
+    assert progress_values[-1] == 100  # 最後の進捗が100%であることを確認
+
+
+def test_file_searcher_cancel(qapp, temp_directory):
+    searcher = FileSearcher(str(temp_directory), ["test"], True, "OR", [".txt"], 10)
+
+    results = []
+
+    def on_result_found(file_path, matches):
+        results.append((file_path, matches))
+        print(f"Found in file: {file_path}")
+        searcher.cancel_search()  # 最初の結果が見つかったらキャンセル
+
+    searcher.result_found.connect(on_result_found)
+    searcher.run()
+
+    print(f"Total results: {len(results)}")
+    assert len(results) <= 1  # キャンセルが機能していれば、最大1つの結果のみ
+
+
+# モック関数を使用してPDFファイルの検索をテスト
+def test_file_searcher_pdf(qapp, temp_directory, mocker):
+    pdf_file = temp_directory.join("test.pdf")
+    pdf_file.write("dummy content")  # 実際のPDFではありませんが、テストには十分です
+
+    # PyPDF2.PdfReaderをモック
+    mock_pdf_reader = mocker.patch('file_searcher.PyPDF2.PdfReader')
+    mock_pdf_reader.return_value.pages = [mocker.Mock(extract_text=lambda: "This is a test PDF content.")]
+
+    searcher = FileSearcher(str(temp_directory), ["test"], True, "OR", [".pdf"], 10)
+
+    results = []
+
+    def on_result_found(file_path, matches):
+        results.append((file_path, matches))
+        print(f"Found in file: {file_path}")
+        for match in matches:
+            print(f"  Match: {match}")
+
+    searcher.result_found.connect(on_result_found)
+    searcher.run()
+
+    print(f"Total results: {len(results)}")
+    assert len(results) == 1  # PDFファイルにマッチするはず
+    assert results[0][0].endswith("test.pdf")
+
+
+if __name__ == "__main__":
+    pytest.main()
