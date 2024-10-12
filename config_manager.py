@@ -73,7 +73,8 @@ class ConfigManager:
         self.save_config()
 
     def get_directories(self):
-        return self.config.get('Directories', 'list', fallback='').split(',')
+        directories = self.config.get('Directories', 'list', fallback='').split(',')
+        return [dir.strip() for dir in directories if dir.strip()]
 
     def set_directories(self, directories):
         if 'Directories' not in self.config:

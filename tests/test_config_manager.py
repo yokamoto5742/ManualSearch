@@ -1,127 +1,126 @@
-import configparser
+import pytest
 import os
-import sys
-from utils import read_file_with_auto_encoding
+import configparser
+from config_manager import ConfigManager
 
-def get_config_path():
-    if getattr(sys, 'frozen', False):
-        # PyInstallerでビルドされた実行ファイルの場合
-        base_path = sys._MEIPASS
-    else:
-        # 通常のPythonスクリプトとして実行される場合
-        base_path = os.path.dirname(__file__)
+@pytest.fixture
+def temp_config_file(tmp_path):
+    config_file = tmp_path / "test_config.ini"
+    config_file.touch()  # 空のファイルを作成
+    return str(config_file)
 
-    return os.path.join(base_path, 'config.ini')
+@pytest.fixture
+def config_manager(temp_config_file):
+    return ConfigManager(temp_config_file)
 
-CONFIG_PATH = get_config_path()
+def test_init_and_load_config(config_manager, temp_config_file):
+    assert os.path.exists(temp_config_file)
+    assert isinstance(config_manager.config, configparser.ConfigParser)
 
-class ConfigManager:
-    def __init__(self, config_file=CONFIG_PATH):
-        self.config_file = config_file
-        self.config = configparser.ConfigParser()
-        self.load_config()
+def test_get_file_extensions(config_manager):
+    assert config_manager.get_file_extensions() == ['.pdf', '.txt', '.md']
 
-    def load_config(self):
-        if os.path.exists(self.config_file):
-            try:
-                with open(self.config_file, 'r', encoding='utf-8') as configfile:
-                    self.config.read_file(configfile)
-            except UnicodeDecodeError:
-                # UTF-8で失敗した場合、他のエンコーディングを試す
-                content = read_file_with_auto_encoding(self.config_file)
-                self.config.read_string(content)
+def test_set_file_extensions(config_manager):
+    new_extensions = ['.docx', '.xlsx']
+    config_manager.set_file_extensions(new_extensions)
+    assert config_manager.get_file_extensions() == new_extensions
 
-    def save_config(self):
-        with open(self.config_file, 'w', encoding='utf-8') as configfile:
-            self.config.write(configfile)
+def test_get_window_geometry(config_manager):
+    assert config_manager.get_window_geometry() == [100, 100, 900, 800]
 
-    def get_file_extensions(self):
-        return self.config.get('FileTypes', 'extensions', fallback='.pdf,.txt,.md').split(',')
+def test_set_window_geometry(config_manager):
+    new_geometry = [200, 200, 1000, 900]
+    config_manager.set_window_geometry(*new_geometry)
+    assert config_manager.get_window_geometry() == new_geometry
 
-    def get_window_geometry(self):
-        geometry = self.config.get('WindowSettings', 'geometry', fallback='100,100,900,800')
-        return [int(x) for x in geometry.split(',')]
+def test_get_font_size(config_manager):
+    assert config_manager.get_font_size() == 16
 
-    def get_font_size(self):
-        return self.config.getint('WindowSettings', 'font_size', fallback=16)
+def test_set_font_size(config_manager):
+    new_size = 18
+    config_manager.set_font_size(new_size)
+    assert config_manager.get_font_size() == new_size
 
-    def get_acrobat_path(self):
-        return self.config.get('Paths', 'acrobat_path', fallback=r'C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe')
+def test_get_acrobat_path(config_manager):
+    assert config_manager.get_acrobat_path() == r'C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe'
 
-    def set_file_extensions(self, extensions):
-        if 'FileTypes' not in self.config:
-            self.config['FileTypes'] = {}
-        self.config['FileTypes']['extensions'] = ','.join(extensions)
-        self.save_config()
+def test_set_acrobat_path(config_manager):
+    new_path = r'D:\Adobe\Acrobat.exe'
+    config_manager.set_acrobat_path(new_path)
+    assert config_manager.get_acrobat_path() == new_path
 
-    def set_window_geometry(self, x, y, width, height):
-        if 'WindowSettings' not in self.config:
-            self.config['WindowSettings'] = {}
-        self.config['WindowSettings']['geometry'] = f"{x},{y},{width},{height}"
-        self.save_config()
+def test_get_directories(config_manager):
+    assert config_manager.get_directories() == []
 
-    def set_font_size(self, size):
-        if 'WindowSettings' not in self.config:
-            self.config['WindowSettings'] = {}
-        self.config['WindowSettings']['font_size'] = str(size)
-        self.save_config()
+def test_set_directories(config_manager):
+    new_dirs = ['/home/user/docs', '/home/user/downloads']
+    config_manager.set_directories(new_dirs)
+    assert config_manager.get_directories() == new_dirs
 
-    def set_acrobat_path(self, path):
-        if 'Paths' not in self.config:
-            self.config['Paths'] = {}
-        self.config['Paths']['acrobat_path'] = path
-        self.save_config()
+def test_get_last_directory(config_manager):
+    assert config_manager.get_last_directory() == ''
 
-    def get_directories(self):
-        return self.config.get('Directories', 'list', fallback='').split(',')
+def test_set_last_directory(config_manager):
+    new_dir = '/home/user/last_dir'
+    config_manager.set_last_directory(new_dir)
+    assert config_manager.get_last_directory() == new_dir
 
-    def set_directories(self, directories):
-        if 'Directories' not in self.config:
-            self.config['Directories'] = {}
-        self.config['Directories']['list'] = ','.join(directories)
-        self.save_config()
+def test_get_context_length(config_manager):
+    assert config_manager.get_context_length() == 50
 
-    def get_last_directory(self):
-        return self.config.get('Directories', 'last_directory', fallback='')
+def test_set_context_length(config_manager):
+    new_length = 100
+    config_manager.set_context_length(new_length)
+    assert config_manager.get_context_length() == new_length
 
-    def set_last_directory(self, directory):
-        if 'Directories' not in self.config:
-            self.config['Directories'] = {}
-        self.config['Directories']['last_directory'] = directory
-        self.save_config()
+def test_get_filename_font_size(config_manager):
+    assert config_manager.get_filename_font_size() == 12
 
-    def get_context_length(self):
-        return self.config.getint('SearchSettings', 'context_length', fallback=50)
+def test_set_filename_font_size(config_manager):
+    new_size = 14
+    config_manager.set_filename_font_size(new_size)
+    assert config_manager.get_filename_font_size() == new_size
 
-    def set_context_length(self, length):
-        if 'SearchSettings' not in self.config:
-            self.config['SearchSettings'] = {}
-        self.config['SearchSettings']['context_length'] = str(length)
-        self.save_config()
+def test_get_result_detail_font_size(config_manager):
+    assert config_manager.get_result_detail_font_size() == 12
 
-    def get_filename_font_size(self):
-        return self.config.getint('UISettings', 'filename_font_size', fallback=12)
+def test_set_result_detail_font_size(config_manager):
+    new_size = 14
+    config_manager.set_result_detail_font_size(new_size)
+    assert config_manager.get_result_detail_font_size() == new_size
 
-    def set_filename_font_size(self, size):
-        if 'UISettings' not in self.config:
-            self.config['UISettings'] = {}
-        self.config['UISettings']['filename_font_size'] = str(size)
-        self.save_config()
+def test_get_html_font_size(config_manager):
+    assert config_manager.get_html_font_size() == 16
 
-    def get_result_detail_font_size(self):
-        return self.config.getint('UISettings', 'result_detail_font_size', fallback=12)
+def test_set_html_font_size(config_manager):
+    new_size = 18
+    config_manager.set_html_font_size(new_size)
+    assert config_manager.get_html_font_size() == new_size
 
-    def set_result_detail_font_size(self, size):
-        if 'UISettings' not in self.config:
-            self.config['UISettings'] = {}
-        self.config['UISettings']['result_detail_font_size'] = str(size)
-        self.save_config()
+def test_save_and_load_config(config_manager, temp_config_file):
+    # 設定を変更
+    config_manager.set_file_extensions(['.doc', '.xls'])
+    config_manager.set_window_geometry(300, 300, 1100, 1000)
+    config_manager.set_font_size(20)
+    config_manager.set_acrobat_path(r'E:\Adobe\Acrobat.exe')
+    config_manager.set_directories(['/path1', '/path2'])
+    config_manager.set_last_directory('/last_path')
+    config_manager.set_context_length(75)
+    config_manager.set_filename_font_size(15)
+    config_manager.set_result_detail_font_size(15)
+    config_manager.set_html_font_size(20)
 
-    def get_html_font_size(self):
-        return self.config.getint('UISettings', 'html_font_size', fallback=16)
+    # 新しいConfigManagerインスタンスを作成して設定を読み込む
+    new_config_manager = ConfigManager(temp_config_file)
 
-    def set_html_font_size(self, size):
-        if 'UISettings' not in self.config:
-            self.config['UISettings'] = {}
-        self.config['UISettings']['html_font_size'] = str(size)
-        self.save_config()
+    # 設定が正しく保存され、読み込まれたことを確認
+    assert new_config_manager.get_file_extensions() == ['.doc', '.xls']
+    assert new_config_manager.get_window_geometry() == [300, 300, 1100, 1000]
+    assert new_config_manager.get_font_size() == 20
+    assert new_config_manager.get_acrobat_path() == r'E:\Adobe\Acrobat.exe'
+    assert new_config_manager.get_directories() == ['/path1', '/path2']
+    assert new_config_manager.get_last_directory() == '/last_path'
+    assert new_config_manager.get_context_length() == 75
+    assert new_config_manager.get_filename_font_size() == 15
+    assert new_config_manager.get_result_detail_font_size() == 15
+    assert new_config_manager.get_html_font_size() == 20
