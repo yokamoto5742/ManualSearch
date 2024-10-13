@@ -1,8 +1,9 @@
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
+from typing import Optional
 
 class AutoCloseMessage(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget]=None) -> None:
         super().__init__(parent, Qt.Window | Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setStyleSheet("""
             background-color: #f0f0f0;
@@ -16,7 +17,7 @@ class AutoCloseMessage(QWidget):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.close)
 
-    def show_message(self, message, duration=1000):
+    def show_message(self, message: str, duration: int=1000) -> None:
         self.label.setText(message)
         self.adjustSize()
         parent = self.parent()
