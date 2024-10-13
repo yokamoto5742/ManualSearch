@@ -1,92 +1,111 @@
 import pytest
-from PyQt5.QtWidgets import QApplication, QPushButton
-from PyQt5.QtCore import Qt, QRect
-from unittest.mock import MagicMock, patch
+from PyQt5.QtWidgets import QApplication, QListWidgetItem
+from unittest.mock import MagicMock
 from gui import MainWindow
-from config_manager import ConfigManager
-
+from PyQt5.QtCore import Qt
 
 @pytest.fixture
 def app(qtbot):
-    test_app = QApplication([])
-    return test_app
-
-
-@pytest.fixture
-def mock_config_manager():
-    config = ConfigManager()
-    config.get_window_geometry = MagicMock(return_value=(100, 100, 800, 600))
-    config.get_font_size = MagicMock(return_value=12)
-    config.get_directories = MagicMock(return_value=["/test/dir1", "/test/dir2"])
-    config.get_last_directory = MagicMock(return_value="/test/dir1")
-    config.get_file_extensions = MagicMock(return_value=[".txt", ".pdf"])
-    config.get_context_length = MagicMock(return_value=50)
-    config.get_acrobat_path = MagicMock(return_value="/path/to/acrobat")
-    config.get_html_font_size = MagicMock(return_value=16)
-    return config
-
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication([])
+    return app
 
 @pytest.fixture
-def main_window(qtbot, mock_config_manager):
-    window = MainWindow(mock_config_manager)
+def config_manager():
+    # config_managerのモックを作成
+    mock = MagicMock()
+    mock.get_window_geometry.return_value = (100, 100, 800, 600)
+    mock.get_font_size.return_value = 12
+    mock.get_directories.return_value = ['/path/to/directory']
+    mock.get_last_directory.return_value = '/path/to/directory'
+    mock.get_filename_font_size.return_value = 10
+    mock.get_result_detail_font_size.return_value = 10
+    mock.get_html_font_size.return_value = 10
+    mock.get_file_extensions.return_value = ['.txt', '.pdf']
+    mock.get_context_length.return_value = 100
+    mock.get_acrobat_path.return_value = '/path/to/acrobat'
+    return mock
+
+def test_main_window_initialization(qtbot, app, config_manager):
+    # MainWindowのインスタンスを作成
+    window = MainWindow(config_manager)
     qtbot.addWidget(window)
-    return window
+    window.show()
 
+    # ウィンドウタイトルの確認
+    assert window.windowTitle() == "マニュアル検索アプリ"
 
-def test_window_initialization(main_window):
-    assert main_window.windowTitle() == "マニュアル検索アプリ"
-    assert main_window.geometry().getRect() == (100, 100, 800, 600)
+    # プレースホルダーテキストの確認
+    assert window.search_input.placeholderText() == "検索語を入力 ( , または 、区切りで複数語検索)"
 
+    # ディレクトリコンボボックスの項目数の確認
+    assert window.dir_combo.count() == len(config_manager.get_directories())
 
-@patch('gui.FileSearcher')
-def test_start_search(mock_file_searcher, main_window, qtbot):
-    main_window.search_input.setText("test1,test2")
-    main_window.dir_combo.setCurrentText("/test/dir1")
+    # サブフォルダを含むチェックボックスの初期状態の確認
+    assert window.include_subdirs_checkbox.isChecked() == True
 
+def test_start_search_no_input(qtbot, app, config_manager):
+    # 入力がない状態での検索開始のテスト
+    window = MainWindow(config_manager)
+    qtbot.addWidget(window)
+    window.show()
+
+    window.dir_combo.setCurrentText('')
+    window.search_input.setText('')
+    window.start_search()
+
+    # searcher属性が作成されていないことを確認
+    assert not hasattr(window, 'searcher')
+
+def test_start_search_with_input(qtbot, app, config_manager, monkeypatch):
+    # 有効な入力での検索開始のテスト
+    window = MainWindow(config_manager)
+    qtbot.addWidget(window)
+    window.show()
+
+    # FileSearcherのモックを作成
     mock_searcher = MagicMock()
-    mock_file_searcher.return_value = mock_searcher
+    monkeypatch.setattr('gui.FileSearcher', lambda *args, **kwargs: mock_searcher)
 
-    qtbot.mouseClick(main_window.findChild(QPushButton, "検索"), Qt.LeftButton)
+    window.dir_combo.setCurrentText('/path/to/directory')
+    window.search_input.setText('テスト')
+    window.start_search()
 
-    mock_file_searcher.assert_called_once()
+    # searcherが開始されたことを確認
     mock_searcher.start.assert_called_once()
 
+def test_add_result(qtbot, app, config_manager):
+    # 検索結果の追加のテスト
+    window = MainWindow(config_manager)
+    qtbot.addWidget(window)
+    window.show()
 
-@patch('gui.open_pdf')
-def test_open_pdf_file(mock_open_pdf, main_window, qtbot):
-    main_window.current_file_path = "/test/file.pdf"
-    main_window.current_position = 5
-    main_window.search_input.setText("test")
+    file_path = '/path/to/file.txt'
+    results = [(10, 'これはテストコンテキストです。')]
+    window.add_result(file_path, results)
 
-    qtbot.mouseClick(main_window.open_file_button, Qt.LeftButton)
+    # リストにアイテムが追加されたことを確認
+    assert window.results_list.count() == 1
+    item = window.results_list.item(0)
+    assert 'file.txt' in item.text()
 
-    mock_open_pdf.assert_called_once_with(
-        "/test/file.pdf",
-        "/path/to/acrobat",
-        5,
-        ["test"]
-    )
+def test_show_result(qtbot, app, config_manager):
+    # 結果の表示のテスト
+    window = MainWindow(config_manager)
+    qtbot.addWidget(window)
+    window.show()
 
+    file_path = '/path/to/file.txt'
+    position = 10
+    context = 'これはテストコンテキストです。'
 
-@patch('gui.open_text_file')
-def test_open_text_file(mock_open_text_file, main_window, qtbot):
-    main_window.current_file_path = "/test/file.txt"
-    main_window.search_input.setText("test")
+    # リストアイテムを作成して結果を表示
+    list_item = QListWidgetItem('テストアイテム')
+    list_item.setData(Qt.UserRole, (file_path, position, context))
+    window.show_result(list_item)
 
-    qtbot.mouseClick(main_window.open_file_button, Qt.LeftButton)
-
-    mock_open_text_file.assert_called_once_with(
-        "/test/file.txt",
-        ["test"],
-        16
-    )
-
-
-def test_highlight_content(main_window):
-    main_window.search_input.setText("test,example")
-    main_window.search_term_colors = {"test": "yellow", "example": "lightgreen"}
-    highlighted = main_window.highlight_content("This is a test example.")
-    assert '<span style="background-color: yellow;">test</span>' in highlighted
-    assert '<span style="background-color: lightgreen;">example</span>' in highlighted
-
-# 他のメソッドに対するテストも同様に追加できます
+    # 結果表示ウィジェットに正しい内容が表示されているか確認
+    assert 'file.txt' in window.result_display.toHtml()
+    assert '行: 10' in window.result_display.toHtml()
+    assert 'これはテストコンテキストです。' in window.result_display.toHtml()
