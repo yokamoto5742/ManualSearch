@@ -30,7 +30,7 @@ class ConfigManager:
     def save_config(self) -> None:
         try:
             with open(self.config_file, 'w', encoding='utf-8') as configfile:
-                self.config.write(configfile)
+                self.config.write(configfile) # type: ignore
         except IOError as e:
             print(f"Error saving config: {e}")
 
@@ -39,7 +39,7 @@ class ConfigManager:
         return [ext.strip() for ext in extensions.split(',') if ext.strip()]
 
     def get_window_geometry(self) -> List[int]:
-        geometry = self.config.get('WindowSettings', 'geometry', fallback='100,100,900,800')
+        geometry = self.config.get('WindowSettings', 'geometry', fallback='100,100,1150,900')
         return [int(val) for val in geometry.split(',')]
 
     def get_font_size(self) -> int:
@@ -92,7 +92,7 @@ class ConfigManager:
         self.save_config()
 
     def get_context_length(self) -> int:
-        return self.config.getint('SearchSettings', 'context_length', fallback=50)
+        return self.config.getint('SearchSettings', 'context_length', fallback=100)
 
     def set_context_length(self, length: int) -> None:
         if 'SearchSettings' not in self.config:
@@ -101,7 +101,7 @@ class ConfigManager:
         self.save_config()
 
     def get_filename_font_size(self) -> int:
-        return self.config.getint('UISettings', 'filename_font_size', fallback=12)
+        return self.config.getint('UISettings', 'filename_font_size', fallback=14)
 
     def set_filename_font_size(self, size: int) -> None:
         if 'UISettings' not in self.config:
@@ -110,7 +110,7 @@ class ConfigManager:
         self.save_config()
 
     def get_result_detail_font_size(self) -> int:
-        return self.config.getint('UISettings', 'result_detail_font_size', fallback=12)
+        return self.config.getint('UISettings', 'result_detail_font_size', fallback=14)
 
     def set_result_detail_font_size(self, size: int) -> None:
         if 'UISettings' not in self.config:
