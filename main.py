@@ -3,8 +3,8 @@ from PyQt5.QtWidgets import QApplication
 from gui import MainWindow
 from config_manager import ConfigManager
 
-VERSION = "1.0.5"
-LAST_UPDATED = "2024/09/24"
+VERSION = "1.1.1"
+LAST_UPDATED = "2024/10/14"
 
 def main():
     app = QApplication(sys.argv)
