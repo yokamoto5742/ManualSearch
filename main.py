@@ -1,5 +1,7 @@
 import sys
+
 from PyQt5.QtWidgets import QApplication
+
 from gui import MainWindow
 from config_manager import ConfigManager
 
