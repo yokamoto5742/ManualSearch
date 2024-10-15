@@ -2,38 +2,49 @@ import os
 import re
 import tempfile
 import webbrowser
+from typing import List, Optional
+
 import markdown
+
 from utils import read_file_with_auto_encoding
 
-def open_text_file(file_path, search_terms, html_font_size):
+def open_text_file(file_path: str, search_terms: List[str], html_font_size: int) -> None:
     try:
         highlighted_html_path = highlight_text_file(file_path, search_terms, html_font_size)
-        # デフォルトのブラウザで開く
         webbrowser.open(f'file://{highlighted_html_path}')
     except Exception as e:
         raise Exception(f"テキストファイルを開けませんでした: {str(e)}")
 
-def highlight_text_file(file_path, search_terms, html_font_size):
+def highlight_text_file(file_path: str, search_terms: List[str], html_font_size: int) -> str:
     try:
         content = read_file_with_auto_encoding(file_path)
+    except ValueError as e:
+        raise ValueError(f"ファイルの読み込みに失敗しました: {file_path} - {str(e)}")
 
-        file_extension = os.path.splitext(file_path)[1].lower()
-        is_markdown = file_extension == '.md'
-        if is_markdown:
-            # nl2br拡張を使用してマークダウンをHTMLに変換
-            content = markdown.markdown(content, extensions=['nl2br'])
+    file_extension = os.path.splitext(file_path)[1].lower()
+    is_markdown = file_extension == '.md'
+    if is_markdown:
+        content = markdown.markdown(content, extensions=['nl2br']) # 改行を<br>に変換
 
-        colors = ['yellow', 'lightgreen', 'lightblue', 'lightsalmon', 'lightpink']
-        for i, term in enumerate(search_terms):
-            color = colors[i % len(colors)]
-            content = re.sub(
-                f'({re.escape(term.strip())})',
-                f'<span style="background-color: {color};">\\1</span>',
-                content,
-                flags=re.IGNORECASE
-            )
+    content = highlight_search_terms(content, search_terms)
+    html_content = generate_html_content(file_path, content, is_markdown, html_font_size)
 
-        html_template = f'''<!DOCTYPE html>
+    return create_temp_html_file(html_content)
+
+def highlight_search_terms(content: str, search_terms: List[str]) -> str:
+    colors = ['yellow', 'lightgreen', 'lightblue', 'lightsalmon', 'lightpink']
+    for i, term in enumerate(search_terms):
+        color = colors[i % len(colors)] # 色をループさせる
+        content = re.sub(
+            f'({re.escape(term.strip())})',
+            f'<span style="background-color: {color};">\\1</span>',
+            content,
+            flags=re.IGNORECASE
+        )
+    return content
+
+def generate_html_content(file_path: str, content: str, is_markdown: bool, html_font_size: int) -> str:
+    return f'''<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
@@ -106,8 +117,7 @@ def highlight_text_file(file_path, search_terms, html_font_size):
 </body>
 </html>'''
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.html', mode='w', encoding='utf-8') as tmp_file:
-            tmp_file.write(html_template)
-            return tmp_file.name
-    except ValueError as e:
-        raise ValueError(f"ファイルの読み込みに失敗しました: {file_path} - {str(e)}")
+def create_temp_html_file(html_content: str) -> str:
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.html', mode='w', encoding='utf-8') as tmp_file:
+        tmp_file.write(html_content)
+        return tmp_file.name
