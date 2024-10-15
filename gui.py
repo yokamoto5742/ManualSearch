@@ -1,11 +1,13 @@
 import os
 import re
 import subprocess
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, \
     QTextEdit, QFileDialog, QListWidget, QListWidgetItem, QMessageBox, QCheckBox, QComboBox, QInputDialog, \
     QProgressDialog, QStyleFactory, QApplication
+
 from file_searcher import FileSearcher
 from pdf_handler import open_pdf, wait_for_acrobat, navigate_to_page, highlight_pdf
 from text_handler import open_text_file
