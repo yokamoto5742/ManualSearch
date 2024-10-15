@@ -26,7 +26,7 @@ def test_set_file_extensions(config_manager):
     assert config_manager.get_file_extensions() == new_extensions
 
 def test_get_window_geometry(config_manager):
-    assert config_manager.get_window_geometry() == [100, 100, 900, 800]
+    assert config_manager.get_window_geometry() == [100, 100, 1150, 900]
 
 def test_set_window_geometry(config_manager):
     new_geometry = [200, 200, 1000, 900]
@@ -66,7 +66,7 @@ def test_set_last_directory(config_manager):
     assert config_manager.get_last_directory() == new_dir
 
 def test_get_context_length(config_manager):
-    assert config_manager.get_context_length() == 50
+    assert config_manager.get_context_length() == 100
 
 def test_set_context_length(config_manager):
     new_length = 100
@@ -74,7 +74,7 @@ def test_set_context_length(config_manager):
     assert config_manager.get_context_length() == new_length
 
 def test_get_filename_font_size(config_manager):
-    assert config_manager.get_filename_font_size() == 12
+    assert config_manager.get_filename_font_size() == 14
 
 def test_set_filename_font_size(config_manager):
     new_size = 14
@@ -82,7 +82,7 @@ def test_set_filename_font_size(config_manager):
     assert config_manager.get_filename_font_size() == new_size
 
 def test_get_result_detail_font_size(config_manager):
-    assert config_manager.get_result_detail_font_size() == 12
+    assert config_manager.get_result_detail_font_size() == 14
 
 def test_set_result_detail_font_size(config_manager):
     new_size = 14
