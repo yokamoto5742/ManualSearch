@@ -2,7 +2,7 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 
-from gui import MainWindow
+from main_window import MainWindow
 from config_manager import ConfigManager
 
 VERSION = "1.1.1"
