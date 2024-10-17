@@ -31,6 +31,8 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(main_widget)
 
         layout = QVBoxLayout()
+        layout.setSpacing(0)  # ウィジェット間のスペースを0に設定
+        layout.setContentsMargins(10, 10, 10, 10)  # 左、上、右、下のマージンを設定
         main_widget.setLayout(layout)
 
         # SearchWidget
