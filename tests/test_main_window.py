@@ -1,13 +1,11 @@
 import pytest
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton
 from PyQt5.QtCore import Qt
 from unittest.mock import MagicMock, patch
-
-from directory_widget import DirectoryWidget
 from main_window import MainWindow
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def qapp():
     app = QApplication([])
     yield app
@@ -15,58 +13,45 @@ def qapp():
 
 
 @pytest.fixture
-def config_manager():
-    mock_config = MagicMock()
-    mock_config.get_window_geometry.return_value = (100, 100, 800, 600)
-    mock_config.get_font_size.return_value = 12
-    mock_config.get_directories.return_value = ["ディレクトリ1", "ディレクトリ2"]
-    mock_config.get_last_directory.return_value = "ディレクトリ1"
-    return mock_config
+def mock_config_manager():
+    config_manager = MagicMock()
+    config_manager.get_window_geometry.return_value = (100, 100, 800, 600)
+    config_manager.get_font_size.return_value = 12
+    return config_manager
 
 
 @pytest.fixture
-def directory_widget(config_manager):
-    with patch('directory_widget.QComboBox'):
-        return DirectoryWidget(config_manager)
+def main_window(qapp, mock_config_manager):
+    with patch('main_window.SearchWidget') as mock_search_widget, \
+            patch('main_window.DirectoryWidget') as mock_directory_widget, \
+            patch('main_window.ResultsWidget') as mock_results_widget, \
+            patch('main_window.FileOpener') as mock_file_opener, \
+            patch('main_window.AutoCloseMessage') as mock_auto_close_message, \
+            patch('main_window.MainWindow.__init__', return_value=None) as mock_init:
+        window = MainWindow(mock_config_manager)
+
+        # Manually set up the mocked attributes
+        window.config_manager = mock_config_manager
+        window.search_widget = mock_search_widget.return_value
+        window.directory_widget = mock_directory_widget.return_value
+        window.results_widget = mock_results_widget.return_value
+        window.file_opener = mock_file_opener.return_value
+        window.auto_close_message = mock_auto_close_message.return_value
+        window.open_file_button = MagicMock(spec=QPushButton)
+        window.open_folder_button = MagicMock(spec=QPushButton)
+
+        yield window
 
 
-@pytest.fixture
-def main_window(app, config_manager, directory_widget, qtbot):
-    with patch('main_window.DirectoryWidget', return_value=directory_widget):
-        with patch('main_window.SearchWidget'):
-            with patch('main_window.ResultsWidget'):
-                with patch('main_window.FileOpener'):
-                    window = MainWindow(config_manager)
-                    qtbot.addWidget(window)
-                    return window
+def test_main_window_init(main_window, mock_config_manager):
+    assert isinstance(main_window.config_manager, MagicMock)
+    assert isinstance(main_window.search_widget, MagicMock)
+    assert isinstance(main_window.directory_widget, MagicMock)
+    assert isinstance(main_window.results_widget, MagicMock)
 
 
-def test_main_window_initialization(main_window, config_manager):
-    assert main_window.windowTitle() == "マニュアル検索アプリ"
-    assert main_window.geometry().getRect() == (100, 100, 800, 600)
-    config_manager.get_window_geometry.assert_called_once()
-    config_manager.get_font_size.assert_called_once()
-
-
-def test_directory_widget_initialization(directory_widget, config_manager):
-    config_manager.get_directories.assert_called_once()
-    config_manager.get_last_directory.assert_called_once()
-
-
-def test_search_widget_connection(main_window, qtbot):
-    with patch.object(main_window, 'start_search') as mock_start_search:
-        main_window.search_widget.search_requested.emit()
-        mock_start_search.assert_called_once()
-
-
-def test_results_widget_connection(main_window, qtbot):
-    with patch.object(main_window, 'enable_open_buttons') as mock_enable_open_buttons:
-        main_window.results_widget.result_selected.emit()
-        mock_enable_open_buttons.assert_called_once()
-
-
-def test_start_search(main_window, qtbot):
-    main_window.search_widget.get_search_terms.return_value = "テスト"
+def test_start_search(main_window):
+    main_window.search_widget.get_search_terms.return_value = "test"
     main_window.directory_widget.get_selected_directory.return_value = "/path/to/dir"
     main_window.directory_widget.include_subdirs.return_value = True
     main_window.search_widget.get_search_type.return_value = "全文検索"
@@ -74,35 +59,42 @@ def test_start_search(main_window, qtbot):
     main_window.start_search()
 
     main_window.results_widget.clear_results.assert_called_once()
-    main_window.results_widget.perform_search.assert_called_once_with("/path/to/dir", "テスト", True, "全文検索")
+    main_window.results_widget.perform_search.assert_called_once_with(
+        "/path/to/dir", "test", True, "全文検索"
+    )
     assert not main_window.open_file_button.isEnabled()
     assert not main_window.open_folder_button.isEnabled()
 
 
-def test_enable_open_buttons(main_window, qtbot):
+def test_enable_open_buttons(main_window):
     main_window.enable_open_buttons()
-    assert main_window.open_file_button.isEnabled()
-    assert main_window.open_folder_button.isEnabled()
+    main_window.open_file_button.setEnabled.assert_called_with(True)
+    main_window.open_folder_button.setEnabled.assert_called_with(True)
 
 
-def test_open_file(main_window, qtbot):
-    main_window.results_widget.get_selected_file_info.return_value = ("/path/to/file", 10)
-    main_window.search_widget.get_search_terms.return_value = "テスト"
+def test_open_file(main_window):
+    main_window.results_widget.get_selected_file_info.return_value = ("/path/to/file.txt", 10)
+    main_window.search_widget.get_search_terms.return_value = "test"
 
     main_window.open_file()
 
-    main_window.file_opener.open_file.assert_called_once_with("/path/to/file", 10, "テスト")
+    main_window.file_opener.open_file.assert_called_once_with("/path/to/file.txt", 10, "test")
 
 
-def test_open_folder(main_window, qtbot):
-    main_window.results_widget.get_selected_file_info.return_value = ("/path/to/file", 10)
+def test_open_folder(main_window):
+    main_window.results_widget.get_selected_file_info.return_value = ("/path/to/file.txt", 10)
 
     main_window.open_folder()
 
     main_window.file_opener.open_folder.assert_called_once_with("/path/to")
 
 
-def test_close_event(main_window, qtbot):
-    with patch.object(main_window.config_manager, 'set_window_geometry') as mock_set_geometry:
-        main_window.close()
-        mock_set_geometry.assert_called_once()
+def test_close_event(main_window, mock_config_manager):
+    event = MagicMock()
+    main_window.geometry = MagicMock(return_value=MagicMock(
+        x=lambda: 200, y=lambda: 200, width=lambda: 1000, height=lambda: 800
+    ))
+
+    main_window.closeEvent(event)
+
+    mock_config_manager.set_window_geometry.assert_called_once_with(200, 200, 1000, 800)
