@@ -1,57 +1,71 @@
 import os
+from typing import Tuple
+
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, \
+from PyQt5.QtWidgets import (
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
     QStyleFactory, QApplication
+)
 
 from search_widget import SearchWidget
 from directory_widget import DirectoryWidget
 from results_widget import ResultsWidget
 from file_opener import FileOpener
 from auto_close_message import AutoCloseMessage
+from config_manager import ConfigManager
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, config_manager):
+    def __init__(self, config_manager: ConfigManager) -> None:
         super().__init__()
         self.config_manager = config_manager
 
         self.setWindowTitle("マニュアル検索アプリ")
-
         QApplication.setStyle(QStyleFactory.create('Fusion'))
 
-        # ウィンドウのジオメトリを設定
+        self._setup_window_geometry()
+        self._setup_font()
+        self._setup_main_layout()
+        self._setup_widgets()
+        self._setup_buttons()
+        self._connect_signals()
+
+    def _setup_window_geometry(self) -> None:
         geometry = self.config_manager.get_window_geometry()
         self.setGeometry(*geometry)
 
+    def _setup_font(self) -> None:
         font = QFont()
         font.setPointSize(self.config_manager.get_font_size())
         QApplication.setFont(font)
 
+    def _setup_main_layout(self) -> None:
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
 
         layout = QVBoxLayout()
-        layout.setSpacing(0)  # ウィジェット間のスペースを0に設定
-        layout.setContentsMargins(10, 10, 10, 10)  # 左、上、右、下のマージンを設定
+        layout.setSpacing(0)
+        layout.setContentsMargins(10, 10, 10, 10)
         main_widget.setLayout(layout)
 
-        # SearchWidget
+        self.main_layout = layout
+
+    def _setup_widgets(self) -> None:
         self.search_widget = SearchWidget(self.config_manager)
-        layout.addWidget(self.search_widget)
+        self.main_layout.addWidget(self.search_widget)
 
-        # DirectoryWidget
         self.directory_widget = DirectoryWidget(self.config_manager)
-        layout.addWidget(self.directory_widget)
+        self.main_layout.addWidget(self.directory_widget)
 
-        # ResultsWidget
         self.results_widget = ResultsWidget(self.config_manager)
-        layout.addWidget(self.results_widget)
+        self.main_layout.addWidget(self.results_widget)
 
-        # FileOpener
         self.file_opener = FileOpener(self.config_manager)
+        self.auto_close_message = AutoCloseMessage(self)
 
-        # Buttons
+    def _setup_buttons(self) -> None:
         button_layout = QHBoxLayout()
+
         self.open_file_button = QPushButton("ファイルを開く")
         self.open_file_button.clicked.connect(self.open_file)
         self.open_file_button.setEnabled(False)
@@ -62,15 +76,13 @@ class MainWindow(QMainWindow):
         self.open_folder_button.setEnabled(False)
         button_layout.addWidget(self.open_folder_button)
 
-        layout.addLayout(button_layout)
+        self.main_layout.addLayout(button_layout)
 
-        self.auto_close_message = AutoCloseMessage(self)
-
-        # Connect signals
+    def _connect_signals(self) -> None:
         self.search_widget.search_requested.connect(self.start_search)
         self.results_widget.result_selected.connect(self.enable_open_buttons)
 
-    def start_search(self):
+    def start_search(self) -> None:
         search_terms = self.search_widget.get_search_terms()
         directory = self.directory_widget.get_selected_directory()
         include_subdirs = self.directory_widget.include_subdirs()
@@ -83,23 +95,45 @@ class MainWindow(QMainWindow):
         self.open_file_button.setEnabled(False)
         self.open_folder_button.setEnabled(False)
 
-        self.results_widget.perform_search(directory, search_terms, include_subdirs, search_type)
+        try:
+            self.results_widget.perform_search(directory, search_terms, include_subdirs, search_type)
+        except Exception as e:
+            self.auto_close_message.show_message(f"検索中にエラーが発生しました: {str(e)}", 5000)
 
-    def enable_open_buttons(self):
+    def enable_open_buttons(self) -> None:
         self.open_file_button.setEnabled(True)
         self.open_folder_button.setEnabled(True)
 
-    def open_file(self):
-        file_path, position = self.results_widget.get_selected_file_info()
-        search_terms = self.search_widget.get_search_terms()
-        self.file_opener.open_file(file_path, position, search_terms)
+    def open_file(self) -> None:
+        try:
+            file_path, position = self.results_widget.get_selected_file_info()
+            search_terms = self.search_widget.get_search_terms()
+            self.file_opener.open_file(file_path, position, search_terms)
+        except FileNotFoundError:
+            self.auto_close_message.show_message("ファイルが見つかりません", 3000)
+        except PermissionError:
+            self.auto_close_message.show_message("ファイルを開く権限がありません", 3000)
+        except Exception as e:
+            self.auto_close_message.show_message(f"ファイルを開く際にエラーが発生しました: {str(e)}", 5000)
 
-    def open_folder(self):
-        file_path, _ = self.results_widget.get_selected_file_info()
-        folder_path = os.path.dirname(file_path)
-        self.file_opener.open_folder(folder_path)
+    def open_folder(self) -> None:
+        try:
+            file_path, _ = self.results_widget.get_selected_file_info()
+            folder_path = os.path.dirname(file_path)
+            self.file_opener.open_folder(folder_path)
+        except FileNotFoundError:
+            self.auto_close_message.show_message("フォルダが見つかりません", 3000)
+        except PermissionError:
+            self.auto_close_message.show_message("フォルダを開く権限がありません", 3000)
+        except Exception as e:
+            self.auto_close_message.show_message(f"フォルダを開く際にエラーが発生しました: {str(e)}", 5000)
 
-    def closeEvent(self, event):
-        geometry = self.geometry()
-        self.config_manager.set_window_geometry(geometry.x(), geometry.y(), geometry.width(), geometry.height())
+    def closeEvent(self, event) -> None:
+        try:
+            geometry = self.geometry()
+            self.config_manager.set_window_geometry(
+                geometry.x(), geometry.y(), geometry.width(), geometry.height()
+            )
+        except Exception as e:
+            print(f"ウィンドウジオメトリの保存中にエラーが発生しました: {str(e)}")
         super().closeEvent(event)
