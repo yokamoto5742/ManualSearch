@@ -1,7 +1,8 @@
-import pytest
 from unittest.mock import MagicMock, patch
-import os
+
+import pytest
 from PyQt5.QtWidgets import QMessageBox
+
 from file_opener import FileOpener
 
 
@@ -43,9 +44,10 @@ def test_open_pdf_file(mock_highlight_pdf, mock_navigate, mock_wait, mock_open_p
         mock_process.pid = 12345
         mock_popen.return_value = mock_process
 
-        file_opener.open_pdf_file('test.pdf', 1, ['test'])
+        file_opener._open_pdf_file('test.pdf', 1, ['test'])
 
         mock_highlight_pdf.assert_called_once_with('test.pdf', ['test'])
+        mock_open_pdf.assert_called_once_with('highlighted.pdf')
         mock_popen.assert_called_once()
         mock_wait.assert_called_once_with(12345)
         mock_navigate.assert_called_once_with(1)
@@ -53,7 +55,7 @@ def test_open_pdf_file(mock_highlight_pdf, mock_navigate, mock_wait, mock_open_p
 
 @patch('file_opener.open_text_file')
 def test_open_text_file(mock_open_text, file_opener):
-    file_opener.open_text_file('test.txt', ['test'])
+    file_opener._open_text_file('test.txt', ['test'])
     mock_open_text.assert_called_once_with('test.txt', ['test'], 14)
 
 
@@ -67,4 +69,21 @@ def test_open_folder_error(file_opener):
     with patch('os.startfile', side_effect=Exception("テストエラー")), \
             patch.object(QMessageBox, 'warning') as mock_warning:
         file_opener.open_folder('C:\\test_folder')
-        mock_warning.assert_called_once_with(None, "エラー", "フォルダを開けませんでした: テストエラー")
+        mock_warning.assert_called_once_with(None, "エラー", "フォルダを開く際にエラーが発生しました: テストエラー")
+
+
+@patch('file_opener.open_pdf')
+@patch('file_opener.highlight_pdf')
+def test_open_pdf_file_error(mock_highlight_pdf, mock_open_pdf, file_opener):
+    mock_highlight_pdf.side_effect = IOError("テストIOエラー")
+    with patch.object(QMessageBox, 'warning') as mock_warning:
+        file_opener._open_pdf_file('test.pdf', 1, ['test'])
+        mock_warning.assert_called_once_with(None, "エラー", "PDFの処理に失敗しました: テストIOエラー")
+
+
+@patch('file_opener.open_text_file')
+def test_open_text_file_error(mock_open_text, file_opener):
+    mock_open_text.side_effect = ValueError("テスト値エラー")
+    with patch.object(QMessageBox, 'warning') as mock_warning:
+        file_opener._open_text_file('test.txt', ['test'])
+        mock_warning.assert_called_once_with(None, "エラー", "テキストファイルの処理中にエラーが発生しました: テスト値エラー")
