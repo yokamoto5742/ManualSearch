@@ -70,7 +70,7 @@ class ResultsWidget(QWidget):
 
     def _setup_progress_dialog(self) -> None:
         self.progress_dialog = QProgressDialog("検索中...", "キャンセル", 0, 100, self)
-        self.progress_dialog.setWindowTitle("検索進捗")
+        self.progress_dialog.setWindowTitle("検索の進行状況")
         self.progress_dialog.setWindowModality(Qt.WindowModal)
         self.progress_dialog.canceled.connect(self.cancel_search)
         self.progress_dialog.show()
@@ -113,13 +113,13 @@ class ResultsWidget(QWidget):
             self.current_position = position
             self.result_selected.emit()
         except AttributeError:
-            print("Error: Invalid item data")
+            print("エラー: 無効な項目データ")
         except Exception as e:
-            print(f"Unexpected error in show_result: {e}")
+            print(f"show_resultで予期せぬエラーが発生しました: {e}")
 
     def _create_result_html(self, file_path: str, position: int, highlighted_content: str) -> str:
         result_html = f'<span style="font-size:{self.result_detail_font.pointSize()}pt;">'
-        result_html += f"<h3>ファイル: {os.path.basename(file_path)}</h3>"
+        result_html += f"<h3>{os.path.basename(file_path)}</h3>"
         result_html += f"<p>{'ページ' if file_path.lower().endswith('.pdf') else '行'}: {position}</p>"
         result_html += f"<p>{highlighted_content}</p>"
         result_html += '</span>'
