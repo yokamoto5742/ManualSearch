@@ -46,8 +46,8 @@ class SearchWidget(QWidget):
     def _create_search_type_combo() -> QComboBox:
         search_type_combo = QComboBox()
         search_type_combo.addItems([
-            "AND検索(複数語のすべてを含む)",
-            "OR検索(複数語のいずれかを含む)"
+            "AND検索(1ページに複数の検索語をすべて含む)",
+            "OR検索(1ページに複数の検索語のいずれかを含む)"
         ])
         return search_type_combo
 
@@ -55,7 +55,7 @@ class SearchWidget(QWidget):
         try:
             return [
                 term.strip()
-                for term in re.split('[,、]', self.search_input.text())
+                for term in re.split('[,、]', self.search_input.text()) # 複数の区切り文字を一括処理
                 if term.strip()
             ]
         except re.error as e:
@@ -70,4 +70,4 @@ class SearchWidget(QWidget):
             return 'AND' if self.search_type_combo.currentText().startswith("AND") else 'OR'
         except AttributeError:
             print("検索タイプコンボボックスが正しく初期化されていません")
-            return 'AND'  # デフォルト値として'AND'を返す
+            return 'AND'
