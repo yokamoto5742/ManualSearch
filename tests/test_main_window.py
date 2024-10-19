@@ -1,7 +1,8 @@
-import pytest
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton
-from PyQt5.QtCore import Qt, QEvent
 from unittest.mock import MagicMock, patch
+
+import pytest
+from PyQt5.QtWidgets import QApplication, QPushButton
+
 from main_window import MainWindow
 
 
@@ -56,25 +57,6 @@ def test_main_window_init(main_window, mock_config_manager):
 
 def test_start_search(main_window):
     pass
-#     # モックの設定
-#     main_window.search_widget.get_search_terms.return_value = "test"
-#     main_window.directory_widget.get_selected_directory.return_value = "/path/to/dir"
-#     main_window.directory_widget.include_subdirs.return_value = True
-#     main_window.search_widget.get_search_type.return_value = "全文検索"
-#
-#     # clear_results メソッドが呼び出されたかを追跡するためのモックを設定
-#     main_window.results_widget.clear_results = MagicMock()
-#
-#     # メソッドの呼び出し
-#     main_window.start_search()
-#
-#     # アサーション
-#     main_window.results_widget.clear_results.assert_called_once()
-#     main_window.results_widget.perform_search.assert_called_once_with(
-#         "/path/to/dir", "test", True, "全文検索"
-#     )
-#     main_window.open_file_button.setEnabled.assert_called_with(False)
-#     main_window.open_folder_button.setEnabled.assert_called_with(False)
 
 
 def test_enable_open_buttons(main_window):
@@ -102,15 +84,3 @@ def test_open_folder(main_window):
 
 def test_close_event(main_window, mock_config_manager):
     pass
-#     event = MagicMock(spec=QEvent)
-#     geometry = MagicMock()
-#     geometry.x.return_value = 200
-#     geometry.y.return_value = 200
-#     geometry.width.return_value = 1000
-#     geometry.height.return_value = 800
-#     main_window.geometry = MagicMock(return_value=geometry)
-#
-#     main_window.closeEvent(event)
-#
-#     mock_config_manager.set_window_geometry.assert_called_once_with(200, 200, 1000, 800)
-#     main_window.closeEvent.assert_called_once_with(event)

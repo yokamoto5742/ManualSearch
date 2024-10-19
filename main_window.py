@@ -1,5 +1,4 @@
 import os
-from typing import Tuple
 
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
@@ -7,12 +6,12 @@ from PyQt5.QtWidgets import (
     QStyleFactory, QApplication
 )
 
-from search_widget import SearchWidget
-from directory_widget import DirectoryWidget
-from results_widget import ResultsWidget
-from file_opener import FileOpener
 from auto_close_message import AutoCloseMessage
 from config_manager import ConfigManager
+from directory_widget import DirectoryWidget
+from file_opener import FileOpener
+from results_widget import ResultsWidget
+from search_widget import SearchWidget
 
 
 class MainWindow(QMainWindow):
@@ -110,11 +109,9 @@ class MainWindow(QMainWindow):
             search_terms = self.search_widget.get_search_terms()
             self.file_opener.open_file(file_path, position, search_terms)
         except FileNotFoundError:
-            self.auto_close_message.show_message("ファイルが見つかりません", 3000)
-        except PermissionError:
-            self.auto_close_message.show_message("ファイルを開く権限がありません", 3000)
+            self.auto_close_message.show_message("ファイルが見つかりません", 2000)
         except Exception as e:
-            self.auto_close_message.show_message(f"ファイルを開く際にエラーが発生しました: {str(e)}", 5000)
+            self.auto_close_message.show_message(f"ファイルを開く際にエラーが発生しました: {str(e)}", 2000)
 
     def open_folder(self) -> None:
         try:
@@ -122,11 +119,9 @@ class MainWindow(QMainWindow):
             folder_path = os.path.dirname(file_path)
             self.file_opener.open_folder(folder_path)
         except FileNotFoundError:
-            self.auto_close_message.show_message("フォルダが見つかりません", 3000)
-        except PermissionError:
-            self.auto_close_message.show_message("フォルダを開く権限がありません", 3000)
+            self.auto_close_message.show_message("フォルダが見つかりません", 2000)
         except Exception as e:
-            self.auto_close_message.show_message(f"フォルダを開く際にエラーが発生しました: {str(e)}", 5000)
+            self.auto_close_message.show_message(f"フォルダを開く際にエラーが発生しました: {str(e)}", 2000)
 
     def closeEvent(self, event) -> None:
         try:
