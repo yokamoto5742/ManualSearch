@@ -96,7 +96,8 @@ class ResultsWidget(QWidget):
             list_item.setFont(self.filename_font)
             self.results_list.addItem(list_item)
 
-    def _create_item_text(self, file_name: str, file_path: str, position: int, index: int) -> str:
+    @staticmethod
+    def _create_item_text(file_name: str, file_path: str, position: int, index: int) -> str:
         if file_path.lower().endswith('.pdf'):
             return f"{file_name} (ページ: {position}, 一致: {index + 1})"
         return f"{file_name} (行: {position}, 一致: {index + 1})"
