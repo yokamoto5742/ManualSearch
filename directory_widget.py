@@ -2,7 +2,7 @@ import os
 
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QPushButton, QCheckBox,
-    QFileDialog, QInputDialog, QMessageBox, QLineEdit
+    QFileDialog, QInputDialog, QMessageBox, QLineEdit, QSizePolicy
 )
 
 from config_manager import ConfigManager
@@ -67,13 +67,10 @@ class DirectoryWidget(QWidget):
 
         return button_layout
 
-    from PyQt5.QtWidgets import QApplication, QMessageBox
-
-    def close_application(self):
-        # カスタムボタンを持つ確認ダイアログを作成
+    def _create_confirmation_dialog(self, title: str, message: str, default_button: QMessageBox.StandardButton) -> QMessageBox:
         msg_box = QMessageBox(self)
-        msg_box.setWindowTitle('確認')
-        msg_box.setText("検索を終了しますか?")
+        msg_box.setWindowTitle(title)
+        msg_box.setText(message)
         msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 
         button_style = """
@@ -90,14 +87,9 @@ class DirectoryWidget(QWidget):
         no_button.setText('いいえ')
         no_button.setStyleSheet(button_style)
 
-        msg_box.setDefaultButton(QMessageBox.Yes)
+        msg_box.setDefaultButton(default_button)
 
-        reply = msg_box.exec_()
-
-        if reply == QMessageBox.Yes:
-            QApplication.instance().quit()
-        else:
-            pass
+        return msg_box
 
     def get_selected_directory(self) -> str:
         return self.dir_combo.currentText()
@@ -134,15 +126,27 @@ class DirectoryWidget(QWidget):
             return
 
         try:
-            new_dir, ok = QInputDialog.getText(
-                self, "フォルダ編集", "新しいフォルダパス:", QLineEdit.Normal, current_dir
-            )
-            if ok and new_dir:
-                current_dirs = self.config_manager.get_directories()
-                index = current_dirs.index(current_dir)
-                current_dirs[index] = new_dir
-                self.config_manager.set_directories(current_dirs)
-                self.dir_combo.setItemText(self.dir_combo.currentIndex(), new_dir)
+            dialog = QInputDialog(self)
+            dialog.setWindowTitle("フォルダパスの編集")
+            dialog.setLabelText("フォルダパスを編集してOKをクリックしてください。")
+            dialog.setTextValue(current_dir)
+            dialog.setInputMode(QInputDialog.TextInput)
+
+            text_field = dialog.findChild(QLineEdit)
+            if text_field:
+                text_field.setMinimumWidth(1100)
+
+            dialog.setSizeGripEnabled(True)
+            dialog.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+            if dialog.exec_() == QInputDialog.Accepted:
+                new_dir = dialog.textValue()
+                if new_dir:
+                    current_dirs = self.config_manager.get_directories()
+                    index = current_dirs.index(current_dir)
+                    current_dirs[index] = new_dir
+                    self.config_manager.set_directories(current_dirs)
+                    self.dir_combo.setItemText(self.dir_combo.currentIndex(), new_dir)
         except ValueError:
             QMessageBox.warning(self, "警告", "指定されたディレクトリが見つかりません。")
         except Exception as e:
@@ -154,10 +158,14 @@ class DirectoryWidget(QWidget):
             return
 
         try:
-            reply = QMessageBox.question(
-                self, '確認', f"本当に「{current_dir}」を削除しますか？",
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+            msg_box = self._create_confirmation_dialog(
+                '確認',
+                f"「{current_dir}」を削除しますか？",
+                QMessageBox.No
             )
+
+            reply = msg_box.exec_()
+
             if reply == QMessageBox.Yes:
                 current_dirs = self.config_manager.get_directories()
                 current_dirs.remove(current_dir)
@@ -167,3 +175,15 @@ class DirectoryWidget(QWidget):
             QMessageBox.warning(self, "警告", "指定されたディレクトリが見つかりません。")
         except Exception as e:
             QMessageBox.critical(self, "エラー", f"ディレクトリの削除中にエラーが発生しました: {str(e)}")
+
+    def close_application(self):
+        msg_box = self._create_confirmation_dialog(
+            '確認',
+            "検索を終了しますか?",
+            QMessageBox.Yes
+        )
+
+        reply = msg_box.exec_()
+
+        if reply == QMessageBox.Yes:
+            QApplication.instance().quit()
