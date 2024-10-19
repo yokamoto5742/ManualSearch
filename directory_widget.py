@@ -55,13 +55,49 @@ class DirectoryWidget(QWidget):
         self.include_subdirs_checkbox = QCheckBox("サブフォルダを含む")
         self.include_subdirs_checkbox.setChecked(True)
 
+        close_button = QPushButton("閉じる")
+        close_button.clicked.connect(self.close_application)
+
         button_layout.addWidget(dir_add_button)
         button_layout.addWidget(dir_edit_button)
         button_layout.addWidget(dir_delete_button)
         button_layout.addWidget(self.include_subdirs_checkbox)
         button_layout.addStretch(1)
+        button_layout.addWidget(close_button)
 
         return button_layout
+
+    from PyQt5.QtWidgets import QApplication, QMessageBox
+
+    def close_application(self):
+        # カスタムボタンを持つ確認ダイアログを作成
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle('確認')
+        msg_box.setText("検索を終了しますか?")
+        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+
+        button_style = """
+        QPushButton {
+            min-width: 100px;
+            text-align: center;
+        }
+        """
+
+        yes_button = msg_box.button(QMessageBox.Yes)
+        yes_button.setText('はい')
+        yes_button.setStyleSheet(button_style)
+        no_button = msg_box.button(QMessageBox.No)
+        no_button.setText('いいえ')
+        no_button.setStyleSheet(button_style)
+
+        msg_box.setDefaultButton(QMessageBox.Yes)
+
+        reply = msg_box.exec_()
+
+        if reply == QMessageBox.Yes:
+            QApplication.instance().quit()
+        else:
+            pass
 
     def get_selected_directory(self) -> str:
         return self.dir_combo.currentText()
