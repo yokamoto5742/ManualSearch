@@ -58,5 +58,6 @@ class FileOpener:
         except Exception as e:
             self._show_error(f"フォルダを開く際にエラーが発生しました: {e}")
 
-    def _show_error(self, message: str) -> None:
+    @staticmethod
+    def _show_error(message: str) -> None:
         QMessageBox.warning(None, "エラー", message)
