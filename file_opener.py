@@ -28,10 +28,7 @@ class FileOpener:
     def _open_pdf_file(self, file_path: str, position: int, search_terms: List[str]) -> None:
         try:
             highlighted_pdf_path = highlight_pdf(file_path, search_terms)
-            open_pdf(highlighted_pdf_path)
-            process = subprocess.Popen([self.acrobat_path, highlighted_pdf_path])
-            wait_for_acrobat(process.pid)
-            navigate_to_page(position)
+            open_pdf(highlighted_pdf_path, self.acrobat_path, position, search_terms)
         except IOError as e:
             self._show_error(f"PDFの処理に失敗しました: {e}")
         except subprocess.SubprocessError as e:
