@@ -12,6 +12,7 @@ from utils.config_manager import ConfigManager
 from widgets.directory_widget import DirectoryWidget
 from widgets.results_widget import ResultsWidget
 from widgets.search_widget import SearchWidget
+from version import VERSION
 
 
 class MainWindow(QMainWindow):
@@ -19,7 +20,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.config_manager = config_manager
 
-        self.setWindowTitle("マニュアル検索アプリ")
+        self.setWindowTitle(f"マニュアル検索アプリ v{VERSION}")
         QApplication.setStyle(QStyleFactory.create('Fusion'))
 
         self._setup_window_geometry()
