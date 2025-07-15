@@ -11,7 +11,7 @@ def build_executable():
         "--name=ManualSearch",
         "--windowed",
         "--icon=assets/ManualSearch.ico",
-        "--add-data", "config.ini:.",
+        "--add-data", "utils/config.ini:.",
         "main.py"
     ])
 

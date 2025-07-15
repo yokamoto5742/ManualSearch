@@ -3,15 +3,17 @@ import sys
 from PyQt5.QtWidgets import QApplication
 
 from main_window import MainWindow
-from config_manager import ConfigManager
+from utils.config_manager import load_config
+from version import VERSION
 
-VERSION = "1.1.4"
-LAST_UPDATED = "2024/10/20"
 
 def main():
     app = QApplication(sys.argv)
-    config_manager = ConfigManager()
-    window = MainWindow(config_manager)
+    config = load_config()
+    window = MainWindow(
+        config=config,
+        version=VERSION
+    )
     window.show()
     sys.exit(app.exec_())
 
