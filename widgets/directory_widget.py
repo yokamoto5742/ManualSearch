@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
     QFileDialog, QInputDialog, QMessageBox, QLineEdit, QSizePolicy
 )
 
-from config_manager import ConfigManager
+from utils.config_manager import ConfigManager
 
 
 class DirectoryWidget(QWidget):

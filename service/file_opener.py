@@ -1,10 +1,12 @@
 import os
 import subprocess
 from typing import List
+
 from PyQt5.QtWidgets import QMessageBox
 
-from pdf_handler import open_pdf, wait_for_acrobat, navigate_to_page, highlight_pdf
-from text_handler import open_text_file
+from service.pdf_handler import open_pdf, highlight_pdf
+from service.text_handler import open_text_file
+
 
 class FileOpener:
     def __init__(self, config_manager):

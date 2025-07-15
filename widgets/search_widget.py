@@ -1,4 +1,6 @@
+import re
 from typing import List
+
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import (
     QWidget,
@@ -8,7 +10,6 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QComboBox,
 )
-import re
 
 
 class SearchWidget(QWidget):

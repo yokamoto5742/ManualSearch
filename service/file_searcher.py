@@ -3,10 +3,10 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Tuple, Optional
 
-from PyQt5.QtCore import QThread, pyqtSignal
 import PyPDF2
+from PyQt5.QtCore import QThread, pyqtSignal
 
-from utils import normalize_path, check_file_accessibility, read_file_with_auto_encoding
+from utils.helpers import normalize_path, check_file_accessibility, read_file_with_auto_encoding
 
 
 class FileSearcher(QThread):

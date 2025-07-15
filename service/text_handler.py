@@ -6,7 +6,7 @@ from typing import List, Optional
 
 import markdown
 
-from utils import read_file_with_auto_encoding
+from utils.helpers import read_file_with_auto_encoding
 
 def open_text_file(file_path: str, search_terms: List[str], html_font_size: int) -> None:
     try:

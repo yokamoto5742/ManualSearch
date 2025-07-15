@@ -3,7 +3,7 @@ import os
 import sys
 from typing import List
 
-from helpers import read_file_with_auto_encoding
+from utils.helpers import read_file_with_auto_encoding
 
 
 def get_config_path() -> str:

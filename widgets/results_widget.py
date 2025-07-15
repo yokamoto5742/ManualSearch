@@ -1,6 +1,7 @@
 import os
 import re
 from typing import Dict, List, Tuple, Optional
+
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtWidgets import (
@@ -8,7 +9,8 @@ from PyQt5.QtWidgets import (
     QTextEdit, QProgressDialog
 )
 
-from file_searcher import FileSearcher
+from service.file_searcher import FileSearcher
+
 
 class ResultsWidget(QWidget):
     result_selected = pyqtSignal()
