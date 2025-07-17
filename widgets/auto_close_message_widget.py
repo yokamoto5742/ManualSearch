@@ -24,20 +24,14 @@ class AutoCloseMessage(QWidget):
         self.timer.timeout.connect(self.close)
 
     def show_message(self, message: str, duration: int = 1000) -> None:
-        try:
-            self.label.setText(message)
-            self.adjustSize()
-            self._center_on_parent()
-            self.show()
-            self.timer.start(duration)
-        except Exception as e:
-            print(f"Error showing message: {e}")
+        self.label.setText(message)
+        self.adjustSize()
+        self._center_on_parent()
+        self.show()
+        self.timer.start(duration)
 
     def _center_on_parent(self) -> None:
-        try:
-            parent = self.parent()
-            if parent:
-                geometry = parent.geometry()
-                self.move(geometry.center() - self.rect().center())
-        except AttributeError as e:
-            print(f"Error centering window: {e}")
+        parent = self.parent()
+        if parent:
+            geometry = parent.geometry()
+            self.move(geometry.center() - self.rect().center())
