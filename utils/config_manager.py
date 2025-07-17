@@ -43,7 +43,8 @@ class ConfigManager:
         return [int(val) for val in geometry.split(',')]
 
     def get_font_size(self) -> int:
-        return self.config.getint('WindowSettings', 'font_size', fallback=16)
+        size = self.config.getint('WindowSettings', 'font_size', fallback=16)
+        return max(8, min(32, size))  # 8-32の範囲でクランプ
 
     def get_acrobat_path(self) -> str:
         return self.config.get('Paths', 'acrobat_path', fallback=r'C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe')
@@ -61,6 +62,9 @@ class ConfigManager:
         self.save_config()
 
     def set_font_size(self, size: int) -> None:
+        if not 8 <= size <= 32:
+            raise ValueError(f"フォントサイズは8-32の範囲で指定してください: {size}")
+
         if 'WindowSettings' not in self.config:
             self.config['WindowSettings'] = {}
         self.config['WindowSettings']['font_size'] = str(size)
