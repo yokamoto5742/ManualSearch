@@ -13,19 +13,29 @@ class FileOpener:
         self.config_manager = config_manager
         self.acrobat_path: str = self.config_manager.get_acrobat_path()
 
+    SUPPORTED_EXTENSIONS = {
+        '.pdf': '_open_pdf_file',
+        '.txt': '_open_text_file',
+        '.md': '_open_text_file'
+    }
+
     def open_file(self, file_path: str, position: int, search_terms: List[str]) -> None:
         if not os.path.exists(file_path):
             self._show_error("ファイルが存在しません。")
             return
 
         file_extension = os.path.splitext(file_path)[1].lower()
+        handler_method = self.SUPPORTED_EXTENSIONS.get(file_extension)
 
-        if file_extension == '.pdf':
-            self._open_pdf_file(file_path, position, search_terms)
-        elif file_extension in ['.txt', '.md']:
-            self._open_text_file(file_path, search_terms)
-        else:
+        if not handler_method:
             self._show_error("サポートされていないファイル形式です。")
+            return
+
+        method = getattr(self, handler_method)
+        if file_extension == '.pdf':
+            method(file_path, position, search_terms)
+        else:
+            method(file_path, search_terms)
 
     def _open_pdf_file(self, file_path: str, position: int, search_terms: List[str]) -> None:
         try:
