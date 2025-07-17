@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QStyleFactory, QApplication
 )
 
-from app.auto_close_message import AutoCloseMessage
+from widgets.auto_close_message_widget import AutoCloseMessage
 from service.file_opener import FileOpener
 from utils.config_manager import ConfigManager
 from widgets.directory_widget import DirectoryWidget
