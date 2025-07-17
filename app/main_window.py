@@ -107,12 +107,17 @@ class MainWindow(QMainWindow):
     def open_file(self) -> None:
         try:
             file_path, position = self.results_widget.get_selected_file_info()
+            if not file_path:
+                return
             search_terms = self.search_widget.get_search_terms()
             self.file_opener.open_file(file_path, position, search_terms)
         except FileNotFoundError:
-            self.auto_close_message.show_message("ファイルが見つかりません", 2000)
+            self._show_error_message("ファイルが見つかりません")
         except Exception as e:
-            self.auto_close_message.show_message(f"ファイルを開く際にエラーが発生しました: {str(e)}", 2000)
+            self._show_error_message(f"ファイルを開く際にエラーが発生しました: {e}")
+
+    def _show_error_message(self, message: str) -> None:
+        self.auto_close_message.show_message(message, 2000)
 
     def open_folder(self) -> None:
         try:
