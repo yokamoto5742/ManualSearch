@@ -6,9 +6,9 @@ from PyQt5.QtWidgets import (
     QStyleFactory, QApplication
 )
 
-from widgets.auto_close_message_widget import AutoCloseMessage
 from service.file_opener import FileOpener
 from utils.config_manager import ConfigManager
+from widgets.auto_close_message_widget import AutoCloseMessage
 from widgets.directory_widget import DirectoryWidget
 from widgets.results_widget import ResultsWidget
 from widgets.search_widget import SearchWidget
@@ -20,7 +20,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.config_manager = config_manager
 
-        self.setWindowTitle(f"マニュアル検索アプリ v{VERSION}")
+        self.setWindowTitle(f"マニュアル検索 v{VERSION}")
         QApplication.setStyle(QStyleFactory.create('Fusion'))
 
         self._setup_window_geometry()
