@@ -73,26 +73,26 @@ class FileSearcher(QThread):
     def search_file(self, file_path: str) -> Optional[Tuple[str, List[Tuple[int, str]]]]:
         normalized_path = normalize_path(file_path)
         if not check_file_accessibility(normalized_path):
-            print(f"ファイルにアクセスできません: {normalized_path}")
             return None
 
         file_extension = os.path.splitext(normalized_path)[1].lower()
 
-        try:
-            if file_extension == '.pdf':
-                return self.search_pdf(normalized_path)
-            elif file_extension in ['.txt', '.md']:
-                return self.search_text(normalized_path)
-            else:
-                raise ValueError(f"サポートされていないファイル形式: {file_extension}")
-        except IOError as e:
-            print(f"I/Oエラー: {normalized_path} - {str(e)}")
-        except ValueError as e:
-            print(f"値エラー: {normalized_path} - {str(e)}")
-        except Exception as e:
-            print(f"予期せぬエラー: {normalized_path} - {str(e)}")
+        search_methods = {
+            '.pdf': self.search_pdf,
+            '.txt': self.search_text,
+            '.md': self.search_text
+        }
 
-        return None
+        search_method = search_methods.get(file_extension)
+        if not search_method:
+            print(f"サポートされていないファイル形式: {file_extension}")
+            return None
+
+        try:
+            return search_method(normalized_path)
+        except Exception as e:
+            print(f"検索エラー: {normalized_path} - {e}")
+            return None
 
     def search_pdf(self, file_path: str) -> Optional[Tuple[str, List[Tuple[int, str]]]]:
         results = []
