@@ -1,13 +1,39 @@
 ============================================================
-プロジェクト構造: scripts
-パス: C:\Users\yokam\PycharmProjects\ManualSearch\scripts
-生成日時: 2025-07-17 18:24:07
+プロジェクト構造: ManualSearch
+パス: C:\Users\yokam\PycharmProjects\ManualSearch
+生成日時: 2025-07-17 18:31:32
 ============================================================
 
-└── scripts
-    ├── __init__.py
-    └── project_structure.py
-
-============================================================
-除外パターン: *.egg-info, *.log, *.pyc, *.pyd, *.pyo, *.swo, *.swp, *.tmp, *~, .DS_Store, .cacheproject_structure.py, .coverage, .env, .git, .gitignore, .hg, .idea, .npm, .pytest_cache, .svn, .tox, .venv, .vscode, Thumbs.db, __pycache__, build, desktop.ini, dist, env, htmlcov, node_modules, project_structure.txt, tests, venv
-============================================================
+└── ManualSearch
+    ├── app
+    │   ├── __init__.py
+    │   └── main_window.py
+    ├── assets
+    │   ├── ManualSearch.ico
+    │   └── ManualSearch.png
+    ├── docs
+    │   ├── README.md
+    │   └── LICENSE
+    ├── scripts
+    │   └── __init__.py
+    ├── service
+    │   ├── __init__.py
+    │   ├── file_opener.py
+    │   ├── file_searcher.py
+    │   ├── pdf_handler.py
+    │   └── text_handler.py
+    ├── utils
+    │   ├── config.ini
+    │   ├── config_manager.py
+    │   └── helpers.py
+    ├── widgets
+    │   ├── __init__.py
+    │   ├── auto_close_message_widget.py
+    │   ├── directory_widget.py
+    │   ├── results_widget.py
+    │   └── search_widget.py
+    ├── requirements.txt
+    ├── main.py
+    ├── version.py
+    ├── version.txt
+    └── version_manager.py

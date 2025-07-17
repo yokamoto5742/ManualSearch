@@ -8,13 +8,13 @@ class ProjectStructureGenerator:
     def __init__(self):
         self.ignore_patterns = {
             '__pycache__', '*.pyc', '*.pyo', '*.pyd', '.pytest_cache',
-            '*.egg-info', 'dist', 'build', '.tox', '.coverage','htmlcov',
-            '.venv', 'venv', '.env', 'env','tests',
+            '*.egg-info', 'dist', 'build', '.tox', '.coverage', 'htmlcov',
+            '.venv', 'venv', '.env', 'env', 'tests',
             '.vscode', '.idea', '*.swp', '*.swo', '*~',
             '.git', '.gitignore', '.hg', '.svn',
             '.DS_Store', 'Thumbs.db', 'desktop.ini',
             'node_modules', '.npm',
-            '*.log', '*.tmp', '.cache' 'project_structure.py', 'project_structure.txt'
+            '*.log', '*.tmp', '.cache', 'project_structure.py', 'project_structure.txt'
         }
 
         self.important_files = {
@@ -99,13 +99,6 @@ class ProjectStructureGenerator:
 
         print_tree(root)
 
-        output_lines.extend([
-            "",
-            "=" * 60,
-            f"除外パターン: {', '.join(sorted(self.ignore_patterns))}",
-            "=" * 60
-        ])
-
         return "\n".join(output_lines)
 
     def save_to_file(self, content, filename):
@@ -120,14 +113,18 @@ class ProjectStructureGenerator:
 
 
 def main():
+    # 現在のディレクトリがscriptsの場合、親ディレクトリを対象とする
+    current_dir = os.path.basename(os.getcwd())
+    default_path = ".." if current_dir == "scripts" else "."
+
     parser = argparse.ArgumentParser(
         description="Pythonプロジェクトの構造を出力するスクリプト"
     )
     parser.add_argument(
         "path",
         nargs="?",
-        default=".",
-        help="プロジェクトのルートパス (デフォルト: 現在のディレクトリ)"
+        default=default_path,
+        help="プロジェクトのルートパス (デフォルト: プロジェクトルート)"
     )
     parser.add_argument(
         "-o", "--output",
@@ -179,13 +176,19 @@ def main():
         print(f"予期しないエラー: {e}")
 
 
-def quick_structure(path=".", depth=3):
+def quick_structure(path=None, depth=3):
+    if path is None:
+        current_dir = os.path.basename(os.getcwd())
+        path = ".." if current_dir == "scripts" else "."
     generator = ProjectStructureGenerator()
     structure = generator.generate_structure(path, max_depth=depth, show_size=True)
     print(structure)
 
 
-def save_structure(path=".", output_file="project_structure.txt", depth=None):
+def save_structure(path=None, output_file="project_structure.txt", depth=None):
+    if path is None:
+        current_dir = os.path.basename(os.getcwd())
+        path = ".." if current_dir == "scripts" else "."
     generator = ProjectStructureGenerator()
     structure = generator.generate_structure(path, max_depth=depth, show_size=True)
     return generator.save_to_file(structure, output_file)
