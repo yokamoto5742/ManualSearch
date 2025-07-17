@@ -14,7 +14,7 @@ class ProjectStructureGenerator:
             '.git', '.gitignore', '.hg', '.svn',
             '.DS_Store', 'Thumbs.db', 'desktop.ini',
             'node_modules', '.npm',
-            '*.log', '*.tmp', '.cache'
+            '*.log', '*.tmp', '.cache' 'project_structure.py', 'project_structure.txt'
         }
 
         self.important_files = {
