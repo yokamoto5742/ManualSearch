@@ -111,7 +111,6 @@ def generate_html_content(
             'is_markdown': is_markdown,
             'font_size': max(8, min(32, html_font_size or 16)),
             'search_terms': search_terms or [],
-            'stats': stats
         }
 
         return template.render(**template_vars)
