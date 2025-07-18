@@ -142,15 +142,6 @@
         </div>
     </div>
 
-    <div class="file-info">
-        <h1>{{ title }}</h1>
-        <p><strong>ファイルパス:</strong> {{ file_path }}</p>
-        <p><strong>ファイルタイプ:</strong> {{ file_type }}</p>
-        {% if search_terms %}
-        <p><strong>検索語:</strong> {{ search_terms | join(', ') }}</p>
-        {% endif %}
-    </div>
-
     <div id="content">
         {% if is_markdown %}
             <div class="markdown-content">{{ content | safe }}</div>
@@ -158,15 +149,6 @@
             <pre>{{ content | safe }}</pre>
         {% endif %}
     </div>
-
-    {% if stats %}
-    <div class="stats">
-        <p><strong>ファイル統計:</strong></p>
-        <p>文字数: {{ stats.char_count | default('不明') }}</p>
-        <p>行数: {{ stats.line_count | default('不明') }}</p>
-        <p>検索語一致数: {{ stats.highlight_count | default('0') }}</p>
-    </div>
-    {% endif %}
 
     <script>
         var currentFontSize = {{ font_size }};   /* jinja2なのでエラーは無視 */
@@ -177,7 +159,6 @@
             if (currentFontSize > 32) currentFontSize = 32;
             document.body.style.fontSize = currentFontSize + 'px';
 
-            // フォントサイズをローカルストレージに保存
             localStorage.setItem('textViewerFontSize', currentFontSize);
         }
 
