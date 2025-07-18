@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            font-size: {{ font_size }}px;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.4;
+            margin: 0;
+            border: 1px solid #ddd;
+            overflow-x: auto;
+        }
+        .markdown-content {
+            line-height: 1.6;
+            max-width: 100%;
+        }
+        .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        .markdown-content code {
+            background-color: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .markdown-content blockquote {
+            border-left: 4px solid #3498db;
+            margin: 10px 0;
+            padding-left: 15px;
+            color: #666;
+        }
+        #content {
+            max-width: 100%;
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        #controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            min-width: 200px;
+        }
+        #controls button {
+            margin: 2px;
+            padding: 8px 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.3s;
+        }
+        #controls button:hover {
+            background-color: #0056b3;
+        }
+        #controls button:active {
+            transform: scale(0.98);
+        }
+        .file-info {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 5px solid #007bff;
+        }
+        .file-info h1 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-size: 1.5em;
+        }
+        .file-info p {
+            margin: 5px 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .search-highlight {
+            padding: 2px 4px;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .search-highlight:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .stats {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border: 1px solid #dee2e6;
+        }
+        .stats p {
+            margin: 5px 0;
+            font-size: 0.9em;
+            color: #666;
+        }
+        @media (max-width: 768px) {
+            #controls {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin-bottom: 20px;
+            }
+            body {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <div>
+            <button onclick="changeFontSize(1)">文字を大きく</button>
+            <button onclick="changeFontSize(-1)">文字を小さく</button>
+        </div>
+        <div style="margin-top: 8px;">
+            <button onclick="toggleWordWrap()">文字の折り返し</button>
+            <button onclick="scrollToTop()">ページ上部へ</button>
+        </div>
+    </div>
+
+    <div class="file-info">
+        <h1>{{ title }}</h1>
+        <p><strong>ファイルパス:</strong> {{ file_path }}</p>
+        <p><strong>ファイルタイプ:</strong> {{ file_type }}</p>
+        {% if search_terms %}
+        <p><strong>検索語:</strong> {{ search_terms | join(', ') }}</p>
+        {% endif %}
+    </div>
+
+    <div id="content">
+        {% if is_markdown %}
+            <div class="markdown-content">{{ content | safe }}</div>
+        {% else %}
+            <pre>{{ content }}</pre>
+        {% endif %}
+    </div>
+
+    {% if stats %}
+    <div class="stats">
+        <p><strong>ファイル統計:</strong></p>
+        <p>文字数: {{ stats.char_count | default('不明') }}</p>
+        <p>行数: {{ stats.line_count | default('不明') }}</p>
+        <p>検索語一致数: {{ stats.highlight_count | default('0') }}</p>
+    </div>
+    {% endif %}
+
+    <script>
+        var currentFontSize = {{ font_size }};
+
+        function changeFontSize(delta) {
+            currentFontSize += delta;
+            if (currentFontSize < 8) currentFontSize = 8;
+            if (currentFontSize > 32) currentFontSize = 32;
+            document.body.style.fontSize = currentFontSize + 'px';
+
+            // フォントサイズをローカルストレージに保存
+            localStorage.setItem('textViewerFontSize', currentFontSize);
+        }
+
+        function toggleWordWrap() {
+            var content = document.getElementById('content');
+            var pre = content.querySelector('pre');
+            if (pre) {
+                if (pre.style.whiteSpace === 'pre-wrap') {
+                    pre.style.whiteSpace = 'pre';
+                    pre.style.overflowX = 'auto';
+                } else {
+                    pre.style.whiteSpace = 'pre-wrap';
+                    pre.style.overflowX = 'hidden';
+                }
+            }
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 検索語のハイライト効果を追加
+        function highlightSearchTerms() {
+            var highlights = document.querySelectorAll('span[style*="background-color"]');
+            highlights.forEach(function(highlight) {
+                highlight.classList.add('search-highlight');
+            });
+        }
+
+        // ページ読み込み時の初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 保存されたフォントサイズを復元
+            var savedFontSize = localStorage.getItem('textViewerFontSize');
+            if (savedFontSize) {
+                currentFontSize = parseInt(savedFontSize);
+                document.body.style.fontSize = currentFontSize + 'px';
+            }
+
+            // ハイライト効果を適用
+            highlightSearchTerms();
+
+            // キーボードショートカットを追加
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey) {
+                    switch(e.key) {
+                        case '+':
+                        case '=':
+                            e.preventDefault();
+                            changeFontSize(1);
+                            break;
+                        case '-':
+                            e.preventDefault();
+                            changeFontSize(-1);
+                            break;
+                        case 'Home':
+                            e.preventDefault();
+                            scrollToTop();
+                            break;
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

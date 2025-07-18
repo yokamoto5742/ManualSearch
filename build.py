@@ -13,6 +13,7 @@ def build_executable():
         "--windowed",
         "--icon=assets/ManualSearch.ico",
         "--add-data", "utils/config.ini:.",
+        "--add-data", "templates:templates",
         "main.py"
     ])
 

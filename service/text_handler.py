@@ -1,101 +1,71 @@
 import os
 import re
+import sys
 import tempfile
 import webbrowser
-from typing import List
+from typing import List, Optional, Dict, Any
+from dataclasses import dataclass
 
 import markdown
-from jinja2 import Environment, BaseLoader
+from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
 from utils.helpers import read_file_with_auto_encoding
 
 
-class StringTemplateLoader(BaseLoader):
-    """文字列からテンプレートを読み込むカスタムローダー"""
-
-    def __init__(self, template_string: str):
-        self.template_string = template_string
-
-    def get_source(self, environment, template):
-        return self.template_string, None, lambda: True
+@dataclass
+class FileStats:
+    """ファイルの統計情報"""
+    char_count: int
+    line_count: int
+    highlight_count: int
 
 
-# HTMLテンプレート定数
-HTML_TEMPLATE = '''<!DOCTYPE html>
+def get_template_directory() -> str:
+    """テンプレートディレクトリのパスを取得"""
+    if getattr(sys, 'frozen', False):
+        # PyInstallerでビルドされた場合
+        base_path = sys._MEIPASS
+    else:
+        # 通常の実行時
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    return os.path.join(base_path, 'templates')
+
+
+def create_jinja_environment() -> Environment:
+    """Jinja2環境を作成"""
+    template_dir = get_template_directory()
+
+    # テンプレートディレクトリが存在しない場合は作成
+    if not os.path.exists(template_dir):
+        os.makedirs(template_dir)
+        # デフォルトテンプレートを作成
+        create_default_template(template_dir)
+
+    return Environment(
+        loader=FileSystemLoader(template_dir),
+        autoescape=True,
+        trim_blocks=True,
+        lstrip_blocks=True
+    )
+
+
+def create_default_template(template_dir: str) -> None:
+    """デフォルトテンプレートファイルを作成"""
+    default_template = '''<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            padding: 20px; 
-            font-size: {{ font_size }}px;
-            line-height: 1.6;
-            color: #333;
-        }
-        pre { 
-            background-color: #f4f4f4; 
-            padding: 10px; 
-            border-radius: 5px; 
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            line-height: 0.8;
-            margin: 0;
-            border: 1px solid #ddd;
-        }
-        .markdown-content {
-            line-height: 1.2;
-        }
-        #content {
-            max-width: 100%;
-            overflow-x: auto;
-        }
-        #controls {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 1000;
-        }
-        #controls button {
-            margin: 0 5px;
-            padding: 5px 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-        #controls button:hover {
-            background-color: #0056b3;
-        }
-        .file-info {
-            background-color: #e9ecef;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border-left: 4px solid #007bff;
-        }
+        body { font-family: Arial, sans-serif; padding: 20px; font-size: {{ font_size }}px; }
+        pre { background-color: #f4f4f4; padding: 10px; border-radius: 5px; }
+        .markdown-content { line-height: 1.6; }
     </style>
 </head>
 <body>
-    <div id="controls">
-        <button onclick="changeFontSize(1)">文字を大きく</button>
-        <button onclick="changeFontSize(-1)">文字を小さく</button>
-        <button onclick="toggleWordWrap()">文字の折り返し</button>
-    </div>
-
-    <div class="file-info">
-        <h1>{{ title }}</h1>
-        <p>ファイルパス: {{ file_path }}</p>
-        <p>ファイルタイプ: {{ file_type }}</p>
-    </div>
-
+    <h1>{{ title }}</h1>
     <div id="content">
         {% if is_markdown %}
             <div class="markdown-content">{{ content | safe }}</div>
@@ -103,50 +73,12 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
             <pre>{{ content }}</pre>
         {% endif %}
     </div>
-
-    <script>
-        var currentFontSize = {{ font_size }};
-
-        function changeFontSize(delta) {
-            currentFontSize += delta;
-            if (currentFontSize < 8) currentFontSize = 8;
-            if (currentFontSize > 32) currentFontSize = 32;
-            document.body.style.fontSize = currentFontSize + 'px';
-        }
-
-        function toggleWordWrap() {
-            var content = document.getElementById('content');
-            var pre = content.querySelector('pre');
-            if (pre) {
-                if (pre.style.whiteSpace === 'pre-wrap') {
-                    pre.style.whiteSpace = 'pre';
-                    pre.style.overflowX = 'auto';
-                } else {
-                    pre.style.whiteSpace = 'pre-wrap';
-                    pre.style.overflowX = 'hidden';
-                }
-            }
-        }
-
-        // 検索語のハイライト効果を追加
-        function highlightSearchTerms() {
-            var highlights = document.querySelectorAll('span[style*="background-color"]');
-            highlights.forEach(function(highlight) {
-                highlight.style.transition = 'all 0.3s ease';
-                highlight.addEventListener('mouseenter', function() {
-                    this.style.transform = 'scale(1.05)';
-                });
-                highlight.addEventListener('mouseleave', function() {
-                    this.style.transform = 'scale(1)';
-                });
-            });
-        }
-
-        // ページ読み込み時にハイライト効果を適用
-        document.addEventListener('DOMContentLoaded', highlightSearchTerms);
-    </script>
 </body>
 </html>'''
+
+    template_path = os.path.join(template_dir, 'text_viewer.html')
+    with open(template_path, 'w', encoding='utf-8') as f:
+        f.write(default_template)
 
 
 def open_text_file(file_path: str, search_terms: List[str], html_font_size: int) -> None:
@@ -168,13 +100,34 @@ def highlight_text_file(file_path: str, search_terms: List[str], html_font_size:
     file_extension = os.path.splitext(file_path)[1].lower()
     is_markdown = file_extension == '.md'
 
+    # 統計情報を計算
+    stats = calculate_file_stats(content, search_terms)
+
     if is_markdown:
         content = markdown.markdown(content, extensions=['nl2br'])  # 改行を<br>に変換
 
     content = highlight_search_terms(content, search_terms)
-    html_content = generate_html_content(file_path, content, is_markdown, html_font_size)
+    html_content = generate_html_content(file_path, content, is_markdown, html_font_size, search_terms, stats)
 
     return create_temp_html_file(html_content)
+
+
+def calculate_file_stats(content: str, search_terms: List[str]) -> FileStats:
+    """ファイルの統計情報を計算"""
+    char_count = len(content)
+    line_count = content.count('\n') + 1 if content else 0
+
+    # 検索語の一致数を計算
+    highlight_count = 0
+    for term in search_terms:
+        if term.strip():
+            highlight_count += len(re.findall(re.escape(term.strip()), content, re.IGNORECASE))
+
+    return FileStats(
+        char_count=char_count,
+        line_count=line_count,
+        highlight_count=highlight_count
+    )
 
 
 def highlight_search_terms(content: str, search_terms: List[str]) -> str:
@@ -200,31 +153,41 @@ def highlight_search_terms(content: str, search_terms: List[str]) -> str:
     return content
 
 
-def generate_html_content(file_path: str, content: str, is_markdown: bool, html_font_size: int) -> str:
-    """Jinja2テンプレートを使用してHTMLコンテンツを生成する"""
-    # テンプレートローダーを作成
-    loader = StringTemplateLoader(HTML_TEMPLATE)
-    env = Environment(loader=loader)
+def generate_html_content(
+        file_path: str,
+        content: str,
+        is_markdown: bool,
+        html_font_size: int,
+        search_terms: Optional[List[str]] = None,
+        stats: Optional[FileStats] = None
+) -> str:
+    """外部テンプレートを使用してHTMLコンテンツを生成する"""
+    try:
+        env = create_jinja_environment()
+        template = env.get_template('text_viewer.html')
 
-    # テンプレートをレンダリング
-    template = env.get_template('template')
+        # ファイルタイプの判定
+        file_extension = os.path.splitext(file_path)[1].lower()
+        file_type = get_file_type_display_name(file_extension)
 
-    # ファイルタイプの判定
-    file_extension = os.path.splitext(file_path)[1].lower()
-    file_type_map = {
-        '.txt': 'テキストファイル',
-        '.md': 'Markdownファイル',
-        '.pdf': 'PDFファイル'
-    }
+        # テンプレート変数を準備
+        template_vars = {
+            'title': os.path.basename(file_path),
+            'file_path': file_path,
+            'file_type': file_type,
+            'content': content,
+            'is_markdown': is_markdown,
+            'font_size': html_font_size,
+            'search_terms': search_terms or [],
+            'stats': stats
+        }
 
-    return template.render(
-        title=os.path.basename(file_path),
-        file_path=file_path,
-        file_type=file_type_map.get(file_extension, '不明なファイル'),
-        content=content,
-        is_markdown=is_markdown,
-        font_size=html_font_size
-    )
+        return template.render(**template_vars)
+
+    except TemplateNotFound as e:
+        raise FileNotFoundError(f"テンプレートファイルが見つかりません: {e}")
+    except Exception as e:
+        raise RuntimeError(f"HTMLテンプレートの処理中にエラーが発生しました: {e}")
 
 
 def create_temp_html_file(html_content: str) -> str:
@@ -242,6 +205,35 @@ def get_file_type_display_name(file_extension: str) -> str:
     file_type_map = {
         '.txt': 'テキストファイル',
         '.md': 'Markdownファイル',
-        '.pdf': 'PDFファイル'
+        '.pdf': 'PDFファイル',
+        '.py': 'Pythonファイル',
+        '.js': 'JavaScriptファイル',
+        '.html': 'HTMLファイル',
+        '.css': 'CSSファイル',
+        '.json': 'JSONファイル',
+        '.xml': 'XMLファイル',
+        '.yaml': 'YAMLファイル',
+        '.yml': 'YAMLファイル'
     }
     return file_type_map.get(file_extension.lower(), '不明なファイル')
+
+
+def validate_template_file() -> bool:
+    """テンプレートファイルの存在を確認"""
+    template_dir = get_template_directory()
+    template_path = os.path.join(template_dir, 'text_viewer.html')
+    return os.path.exists(template_path)
+
+
+def get_available_templates() -> List[str]:
+    """利用可能なテンプレートファイルの一覧を取得"""
+    template_dir = get_template_directory()
+    if not os.path.exists(template_dir):
+        return []
+
+    templates = []
+    for file in os.listdir(template_dir):
+        if file.endswith('.html'):
+            templates.append(file)
+
+    return templates
