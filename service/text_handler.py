@@ -1,3 +1,4 @@
+import html
 import os
 import re
 import sys
@@ -105,8 +106,12 @@ def highlight_text_file(file_path: str, search_terms: List[str], html_font_size:
 
     if is_markdown:
         content = markdown.markdown(content, extensions=['nl2br'])  # 改行を<br>に変換
+    else:
+        # テキストファイルの場合はHTMLエスケープ
+        content = html.escape(content)
 
     content = highlight_search_terms(content, search_terms)
+
     html_content = generate_html_content(file_path, content, is_markdown, html_font_size, search_terms, stats)
 
     return create_temp_html_file(html_content)

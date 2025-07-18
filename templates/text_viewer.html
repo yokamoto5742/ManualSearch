@@ -155,7 +155,7 @@
         {% if is_markdown %}
             <div class="markdown-content">{{ content | safe }}</div>
         {% else %}
-            <pre>{{ content }}</pre>
+            <pre>{{ content | safe }}</pre>
         {% endif %}
     </div>
 
