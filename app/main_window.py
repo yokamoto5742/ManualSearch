@@ -6,13 +6,13 @@ from PyQt5.QtWidgets import (
     QStyleFactory, QApplication
 )
 
+from scripts.version import VERSION
 from service.file_opener import FileOpener
 from utils.config_manager import ConfigManager
 from widgets.auto_close_message_widget import AutoCloseMessage
 from widgets.directory_widget import DirectoryWidget
 from widgets.results_widget import ResultsWidget
 from widgets.search_widget import SearchWidget
-from version import VERSION
 
 
 class MainWindow(QMainWindow):
