@@ -2,7 +2,7 @@ import os
 import re
 from datetime import datetime
 
-VERSION_FILE = "version.txt"
+VERSION_FILE = "current_version.txt"
 
 
 def get_current_version():
