@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QStyleFactory, QApplication
 )
 
-from scripts.version import VERSION
+from app import __version__
 from service.file_opener import FileOpener
 from utils.config_manager import ConfigManager
 from widgets.auto_close_message_widget import AutoCloseMessage
@@ -20,7 +20,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.config_manager = config_manager
 
-        self.setWindowTitle(f"マニュアル検索 v{VERSION}")
+        self.setWindowTitle(f"マニュアル検索 v{__version__}")
         QApplication.setStyle(QStyleFactory.create('Fusion'))
 
         self._setup_window_geometry()
