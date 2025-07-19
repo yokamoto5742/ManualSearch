@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (
 from app import __version__
 from service.file_opener import FileOpener
 from utils.config_manager import ConfigManager
+from utils.helpers import create_confirmation_dialog
 from widgets.auto_close_message_widget import AutoCloseMessage
 from widgets.directory_widget import DirectoryWidget
 from widgets.results_widget import ResultsWidget
@@ -127,7 +128,8 @@ class MainWindow(QMainWindow):
             self.auto_close_message.show_message(f"フォルダを開く際にエラーが発生しました: {str(e)}", 2000)
 
     def close_application(self) -> None:
-        msg_box = self._create_confirmation_dialog(
+        msg_box = create_confirmation_dialog(
+            self,
             '確認',
             "検索を終了しますか?",
             QMessageBox.Yes
@@ -137,29 +139,6 @@ class MainWindow(QMainWindow):
         if reply == QMessageBox.Yes:
             QApplication.instance().quit()
 
-    def _create_confirmation_dialog(self, title: str, message: str,
-                                    default_button: QMessageBox.StandardButton) -> QMessageBox:
-        msg_box = QMessageBox(self)
-        msg_box.setWindowTitle(title)
-        msg_box.setText(message)
-        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-
-        button_style = """
-        QPushButton {
-            min-width: 100px;
-            text-align: center;
-        }
-        """
-
-        yes_button = msg_box.button(QMessageBox.Yes)
-        yes_button.setText('はい')
-        yes_button.setStyleSheet(button_style)
-        no_button = msg_box.button(QMessageBox.No)
-        no_button.setText('いいえ')
-        no_button.setStyleSheet(button_style)
-
-        msg_box.setDefaultButton(default_button)
-        return msg_box
 
     def closeEvent(self, event) -> None:
         try:

@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (
 )
 
 from utils.config_manager import ConfigManager
+from utils.helpers import create_confirmation_dialog
 
 
 class DirectoryWidget(QWidget):
@@ -144,7 +145,8 @@ class DirectoryWidget(QWidget):
             return
 
         try:
-            msg_box = self._create_confirmation_dialog(
+            msg_box = create_confirmation_dialog(
+                self,
                 '確認',
                 f"「{current_dir}」を削除しますか？",
                 QMessageBox.No
@@ -161,27 +163,3 @@ class DirectoryWidget(QWidget):
             QMessageBox.warning(self, "警告", "指定されたディレクトリが見つかりません。")
         except Exception as e:
             QMessageBox.critical(self, "エラー", f"ディレクトリの削除中にエラーが発生しました: {str(e)}")
-
-    def _create_confirmation_dialog(self, title: str, message: str, default_button: QMessageBox.StandardButton) -> QMessageBox:
-        msg_box = QMessageBox(self)
-        msg_box.setWindowTitle(title)
-        msg_box.setText(message)
-        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-
-        button_style = """
-        QPushButton {
-            min-width: 100px;
-            text-align: center;
-        }
-        """
-
-        yes_button = msg_box.button(QMessageBox.Yes)
-        yes_button.setText('はい')
-        yes_button.setStyleSheet(button_style)
-        no_button = msg_box.button(QMessageBox.No)
-        no_button.setText('いいえ')
-        no_button.setStyleSheet(button_style)
-
-        msg_box.setDefaultButton(default_button)
-
-        return msg_box

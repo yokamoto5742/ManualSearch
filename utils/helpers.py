@@ -4,6 +4,7 @@ import socket
 from typing import Optional
 
 import chardet
+from PyQt5.QtWidgets import QMessageBox
 
 
 def normalize_path(file_path: str) -> str:
@@ -47,3 +48,28 @@ def read_file_with_auto_encoding(file_path: str) -> Optional[str]:
         return raw_data.decode(encoding)
     except UnicodeDecodeError as e:
         raise ValueError(f"ファイルのデコードに失敗しました: {file_path}") from e
+
+
+def create_confirmation_dialog(parent, title: str, message: str,
+                               default_button: QMessageBox.StandardButton) -> QMessageBox:
+    msg_box = QMessageBox(parent)
+    msg_box.setWindowTitle(title)
+    msg_box.setText(message)
+    msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+
+    button_style = """
+    QPushButton {
+        min-width: 100px;
+        text-align: center;
+    }
+    """
+
+    yes_button = msg_box.button(QMessageBox.Yes)
+    yes_button.setText('はい')
+    yes_button.setStyleSheet(button_style)
+    no_button = msg_box.button(QMessageBox.No)
+    no_button.setText('いいえ')
+    no_button.setStyleSheet(button_style)
+
+    msg_box.setDefaultButton(default_button)
+    return msg_box
