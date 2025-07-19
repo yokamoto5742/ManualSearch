@@ -14,6 +14,7 @@ from service.file_searcher import FileSearcher
 
 class ResultsWidget(QWidget):
     result_selected = pyqtSignal()
+    file_open_requested = pyqtSignal()
 
     def __init__(self, config_manager):
         super().__init__()
@@ -35,6 +36,7 @@ class ResultsWidget(QWidget):
 
         self.results_list = QListWidget()
         self.results_list.itemClicked.connect(self.show_result)
+        self.results_list.itemDoubleClicked.connect(self.on_item_double_clicked)
         layout.addWidget(self.results_list)
 
         self.result_display = QTextEdit()
@@ -103,6 +105,17 @@ class ResultsWidget(QWidget):
         if file_path.lower().endswith('.pdf'):
             return f"{file_name} (ページ: {position}, 一致: {index + 1})"
         return f"{file_name} (行: {position}, 一致: {index + 1})"
+
+    def on_item_double_clicked(self, item: QListWidgetItem) -> None:
+        try:
+            file_path, position, context = item.data(Qt.UserRole)
+            self.current_file_path = file_path
+            self.current_position = position
+            self.file_open_requested.emit()
+        except (AttributeError, TypeError) as e:
+            print(f"エラー: ダブルクリック処理中にエラーが発生しました: {e}")
+        except Exception as e:
+            print(f"予期せぬエラーが発生しました: {e}")
 
     def show_result(self, item: QListWidgetItem) -> None:
         try:

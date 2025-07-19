@@ -81,6 +81,7 @@ class MainWindow(QMainWindow):
     def _connect_signals(self) -> None:
         self.search_widget.search_requested.connect(self.start_search)
         self.results_widget.result_selected.connect(self.enable_open_buttons)
+        self.results_widget.file_open_requested.connect(self.open_file)
 
     def start_search(self) -> None:
         search_terms = self.search_widget.get_search_terms()
