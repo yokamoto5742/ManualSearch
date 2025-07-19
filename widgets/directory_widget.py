@@ -1,5 +1,6 @@
 import os
 
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QPushButton, QCheckBox,
     QFileDialog, QInputDialog, QMessageBox, QLineEdit, QSizePolicy
@@ -9,6 +10,8 @@ from utils.config_manager import ConfigManager
 
 
 class DirectoryWidget(QWidget):
+    open_folder_requested = pyqtSignal()
+
     def __init__(self, config_manager: 'ConfigManager') -> None:
         super().__init__()
         self.config_manager = config_manager
@@ -55,41 +58,24 @@ class DirectoryWidget(QWidget):
         self.include_subdirs_checkbox = QCheckBox("サブフォルダを含む")
         self.include_subdirs_checkbox.setChecked(True)
 
-        close_button = QPushButton("閉じる")
-        close_button.clicked.connect(self.close_application)
+        self.open_folder_button = QPushButton("フォルダを開く")
+        self.open_folder_button.clicked.connect(self.open_folder_requested.emit)
+        self.open_folder_button.setEnabled(False)
 
         button_layout.addWidget(dir_add_button)
         button_layout.addWidget(dir_edit_button)
         button_layout.addWidget(dir_delete_button)
         button_layout.addWidget(self.include_subdirs_checkbox)
         button_layout.addStretch(1)
-        button_layout.addWidget(close_button)
+        button_layout.addWidget(self.open_folder_button)
 
         return button_layout
 
-    def _create_confirmation_dialog(self, title: str, message: str, default_button: QMessageBox.StandardButton) -> QMessageBox:
-        msg_box = QMessageBox(self)
-        msg_box.setWindowTitle(title)
-        msg_box.setText(message)
-        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+    def enable_open_folder_button(self) -> None:
+        self.open_folder_button.setEnabled(True)
 
-        button_style = """
-        QPushButton {
-            min-width: 100px;
-            text-align: center;
-        }
-        """
-
-        yes_button = msg_box.button(QMessageBox.Yes)
-        yes_button.setText('はい')
-        yes_button.setStyleSheet(button_style)
-        no_button = msg_box.button(QMessageBox.No)
-        no_button.setText('いいえ')
-        no_button.setStyleSheet(button_style)
-
-        msg_box.setDefaultButton(default_button)
-
-        return msg_box
+    def disable_open_folder_button(self) -> None:
+        self.open_folder_button.setEnabled(False)
 
     def get_selected_directory(self) -> str:
         return self.dir_combo.currentText()
@@ -176,14 +162,26 @@ class DirectoryWidget(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "エラー", f"ディレクトリの削除中にエラーが発生しました: {str(e)}")
 
-    def close_application(self):
-        msg_box = self._create_confirmation_dialog(
-            '確認',
-            "検索を終了しますか?",
-            QMessageBox.Yes
-        )
+    def _create_confirmation_dialog(self, title: str, message: str, default_button: QMessageBox.StandardButton) -> QMessageBox:
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(message)
+        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 
-        reply = msg_box.exec_()
+        button_style = """
+        QPushButton {
+            min-width: 100px;
+            text-align: center;
+        }
+        """
 
-        if reply == QMessageBox.Yes:
-            QApplication.instance().quit()
+        yes_button = msg_box.button(QMessageBox.Yes)
+        yes_button.setText('はい')
+        yes_button.setStyleSheet(button_style)
+        no_button = msg_box.button(QMessageBox.No)
+        no_button.setText('いいえ')
+        no_button.setStyleSheet(button_style)
+
+        msg_box.setDefaultButton(default_button)
+
+        return msg_box

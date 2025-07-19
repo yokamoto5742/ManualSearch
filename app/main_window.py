@@ -3,7 +3,7 @@ import os
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
-    QStyleFactory, QApplication
+    QStyleFactory, QApplication, QMessageBox
 )
 
 from app import __version__
@@ -27,7 +27,7 @@ class MainWindow(QMainWindow):
         self._setup_font()
         self._setup_main_layout()
         self._setup_widgets()
-        self._setup_buttons()
+        self._setup_close_button()
         self._connect_signals()
 
     def _setup_window_geometry(self) -> None:
@@ -63,25 +63,21 @@ class MainWindow(QMainWindow):
         self.file_opener = FileOpener(self.config_manager)
         self.auto_close_message = AutoCloseMessage(self)
 
-    def _setup_buttons(self) -> None:
-        button_layout = QHBoxLayout()
+    def _setup_close_button(self) -> None:
+        close_button_layout = QHBoxLayout()
+        close_button_layout.addStretch(1)
 
-        self.open_file_button = QPushButton("ファイルを開く")
-        self.open_file_button.clicked.connect(self.open_file)
-        self.open_file_button.setEnabled(False)
-        button_layout.addWidget(self.open_file_button)
+        self.close_button = QPushButton("終了")
+        self.close_button.clicked.connect(self.close_application)
+        close_button_layout.addWidget(self.close_button)
 
-        self.open_folder_button = QPushButton("フォルダを開く")
-        self.open_folder_button.clicked.connect(self.open_folder)
-        self.open_folder_button.setEnabled(False)
-        button_layout.addWidget(self.open_folder_button)
-
-        self.main_layout.addLayout(button_layout)
+        self.main_layout.addLayout(close_button_layout)
 
     def _connect_signals(self) -> None:
         self.search_widget.search_requested.connect(self.start_search)
         self.results_widget.result_selected.connect(self.enable_open_buttons)
         self.results_widget.file_open_requested.connect(self.open_file)
+        self.directory_widget.open_folder_requested.connect(self.open_folder)
 
     def start_search(self) -> None:
         search_terms = self.search_widget.get_search_terms()
@@ -93,8 +89,7 @@ class MainWindow(QMainWindow):
             return
 
         self.results_widget.clear_results()
-        self.open_file_button.setEnabled(False)
-        self.open_folder_button.setEnabled(False)
+        self.directory_widget.disable_open_folder_button()
 
         try:
             self.results_widget.perform_search(directory, search_terms, include_subdirs, search_type)
@@ -102,8 +97,7 @@ class MainWindow(QMainWindow):
             self.auto_close_message.show_message(f"検索中にエラーが発生しました: {str(e)}", 5000)
 
     def enable_open_buttons(self) -> None:
-        self.open_file_button.setEnabled(True)
-        self.open_folder_button.setEnabled(True)
+        self.directory_widget.enable_open_folder_button()
 
     def open_file(self) -> None:
         try:
@@ -123,12 +117,49 @@ class MainWindow(QMainWindow):
     def open_folder(self) -> None:
         try:
             file_path, _ = self.results_widget.get_selected_file_info()
+            if not file_path:
+                return
             folder_path = os.path.dirname(file_path)
             self.file_opener.open_folder(folder_path)
         except FileNotFoundError:
             self.auto_close_message.show_message("フォルダが見つかりません", 2000)
         except Exception as e:
             self.auto_close_message.show_message(f"フォルダを開く際にエラーが発生しました: {str(e)}", 2000)
+
+    def close_application(self) -> None:
+        msg_box = self._create_confirmation_dialog(
+            '確認',
+            "検索を終了しますか?",
+            QMessageBox.Yes
+        )
+
+        reply = msg_box.exec_()
+        if reply == QMessageBox.Yes:
+            QApplication.instance().quit()
+
+    def _create_confirmation_dialog(self, title: str, message: str,
+                                    default_button: QMessageBox.StandardButton) -> QMessageBox:
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(message)
+        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+
+        button_style = """
+        QPushButton {
+            min-width: 100px;
+            text-align: center;
+        }
+        """
+
+        yes_button = msg_box.button(QMessageBox.Yes)
+        yes_button.setText('はい')
+        yes_button.setStyleSheet(button_style)
+        no_button = msg_box.button(QMessageBox.No)
+        no_button.setText('いいえ')
+        no_button.setStyleSheet(button_style)
+
+        msg_box.setDefaultButton(default_button)
+        return msg_box
 
     def closeEvent(self, event) -> None:
         try:
