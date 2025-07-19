@@ -41,6 +41,10 @@ class ResultsWidget(QWidget):
 
         self.result_display = QTextEdit()
         self.result_display.setReadOnly(True)
+        # テキスト選択を有効にする
+        self.result_display.setTextInteractionFlags(
+            Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard
+        )
         layout.addWidget(self.result_display)
 
     def _setup_fonts(self) -> None:
