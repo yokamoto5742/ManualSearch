@@ -3,7 +3,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Tuple, Optional
 
-import PyPDF2
+import fitz
 from PyQt5.QtCore import QThread, pyqtSignal
 
 from constants import (
@@ -84,7 +84,7 @@ class FileSearcher(QThread):
         file_extension = os.path.splitext(normalized_path)[1].lower()
 
         search_methods = {
-            ext: getattr(self, method_name) 
+            ext: getattr(self, method_name)
             for ext, method_name in SEARCH_METHODS_MAPPING.items()
         }
 
@@ -101,22 +101,25 @@ class FileSearcher(QThread):
 
     def search_pdf(self, file_path: str) -> Optional[Tuple[str, List[Tuple[int, str]]]]:
         results = []
+        doc = None
         try:
-            with open(file_path, 'rb') as file:
-                reader = PyPDF2.PdfReader(file)
-                for page_num, page in enumerate(reader.pages):
-                    text = page.extract_text()
-                    if self.match_search_terms(text):
-                        for search_term in self.search_terms:
-                            for match in re.finditer(re.escape(search_term), text, re.IGNORECASE):
-                                start = max(0, match.start() - self.context_length)
-                                end = min(len(text), match.end() + self.context_length)
-                                context = text[start:end]
-                                results.append((page_num + 1, context))
-                    if len(results) >= MAX_SEARCH_RESULTS_PER_FILE:
-                        break
+            doc = fitz.open(file_path)
+            for page_num, page in enumerate(doc):
+                text = page.get_text()
+                if self.match_search_terms(text):
+                    for search_term in self.search_terms:
+                        for match in re.finditer(re.escape(search_term), text, re.IGNORECASE):
+                            start = max(0, match.start() - self.context_length)
+                            end = min(len(text), match.end() + self.context_length)
+                            context = text[start:end]
+                            results.append((page_num + 1, context))
+                if len(results) >= MAX_SEARCH_RESULTS_PER_FILE:
+                    break
         except Exception as e:
             print(f"PDFの処理中にエラーが発生しました: {file_path} - {str(e)}")
+        finally:
+            if doc is not None:
+                doc.close()
         return (file_path, results) if results else None
 
     def search_text(self, file_path: str) -> Optional[Tuple[str, List[Tuple[int, str]]]]:
