@@ -21,7 +21,7 @@ class ConfigManager:
     def load_config(self) -> None:
         if os.path.exists(self.config_file):
             try:
-                with open(self.config_file, 'r', encoding='utf-8') as configfile:
+                with open(self.config_file, encoding='utf-8') as configfile:
                     self.config.read_file(configfile)
             except UnicodeDecodeError:
                 content = read_file_with_auto_encoding(self.config_file)
@@ -131,46 +131,35 @@ class ConfigManager:
         self.config['UISettings']['html_font_size'] = str(size)
         self.save_config()
 
-def get_pdf_timeout(self) -> int:
-    """PDF処理のタイムアウト時間を取得（秒）"""
-    return self.config.getint('PDFSettings', 'timeout', fallback=30)
+    def get_pdf_timeout(self) -> int:
+        return self.config.getint('PDFSettings', 'timeout', fallback=30)
 
+    def set_pdf_timeout(self, timeout: int) -> None:
+        if not 10 <= timeout <= 120:
+            raise ValueError(f"タイムアウトは10-120秒の範囲で指定してください: {timeout}")
 
-def set_pdf_timeout(self, timeout: int) -> None:
-    """PDF処理のタイムアウト時間を設定"""
-    if not 10 <= timeout <= 120:
-        raise ValueError(f"タイムアウトは10-120秒の範囲で指定してください: {timeout}")
+        if 'PDFSettings' not in self.config:
+            self.config['PDFSettings'] = {}
+        self.config['PDFSettings']['timeout'] = str(timeout)
+        self.save_config()
 
-    if 'PDFSettings' not in self.config:
-        self.config['PDFSettings'] = {}
-    self.config['PDFSettings']['timeout'] = str(timeout)
-    self.save_config()
+    def get_cleanup_temp_files(self) -> bool:
+        return self.config.getboolean('PDFSettings', 'cleanup_temp_files', fallback=True)
 
+    def set_cleanup_temp_files(self, cleanup: bool) -> None:
+        if 'PDFSettings' not in self.config:
+            self.config['PDFSettings'] = {}
+        self.config['PDFSettings']['cleanup_temp_files'] = str(cleanup)
+        self.save_config()
 
-def get_cleanup_temp_files(self) -> bool:
-    """一時ファイルの自動クリーンアップ設定を取得"""
-    return self.config.getboolean('PDFSettings', 'cleanup_temp_files', fallback=True)
+    def get_max_temp_files(self) -> int:
+        return self.config.getint('PDFSettings', 'max_temp_files', fallback=10)
 
+    def set_max_temp_files(self, max_files: int) -> None:
+        if not 1 <= max_files <= 50:
+            raise ValueError(f"最大ファイル数は1-50の範囲で指定してください: {max_files}")
 
-def set_cleanup_temp_files(self, cleanup: bool) -> None:
-    """一時ファイルの自動クリーンアップ設定"""
-    if 'PDFSettings' not in self.config:
-        self.config['PDFSettings'] = {}
-    self.config['PDFSettings']['cleanup_temp_files'] = str(cleanup)
-    self.save_config()
-
-
-def get_max_temp_files(self) -> int:
-    """保持する一時ファイルの最大数を取得"""
-    return self.config.getint('PDFSettings', 'max_temp_files', fallback=10)
-
-
-def set_max_temp_files(self, max_files: int) -> None:
-    """保持する一時ファイルの最大数を設定"""
-    if not 1 <= max_files <= 50:
-        raise ValueError(f"最大ファイル数は1-50の範囲で指定してください: {max_files}")
-
-    if 'PDFSettings' not in self.config:
-        self.config['PDFSettings'] = {}
-    self.config['PDFSettings']['max_temp_files'] = str(max_files)
-    self.save_config()
+        if 'PDFSettings' not in self.config:
+            self.config['PDFSettings'] = {}
+        self.config['PDFSettings']['max_temp_files'] = str(max_files)
+        self.save_config()

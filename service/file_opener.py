@@ -13,7 +13,7 @@ class FileOpener:
     def __init__(self, config_manager):
         self.config_manager = config_manager
         self.acrobat_path: str = self.config_manager.get_acrobat_path()
-        self._last_opened_file: str = ""  # 最後に開いたファイルを追跡
+        self._last_opened_file: str = ""
 
     SUPPORTED_EXTENSIONS = {
         '.pdf': '_open_pdf_file',
@@ -33,12 +33,10 @@ class FileOpener:
             self._show_error("サポートされていないファイル形式です。")
             return
 
-        # 前回と同じファイルかチェック
         if file_path == self._last_opened_file and file_extension == '.pdf':
             print(f"同じPDFファイルを再度開きます: {os.path.basename(file_path)}")
-            # 一時的にクリーンアップを実行
             cleanup_temp_files()
-            time.sleep(0.5)  # 少し待機
+            time.sleep(0.5)
 
         try:
             method = getattr(self, handler_method)
@@ -47,22 +45,18 @@ class FileOpener:
             else:
                 method(file_path, search_terms)
 
-            # 成功した場合、最後に開いたファイルを更新
             self._last_opened_file = file_path
 
         except Exception as e:
             self._show_error(f"ファイルを開く際にエラーが発生しました: {e}")
-            # エラーが発生した場合もクリーンアップを実行
             if file_extension == '.pdf':
                 cleanup_temp_files()
 
     def _open_pdf_file(self, file_path: str, position: int, search_terms: List[str]) -> None:
         try:
-            # PDFファイルのアクセス可能性を事前チェック
             if not self._check_pdf_accessibility(file_path):
                 raise IOError("PDFファイルにアクセスできません")
 
-            # Acrobatパスの存在確認
             if not os.path.exists(self.acrobat_path):
                 raise FileNotFoundError(f"Adobe Acrobat Readerが見つかりません: {self.acrobat_path}")
 
@@ -79,11 +73,8 @@ class FileOpener:
             raise
 
     def _check_pdf_accessibility(self, file_path: str) -> bool:
-        """PDFファイルのアクセス可能性をチェック"""
         try:
-            # ファイルを読み取りモードで開いて即座に閉じる
             with open(file_path, 'rb') as f:
-                # 最初の数バイトを読んでPDFかどうか確認
                 header = f.read(4)
                 if not header.startswith(b'%PDF'):
                     return False
@@ -113,7 +104,6 @@ class FileOpener:
             self._show_error(f"フォルダを開く際にエラーが発生しました: {e}")
 
     def cleanup_resources(self) -> None:
-        """リソースのクリーンアップ"""
         try:
             cleanup_temp_files()
             self._last_opened_file = ""

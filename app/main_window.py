@@ -69,7 +69,7 @@ class MainWindow(QMainWindow):
         close_button_layout = QHBoxLayout()
         close_button_layout.addStretch(1)
 
-        self.close_button = QPushButton("終了")
+        self.close_button = QPushButton("閉じる")
         self.close_button.clicked.connect(self.close_application)
         close_button_layout.addWidget(self.close_button)
 
@@ -138,7 +138,6 @@ class MainWindow(QMainWindow):
 
         reply = msg_box.exec_()
         if reply == QMessageBox.Yes:
-            # アプリケーション終了前にリソースをクリーンアップ
             try:
                 self.file_opener.cleanup_resources()
                 cleanup_temp_files()
@@ -147,16 +146,13 @@ class MainWindow(QMainWindow):
 
             QApplication.instance().quit()
 
-    # 修正点3: closeEvent メソッドの修正
     def closeEvent(self, event) -> None:
         try:
-            # ウィンドウジオメトリの保存
             geometry = self.geometry()
             self.config_manager.set_window_geometry(
                 geometry.x(), geometry.y(), geometry.width(), geometry.height()
             )
 
-            # リソースのクリーンアップ
             self.file_opener.cleanup_resources()
             cleanup_temp_files()
 
