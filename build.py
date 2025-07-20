@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-from scripts.version_manager import update_version, update_version_py
+from scripts.version_manager import update_version
 
 
 def build_executable():
