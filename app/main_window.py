@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import (
 
 from app import __version__
 from service.file_opener import FileOpener
+from service.pdf_handler import cleanup_temp_files
 from utils.config_manager import ConfigManager
 from utils.helpers import create_confirmation_dialog
 from widgets.auto_close_message_widget import AutoCloseMessage
@@ -137,15 +138,29 @@ class MainWindow(QMainWindow):
 
         reply = msg_box.exec_()
         if reply == QMessageBox.Yes:
+            # アプリケーション終了前にリソースをクリーンアップ
+            try:
+                self.file_opener.cleanup_resources()
+                cleanup_temp_files()
+            except Exception as e:
+                print(f"終了時のクリーンアップでエラー: {e}")
+
             QApplication.instance().quit()
 
-
+    # 修正点3: closeEvent メソッドの修正
     def closeEvent(self, event) -> None:
         try:
+            # ウィンドウジオメトリの保存
             geometry = self.geometry()
             self.config_manager.set_window_geometry(
                 geometry.x(), geometry.y(), geometry.width(), geometry.height()
             )
+
+            # リソースのクリーンアップ
+            self.file_opener.cleanup_resources()
+            cleanup_temp_files()
+
         except Exception as e:
-            print(f"ウィンドウジオメトリの保存中にエラーが発生しました: {str(e)}")
-        super().closeEvent(event)
+            print(f"ウィンドウ終了処理中にエラーが発生しました: {str(e)}")
+        finally:
+            super().closeEvent(event)
