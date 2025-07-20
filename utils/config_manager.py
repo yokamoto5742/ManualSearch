@@ -3,12 +3,31 @@ import os
 import sys
 from typing import List
 
+from constants import (
+    CONFIG_FILENAME,
+    DEFAULT_WINDOW_GEOMETRY,
+    DEFAULT_FONT_SIZE,
+    DEFAULT_HTML_FONT_SIZE,
+    DEFAULT_CONTEXT_LENGTH,
+    DEFAULT_PDF_TIMEOUT,
+    DEFAULT_MAX_TEMP_FILES,
+    DEFAULT_ACROBAT_PATH,
+    SUPPORTED_FILE_EXTENSIONS,
+    MIN_FONT_SIZE,
+    MAX_FONT_SIZE,
+    MIN_PDF_TIMEOUT,
+    MAX_PDF_TIMEOUT,
+    MIN_MAX_TEMP_FILES,
+    MAX_MAX_TEMP_FILES,
+    CONFIG_SECTIONS,
+    CONFIG_KEYS
+)
 from utils.helpers import read_file_with_auto_encoding
 
 
 def get_config_path() -> str:
     base_path = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.dirname(__file__)
-    return os.path.join(base_path, 'config.ini')
+    return os.path.join(base_path, CONFIG_FILENAME)
 
 CONFIG_PATH = get_config_path()
 
@@ -35,131 +54,147 @@ class ConfigManager:
             print(f"Error saving config: {e}")
 
     def get_file_extensions(self) -> List[str]:
-        extensions = self.config.get('FileTypes', 'extensions', fallback='.pdf,.txt,.md')
+        extensions = self.config.get(
+            CONFIG_SECTIONS['FILE_TYPES'], 
+            CONFIG_KEYS['EXTENSIONS'], 
+            fallback=','.join(SUPPORTED_FILE_EXTENSIONS)
+        )
         return [ext.strip() for ext in extensions.split(',') if ext.strip()]
 
     def get_window_geometry(self) -> List[int]:
-        geometry = self.config.get('WindowSettings', 'geometry', fallback='100,100,1150,900')
+        geometry = self.config.get(
+            CONFIG_SECTIONS['WINDOW_SETTINGS'], 
+            CONFIG_KEYS['GEOMETRY'], 
+            fallback=','.join(map(str, DEFAULT_WINDOW_GEOMETRY))
+        )
         return [int(val) for val in geometry.split(',')]
 
     def get_font_size(self) -> int:
-        size = self.config.getint('WindowSettings', 'font_size', fallback=16)
-        return max(8, min(32, size))  # 8-32の範囲でクランプ
+        size = self.config.getint(
+            CONFIG_SECTIONS['WINDOW_SETTINGS'], 
+            CONFIG_KEYS['FONT_SIZE'], 
+            fallback=DEFAULT_FONT_SIZE
+        )
+        return max(MIN_FONT_SIZE, min(MAX_FONT_SIZE, size))  # 範囲でクランプ
 
     def get_acrobat_path(self) -> str:
-        return self.config.get('Paths', 'acrobat_path', fallback=r'C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe')
+        return self.config.get(
+            CONFIG_SECTIONS['PATHS'], 
+            CONFIG_KEYS['ACROBAT_PATH'], 
+            fallback=DEFAULT_ACROBAT_PATH
+        )
 
     def set_file_extensions(self, extensions: List[str]) -> None:
-        if 'FileTypes' not in self.config:
-            self.config['FileTypes'] = {}
-        self.config['FileTypes']['extensions'] = ','.join(extensions)
+        if CONFIG_SECTIONS['FILE_TYPES'] not in self.config:
+            self.config[CONFIG_SECTIONS['FILE_TYPES']] = {}
+        self.config[CONFIG_SECTIONS['FILE_TYPES']][CONFIG_KEYS['EXTENSIONS']] = ','.join(extensions)
         self.save_config()
 
     def set_window_geometry(self, x: int, y: int, width: int, height: int) -> None:
-        if 'WindowSettings' not in self.config:
-            self.config['WindowSettings'] = {}
-        self.config['WindowSettings']['geometry'] = f"{x},{y},{width},{height}"
+        if CONFIG_SECTIONS['WINDOW_SETTINGS'] not in self.config:
+            self.config[CONFIG_SECTIONS['WINDOW_SETTINGS']] = {}
+        self.config[CONFIG_SECTIONS['WINDOW_SETTINGS']][CONFIG_KEYS['GEOMETRY']] = f"{x},{y},{width},{height}"
         self.save_config()
 
     def set_font_size(self, size: int) -> None:
-        if not 8 <= size <= 32:
-            raise ValueError(f"フォントサイズは8-32の範囲で指定してください: {size}")
+        if not MIN_FONT_SIZE <= size <= MAX_FONT_SIZE:
+            raise ValueError(f"フォントサイズは{MIN_FONT_SIZE}-{MAX_FONT_SIZE}の範囲で指定してください: {size}")
 
-        if 'WindowSettings' not in self.config:
-            self.config['WindowSettings'] = {}
-        self.config['WindowSettings']['font_size'] = str(size)
+        if CONFIG_SECTIONS['WINDOW_SETTINGS'] not in self.config:
+            self.config[CONFIG_SECTIONS['WINDOW_SETTINGS']] = {}
+        self.config[CONFIG_SECTIONS['WINDOW_SETTINGS']][CONFIG_KEYS['FONT_SIZE']] = str(size)
         self.save_config()
 
     def set_acrobat_path(self, path: str) -> None:
-        if 'Paths' not in self.config:
-            self.config['Paths'] = {}
-        self.config['Paths']['acrobat_path'] = path
+        if CONFIG_SECTIONS['PATHS'] not in self.config:
+            self.config[CONFIG_SECTIONS['PATHS']] = {}
+        self.config[CONFIG_SECTIONS['PATHS']][CONFIG_KEYS['ACROBAT_PATH']] = path
         self.save_config()
 
     def get_directories(self) -> List[str]:
-        directories = self.config.get('Directories', 'list', fallback='')
+        directories = self.config.get(CONFIG_SECTIONS['DIRECTORIES'], CONFIG_KEYS['DIRECTORY_LIST'], fallback='')
         return [dir.strip() for dir in directories.split(',') if dir.strip()]
 
     def set_directories(self, directories: List[str]) -> None:
-        if 'Directories' not in self.config:
-            self.config['Directories'] = {}
-        self.config['Directories']['list'] = ','.join(directories)
+        if CONFIG_SECTIONS['DIRECTORIES'] not in self.config:
+            self.config[CONFIG_SECTIONS['DIRECTORIES']] = {}
+        self.config[CONFIG_SECTIONS['DIRECTORIES']][CONFIG_KEYS['DIRECTORY_LIST']] = ','.join(directories)
         self.save_config()
 
     def get_last_directory(self) -> str:
-        return self.config.get('Directories', 'last_directory', fallback='')
+        return self.config.get(CONFIG_SECTIONS['DIRECTORIES'], CONFIG_KEYS['LAST_DIRECTORY'], fallback='')
 
     def set_last_directory(self, directory: str) -> None:
-        if 'Directories' not in self.config:
-            self.config['Directories'] = {}
-        self.config['Directories']['last_directory'] = directory
+        if CONFIG_SECTIONS['DIRECTORIES'] not in self.config:
+            self.config[CONFIG_SECTIONS['DIRECTORIES']] = {}
+        self.config[CONFIG_SECTIONS['DIRECTORIES']][CONFIG_KEYS['LAST_DIRECTORY']] = directory
         self.save_config()
 
     def get_context_length(self) -> int:
-        return self.config.getint('SearchSettings', 'context_length', fallback=100)
+        return self.config.getint(CONFIG_SECTIONS['SEARCH_SETTINGS'], CONFIG_KEYS['CONTEXT_LENGTH'], fallback=DEFAULT_CONTEXT_LENGTH)
 
     def set_context_length(self, length: int) -> None:
-        if 'SearchSettings' not in self.config:
-            self.config['SearchSettings'] = {}
-        self.config['SearchSettings']['context_length'] = str(length)
+        if CONFIG_SECTIONS['SEARCH_SETTINGS'] not in self.config:
+            self.config[CONFIG_SECTIONS['SEARCH_SETTINGS']] = {}
+        self.config[CONFIG_SECTIONS['SEARCH_SETTINGS']][CONFIG_KEYS['CONTEXT_LENGTH']] = str(length)
         self.save_config()
 
     def get_filename_font_size(self) -> int:
-        return self.config.getint('UISettings', 'filename_font_size', fallback=14)
+        return self.config.getint(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['FILENAME_FONT_SIZE'], fallback=DEFAULT_FONT_SIZE)
 
     def set_filename_font_size(self, size: int) -> None:
-        if 'UISettings' not in self.config:
-            self.config['UISettings'] = {}
-        self.config['UISettings']['filename_font_size'] = str(size)
+        if CONFIG_SECTIONS['UI_SETTINGS'] not in self.config:
+            self.config[CONFIG_SECTIONS['UI_SETTINGS']] = {}
+        self.config[CONFIG_SECTIONS['UI_SETTINGS']][CONFIG_KEYS['FILENAME_FONT_SIZE']] = str(size)
         self.save_config()
 
     def get_result_detail_font_size(self) -> int:
-        return self.config.getint('UISettings', 'result_detail_font_size', fallback=14)
+        return self.config.getint(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['RESULT_DETAIL_FONT_SIZE'], fallback=DEFAULT_FONT_SIZE)
 
     def set_result_detail_font_size(self, size: int) -> None:
-        if 'UISettings' not in self.config:
-            self.config['UISettings'] = {}
-        self.config['UISettings']['result_detail_font_size'] = str(size)
+        if CONFIG_SECTIONS['UI_SETTINGS'] not in self.config:
+            self.config[CONFIG_SECTIONS['UI_SETTINGS']] = {}
+        self.config[CONFIG_SECTIONS['UI_SETTINGS']][CONFIG_KEYS['RESULT_DETAIL_FONT_SIZE']] = str(size)
         self.save_config()
 
     def get_html_font_size(self) -> int:
-        return self.config.getint('UISettings', 'html_font_size', fallback=16)
+        return self.config.getint(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['HTML_FONT_SIZE'], fallback=DEFAULT_HTML_FONT_SIZE)
 
     def set_html_font_size(self, size: int) -> None:
-        if 'UISettings' not in self.config:
-            self.config['UISettings'] = {}
-        self.config['UISettings']['html_font_size'] = str(size)
+        if CONFIG_SECTIONS['UI_SETTINGS'] not in self.config:
+            self.config[CONFIG_SECTIONS['UI_SETTINGS']] = {}
+        self.config[CONFIG_SECTIONS['UI_SETTINGS']][CONFIG_KEYS['HTML_FONT_SIZE']] = str(size)
         self.save_config()
 
     def get_pdf_timeout(self) -> int:
-        return self.config.getint('PDFSettings', 'timeout', fallback=30)
+        return self.config.getint(CONFIG_SECTIONS['PDF_SETTINGS'], CONFIG_KEYS['TIMEOUT'], fallback=DEFAULT_PDF_TIMEOUT)
 
     def set_pdf_timeout(self, timeout: int) -> None:
-        if not 10 <= timeout <= 120:
-            raise ValueError(f"タイムアウトは10-120秒の範囲で指定してください: {timeout}")
+        if not MIN_PDF_TIMEOUT <= timeout <= MAX_PDF_TIMEOUT:
+            raise ValueError(f"タイムアウトは{MIN_PDF_TIMEOUT}-{MAX_PDF_TIMEOUT}秒の範囲で指定してください: {timeout}")
 
-        if 'PDFSettings' not in self.config:
-            self.config['PDFSettings'] = {}
-        self.config['PDFSettings']['timeout'] = str(timeout)
+        if CONFIG_SECTIONS['PDF_SETTINGS'] not in self.config:
+            self.config[CONFIG_SECTIONS['PDF_SETTINGS']] = {}
+        self.config[CONFIG_SECTIONS['PDF_SETTINGS']][CONFIG_KEYS['TIMEOUT']] = str(timeout)
         self.save_config()
 
     def get_cleanup_temp_files(self) -> bool:
-        return self.config.getboolean('PDFSettings', 'cleanup_temp_files', fallback=True)
+        return self.config.getboolean(CONFIG_SECTIONS['PDF_SETTINGS'], CONFIG_KEYS['CLEANUP_TEMP_FILES'], fallback=True)
 
     def set_cleanup_temp_files(self, cleanup: bool) -> None:
-        if 'PDFSettings' not in self.config:
-            self.config['PDFSettings'] = {}
-        self.config['PDFSettings']['cleanup_temp_files'] = str(cleanup)
+        if CONFIG_SECTIONS['PDF_SETTINGS'] not in self.config:
+            self.config[CONFIG_SECTIONS['PDF_SETTINGS']] = {}
+        self.config[CONFIG_SECTIONS['PDF_SETTINGS']][CONFIG_KEYS['CLEANUP_TEMP_FILES']] = str(cleanup)
         self.save_config()
 
     def get_max_temp_files(self) -> int:
-        return self.config.getint('PDFSettings', 'max_temp_files', fallback=10)
+        return self.config.getint(CONFIG_SECTIONS['PDF_SETTINGS'], CONFIG_KEYS['MAX_TEMP_FILES'], fallback=DEFAULT_MAX_TEMP_FILES)
 
     def set_max_temp_files(self, max_files: int) -> None:
-        if not 1 <= max_files <= 50:
-            raise ValueError(f"最大ファイル数は1-50の範囲で指定してください: {max_files}")
+        if not MIN_MAX_TEMP_FILES <= max_files <= MAX_MAX_TEMP_FILES:
+            raise ValueError(f"最大ファイル数は{MIN_MAX_TEMP_FILES}-{MAX_MAX_TEMP_FILES}の範囲で指定してください: {max_files}")
 
-        if 'PDFSettings' not in self.config:
-            self.config['PDFSettings'] = {}
-        self.config['PDFSettings']['max_temp_files'] = str(max_files)
+        if CONFIG_SECTIONS['PDF_SETTINGS'] not in self.config:
+            self.config[CONFIG_SECTIONS['PDF_SETTINGS']] = {}
+        self.config[CONFIG_SECTIONS['PDF_SETTINGS']][CONFIG_KEYS['MAX_TEMP_FILES']] = str(max_files)
         self.save_config()

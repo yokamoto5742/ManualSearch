@@ -9,6 +9,17 @@ import fitz
 import psutil
 import pyautogui
 
+from constants import (
+    PDF_HIGHLIGHT_COLORS,
+    ACROBAT_WAIT_TIMEOUT,
+    ACROBAT_WAIT_INTERVAL,
+    PAGE_NAVIGATION_RETRY_COUNT,
+    PAGE_NAVIGATION_DELAY,
+    PROCESS_TERMINATE_TIMEOUT,
+    PROCESS_CLEANUP_DELAY,
+    ACROBAT_PROCESS_NAMES
+)
+
 _temp_files: List[str] = []
 
 
@@ -30,7 +41,7 @@ def close_existing_acrobat_processes() -> None:
     try:
         acrobat_processes = []
         for proc in psutil.process_iter(['pid', 'name']):
-            if 'acrobat' in proc.info['name'].lower():
+            if any(acrobat_name in proc.info['name'].lower() for acrobat_name in ACROBAT_PROCESS_NAMES):
                 acrobat_processes.append(proc)
 
         if acrobat_processes:
@@ -41,7 +52,7 @@ def close_existing_acrobat_processes() -> None:
                     proc.terminate()
 
                     try:
-                        proc.wait(timeout=3)
+                        proc.wait(timeout=PROCESS_TERMINATE_TIMEOUT)
                         print(f"Acrobatプロセス (PID: {proc.pid}) を正常に終了しました")
                     except psutil.TimeoutExpired:
                         proc.kill()
@@ -52,7 +63,7 @@ def close_existing_acrobat_processes() -> None:
                 except Exception as e:
                     print(f"予期せぬエラー: {e}")
 
-            time.sleep(1.0)
+            time.sleep(PROCESS_CLEANUP_DELAY)
 
         else:
             print("既存のAcrobatプロセスは見つかりませんでした")
@@ -70,7 +81,7 @@ def open_pdf(file_path: str, acrobat_path: str, current_position: int, search_te
         process = subprocess.Popen([acrobat_path, highlighted_pdf_path])
 
         if wait_for_acrobat(process.pid):
-            time.sleep(1.0)
+            time.sleep(PROCESS_CLEANUP_DELAY)
             navigate_to_page(current_position)
         else:
             print("Acrobatの起動確認に失敗しました")
@@ -83,17 +94,18 @@ def open_pdf(file_path: str, acrobat_path: str, current_position: int, search_te
         raise RuntimeError(f"PDFを開く際に予期せぬエラーが発生しました: {str(e)}")
 
 
-def wait_for_acrobat(pid: int, timeout: int = 30) -> bool:
+def wait_for_acrobat(pid: int, timeout: int = ACROBAT_WAIT_TIMEOUT) -> bool:
     start_time = time.time()
 
     while time.time() - start_time < timeout:
         try:
             process = psutil.Process(pid)
             if process.status() == psutil.STATUS_RUNNING:
-                time.sleep(0.5)
+                time.sleep(ACROBAT_WAIT_INTERVAL)
                 try:
                     active_window = pyautogui.getActiveWindowTitle()
-                    if active_window and ("acrobat" in active_window.lower() or "adobe" in active_window.lower()):
+                    if active_window and any(acrobat_name in active_window.lower() 
+                                           for acrobat_name in ['acrobat', 'adobe']):
                         return True
                 except Exception:
                     # ウィンドウタイトル取得に失敗しても継続
@@ -104,7 +116,7 @@ def wait_for_acrobat(pid: int, timeout: int = 30) -> bool:
         except Exception as e:
             print(f"Acrobat待機中にエラー: {e}")
 
-        time.sleep(0.5)
+        time.sleep(ACROBAT_WAIT_INTERVAL)
 
     print(f"Acrobat起動のタイムアウト（{timeout}秒）")
     return False
@@ -115,34 +127,30 @@ def navigate_to_page(page_number: int) -> None:
         return
 
     try:
-        for attempt in range(3):
+        for attempt in range(PAGE_NAVIGATION_RETRY_COUNT):
             try:
                 pyautogui.hotkey('ctrl', 'shift', 'n')
-                time.sleep(0.5)
+                time.sleep(PAGE_NAVIGATION_DELAY)
 
                 pyautogui.hotkey('ctrl', 'a')
                 time.sleep(0.2)
 
                 pyautogui.write(str(page_number))
-                time.sleep(0.5)
+                time.sleep(PAGE_NAVIGATION_DELAY)
                 pyautogui.press('enter')
 
                 break
 
             except Exception as e:
                 print(f"ページ移動試行{attempt + 1}でエラー: {e}")
-                if attempt < 2:  # 最後の試行でなければ少し待つ
-                    time.sleep(1.0)
+                if attempt < PAGE_NAVIGATION_RETRY_COUNT - 1:  # 最後の試行でなければ少し待つ
+                    time.sleep(PROCESS_CLEANUP_DELAY)
 
     except Exception as e:
         print(f"ページ移動中にエラーが発生しました: {str(e)}")
 
 
 def highlight_pdf(pdf_path: str, search_terms: List[str]) -> str:
-    colors: List[Tuple[float, float, float]] = [
-        (1, 1, 0), (0.5, 1, 0.5), (0.5, 0.7, 1), (1, 0.6, 0.4), (1, 0.7, 0.7)
-    ]
-
     with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
         tmp_path = tmp_file.name
 
@@ -162,7 +170,7 @@ def highlight_pdf(pdf_path: str, search_terms: List[str]) -> str:
                 for inst in text_instances:
                     try:
                         highlight = page.add_highlight_annot(inst)
-                        highlight.set_colors(stroke=colors[i % len(colors)])
+                        highlight.set_colors(stroke=PDF_HIGHLIGHT_COLORS[i % len(PDF_HIGHLIGHT_COLORS)])
                         highlight.update()
                     except Exception as e:
                         print(f"ハイライト追加エラー (term: {term}): {e}")

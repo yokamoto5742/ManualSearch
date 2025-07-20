@@ -5,6 +5,11 @@ from typing import List
 
 from PyQt5.QtWidgets import QMessageBox
 
+from constants import (
+    FILE_HANDLER_MAPPING,
+    ERROR_MESSAGES,
+    PROCESS_CLEANUP_DELAY
+)
 from service.pdf_handler import open_pdf, highlight_pdf, cleanup_temp_files
 from service.text_handler import open_text_file
 
@@ -15,28 +20,24 @@ class FileOpener:
         self.acrobat_path: str = self.config_manager.get_acrobat_path()
         self._last_opened_file: str = ""
 
-    SUPPORTED_EXTENSIONS = {
-        '.pdf': '_open_pdf_file',
-        '.txt': '_open_text_file',
-        '.md': '_open_text_file'
-    }
+    SUPPORTED_EXTENSIONS = FILE_HANDLER_MAPPING
 
     def open_file(self, file_path: str, position: int, search_terms: List[str]) -> None:
         if not os.path.exists(file_path):
-            self._show_error("ファイルが存在しません。")
+            self._show_error(ERROR_MESSAGES['FILE_NOT_FOUND'])
             return
 
         file_extension = os.path.splitext(file_path)[1].lower()
         handler_method = self.SUPPORTED_EXTENSIONS.get(file_extension)
 
         if not handler_method:
-            self._show_error("サポートされていないファイル形式です。")
+            self._show_error(ERROR_MESSAGES['UNSUPPORTED_FORMAT'])
             return
 
         if file_path == self._last_opened_file and file_extension == '.pdf':
             print(f"同じPDFファイルを再度開きます: {os.path.basename(file_path)}")
             cleanup_temp_files()
-            time.sleep(0.5)
+            time.sleep(PROCESS_CLEANUP_DELAY)
 
         try:
             method = getattr(self, handler_method)
@@ -55,10 +56,10 @@ class FileOpener:
     def _open_pdf_file(self, file_path: str, position: int, search_terms: List[str]) -> None:
         try:
             if not self._check_pdf_accessibility(file_path):
-                raise IOError("PDFファイルにアクセスできません")
+                raise IOError(ERROR_MESSAGES['PDF_ACCESS_FAILED'])
 
             if not os.path.exists(self.acrobat_path):
-                raise FileNotFoundError(f"Adobe Acrobat Readerが見つかりません: {self.acrobat_path}")
+                raise FileNotFoundError(f"{ERROR_MESSAGES['ACROBAT_NOT_FOUND']}: {self.acrobat_path}")
 
             open_pdf(file_path, self.acrobat_path, position, search_terms)
 
@@ -66,7 +67,7 @@ class FileOpener:
             self._show_error(f"PDFの処理に失敗しました: {e}")
             raise
         except subprocess.SubprocessError as e:
-            self._show_error(f"Acrobatの起動に失敗しました: {e}")
+            self._show_error(f"{ERROR_MESSAGES['ACROBAT_START_FAILED']}: {e}")
             raise
         except Exception as e:
             self._show_error(f"PDFの操作中にエラーが発生しました: {e}")
@@ -97,9 +98,9 @@ class FileOpener:
         try:
             os.startfile(folder_path)
         except FileNotFoundError:
-            self._show_error("指定されたフォルダが見つかりません。")
+            self._show_error(ERROR_MESSAGES['FOLDER_NOT_FOUND'])
         except OSError as e:
-            self._show_error(f"フォルダを開けませんでした: {e}")
+            self._show_error(f"{ERROR_MESSAGES['FOLDER_OPEN_FAILED']}: {e}")
         except Exception as e:
             self._show_error(f"フォルダを開く際にエラーが発生しました: {e}")
 

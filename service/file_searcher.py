@@ -6,6 +6,12 @@ from typing import List, Tuple, Optional
 import PyPDF2
 from PyQt5.QtCore import QThread, pyqtSignal
 
+from constants import (
+    SEARCH_METHODS_MAPPING,
+    MAX_SEARCH_RESULTS_PER_FILE,
+    SEARCH_TYPE_AND,
+    SEARCH_TYPE_OR
+)
 from utils.helpers import normalize_path, check_file_accessibility, read_file_with_auto_encoding
 
 
@@ -78,9 +84,8 @@ class FileSearcher(QThread):
         file_extension = os.path.splitext(normalized_path)[1].lower()
 
         search_methods = {
-            '.pdf': self.search_pdf,
-            '.txt': self.search_text,
-            '.md': self.search_text
+            ext: getattr(self, method_name) 
+            for ext, method_name in SEARCH_METHODS_MAPPING.items()
         }
 
         search_method = search_methods.get(file_extension)
@@ -108,7 +113,7 @@ class FileSearcher(QThread):
                                 end = min(len(text), match.end() + self.context_length)
                                 context = text[start:end]
                                 results.append((page_num + 1, context))
-                    if len(results) >= 100:
+                    if len(results) >= MAX_SEARCH_RESULTS_PER_FILE:
                         break
         except Exception as e:
             print(f"PDFの処理中にエラーが発生しました: {file_path} - {str(e)}")
@@ -133,8 +138,8 @@ class FileSearcher(QThread):
         return (file_path, results) if results else None
 
     def match_search_terms(self, text: str) -> bool:
-        if self.search_type == 'AND':
+        if self.search_type == SEARCH_TYPE_AND:
             return all(term.lower() in text.lower() for term in self.search_terms)
-        elif self.search_type == 'OR':
+        elif self.search_type == SEARCH_TYPE_OR:
             return any(term.lower() in text.lower() for term in self.search_terms)
         return False

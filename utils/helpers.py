@@ -8,6 +8,15 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QMessageBox
 
+from constants import (
+    NETWORK_TIMEOUT,
+    DNS_TEST_HOST,
+    DNS_TEST_PORT,
+    CURSOR_MOVE_DELAY,
+    ERROR_MESSAGES,
+    UI_LABELS
+)
+
 
 def normalize_path(file_path: str) -> str:
     normalized_path = os.path.normpath(file_path.replace('\\', '/'))
@@ -19,11 +28,11 @@ def is_network_file(file_path: str) -> bool:
     return normalized_path.startswith('//') or ':' in normalized_path[:2]
 
 
-def check_file_accessibility(file_path: str, timeout: int = 5) -> bool:
+def check_file_accessibility(file_path: str, timeout: int = NETWORK_TIMEOUT) -> bool:
     normalized_path = normalize_path(file_path)
     if is_network_file(normalized_path):
         try:
-            with socket.create_connection(("8.8.8.8", 53), timeout=timeout):
+            with socket.create_connection((DNS_TEST_HOST, DNS_TEST_PORT), timeout=timeout):
                 return os.path.exists(normalized_path)
         except (socket.error, OSError):
             return False
@@ -41,15 +50,15 @@ def read_file_with_auto_encoding(file_path: str) -> Optional[str]:
         result = chardet.detect(raw_data)
         encoding = result['encoding']
     except Exception as e:
-        raise ValueError(f"エンコーディングの検出に失敗しました: {file_path}") from e
+        raise ValueError(f"{ERROR_MESSAGES['ENCODING_DETECTION_FAILED']}: {file_path}") from e
 
     if encoding is None:
-        raise ValueError(f"エンコーディングを検出できませんでした: {file_path}")
+        raise ValueError(f"{ERROR_MESSAGES['ENCODING_DETECTION_FAILED']}: {file_path}")
 
     try:
         return raw_data.decode(encoding)
     except UnicodeDecodeError as e:
-        raise ValueError(f"ファイルのデコードに失敗しました: {file_path}") from e
+        raise ValueError(f"{ERROR_MESSAGES['FILE_DECODE_FAILED']}: {file_path}") from e
 
 
 def create_confirmation_dialog(parent, title: str, message: str,
@@ -67,10 +76,10 @@ def create_confirmation_dialog(parent, title: str, message: str,
     """
 
     yes_button = msg_box.button(QMessageBox.Yes)
-    yes_button.setText('はい')
+    yes_button.setText(UI_LABELS['YES_BUTTON'])
     yes_button.setStyleSheet(button_style)
     no_button = msg_box.button(QMessageBox.No)
-    no_button.setText('いいえ')
+    no_button.setText(UI_LABELS['NO_BUTTON'])
     no_button.setStyleSheet(button_style)
 
     msg_box.setDefaultButton(default_button)
@@ -78,7 +87,7 @@ def create_confirmation_dialog(parent, title: str, message: str,
     timer = QTimer()
     timer.setSingleShot(True)
     timer.timeout.connect(lambda: move_cursor_to_yes_button(yes_button))
-    timer.start(100)  # 指定時間後にマウスを移動
+    timer.start(CURSOR_MOVE_DELAY)
     msg_box._cursor_timer = timer
 
     return msg_box

@@ -6,6 +6,9 @@ from PyQt5.QtWidgets import (
     QFileDialog, QInputDialog, QMessageBox, QLineEdit, QSizePolicy
 )
 
+from constants import (
+    UI_LABELS
+)
 from utils.config_manager import ConfigManager
 from utils.helpers import create_confirmation_dialog
 
@@ -47,19 +50,19 @@ class DirectoryWidget(QWidget):
     def _setup_button_layout(self) -> QHBoxLayout:
         button_layout = QHBoxLayout()
 
-        dir_add_button = QPushButton("追加")
+        dir_add_button = QPushButton(UI_LABELS['ADD_BUTTON'])
         dir_add_button.clicked.connect(self.add_directory)
 
-        dir_edit_button = QPushButton("編集")
+        dir_edit_button = QPushButton(UI_LABELS['EDIT_BUTTON'])
         dir_edit_button.clicked.connect(self.edit_directory)
 
-        dir_delete_button = QPushButton("削除")
+        dir_delete_button = QPushButton(UI_LABELS['DELETE_BUTTON'])
         dir_delete_button.clicked.connect(self.delete_directory)
 
-        self.include_subdirs_checkbox = QCheckBox("サブフォルダを含む")
+        self.include_subdirs_checkbox = QCheckBox(UI_LABELS['INCLUDE_SUBDIRS'])
         self.include_subdirs_checkbox.setChecked(True)
 
-        self.open_folder_button = QPushButton("フォルダを開く")
+        self.open_folder_button = QPushButton(UI_LABELS['OPEN_FOLDER'])
         self.open_folder_button.clicked.connect(self.open_folder_requested.emit)
         self.open_folder_button.setEnabled(False)
 

@@ -10,6 +10,16 @@ from dataclasses import dataclass
 import markdown
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
+from constants import (
+    HIGHLIGHT_COLORS,
+    TEMPLATE_DIRECTORY,
+    TEXT_VIEWER_TEMPLATE,
+    FILE_TYPE_DISPLAY_NAMES,
+    MARKDOWN_EXTENSIONS,
+    HIGHLIGHT_STYLE_TEMPLATE,
+    MIN_FONT_SIZE,
+    MAX_FONT_SIZE
+)
 from utils.helpers import read_file_with_auto_encoding
 
 
@@ -21,7 +31,7 @@ def get_template_directory() -> str:
         # 通常の実行時
         base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-    return os.path.join(base_path, 'templates')
+    return os.path.join(base_path, TEMPLATE_DIRECTORY)
 
 
 def create_jinja_environment() -> Environment:
@@ -56,7 +66,7 @@ def highlight_text_file(file_path: str, search_terms: List[str], html_font_size:
     is_markdown = file_extension == '.md'
 
     if is_markdown:
-        content = markdown.markdown(content, extensions=['nl2br'])  # 改行を<br>に変換
+        content = markdown.markdown(content, extensions=MARKDOWN_EXTENSIONS)
     else:
         content = html.escape(content)
 
@@ -68,17 +78,15 @@ def highlight_text_file(file_path: str, search_terms: List[str], html_font_size:
 
 
 def highlight_search_terms(content: str, search_terms: List[str]) -> str:
-    colors = ['yellow', 'lightgreen', 'lightblue', 'lightsalmon', 'lightpink']
-
     for i, term in enumerate(search_terms):
         if not term.strip():
             continue
 
-        color = colors[i % len(colors)]  # 色をループさせる
+        color = HIGHLIGHT_COLORS[i % len(HIGHLIGHT_COLORS)]  # 色をループさせる
         try:
             content = re.sub(
                 f'({re.escape(term.strip())})',
-                f'<span style="background-color: {color}; padding: 2px; border-radius: 2px;">\\1</span>',
+                f'<span style="{HIGHLIGHT_STYLE_TEMPLATE.format(color=color)}">\\1</span>',
                 content,
                 flags=re.IGNORECASE
             )
@@ -98,7 +106,7 @@ def generate_html_content(
 ) -> str:
     try:
         env = create_jinja_environment()
-        template = env.get_template('text_viewer.html')
+        template = env.get_template(TEXT_VIEWER_TEMPLATE)
 
         file_extension = os.path.splitext(file_path)[1].lower()
         file_type = get_file_type_display_name(file_extension)
@@ -109,7 +117,7 @@ def generate_html_content(
             'file_type': file_type,
             'content': content,
             'is_markdown': is_markdown,
-            'font_size': max(8, min(32, html_font_size or 16)),
+            'font_size': max(MIN_FONT_SIZE, min(MAX_FONT_SIZE, html_font_size or 16)),
             'search_terms': search_terms or [],
         }
 
@@ -131,19 +139,12 @@ def create_temp_html_file(html_content: str) -> str:
 
 
 def get_file_type_display_name(file_extension: str) -> str:
-    file_type_map = {
-        '.txt': 'テキストファイル',
-        '.md': 'Markdownファイル',
-        '.pdf': 'PDFファイル',
-        '.html': 'HTMLファイル',
-        '.css': 'CSSファイル',
-    }
-    return file_type_map.get(file_extension.lower(), '不明なファイル')
+    return FILE_TYPE_DISPLAY_NAMES.get(file_extension.lower(), '不明なファイル')
 
 
 def validate_template_file() -> bool:
     template_dir = get_template_directory()
-    template_path = os.path.join(template_dir, 'text_viewer.html')
+    template_path = os.path.join(template_dir, TEXT_VIEWER_TEMPLATE)
     return os.path.exists(template_path)
 
 

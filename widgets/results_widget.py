@@ -9,6 +9,10 @@ from PyQt5.QtWidgets import (
     QTextEdit, QProgressDialog
 )
 
+from constants import (
+    HIGHLIGHT_COLORS,
+    UI_LABELS
+)
 from service.file_searcher import FileSearcher
 
 
@@ -63,8 +67,10 @@ class ResultsWidget(QWidget):
         self.searcher.start()
 
     def _setup_search_colors(self, search_terms: List[str]) -> None:
-        colors = ['yellow', 'lightgreen', 'lightblue', 'lightsalmon', 'lightpink']
-        self.search_term_colors = {term: colors[i % len(colors)] for i, term in enumerate(search_terms)}
+        self.search_term_colors = {
+            term: HIGHLIGHT_COLORS[i % len(HIGHLIGHT_COLORS)] 
+            for i, term in enumerate(search_terms)
+        }
 
     def _setup_searcher(self, directory: str, search_terms: List[str],
                         include_subdirs: bool, search_type: str) -> None:
@@ -77,8 +83,12 @@ class ResultsWidget(QWidget):
         self.searcher.search_completed.connect(self.search_completed)
 
     def _setup_progress_dialog(self) -> None:
-        self.progress_dialog = QProgressDialog("検索中...", "キャンセル", 0, 100, self)
-        self.progress_dialog.setWindowTitle("検索の進行状況")
+        self.progress_dialog = QProgressDialog(
+            UI_LABELS['SEARCHING'], 
+            UI_LABELS['CANCEL'], 
+            0, 100, self
+        )
+        self.progress_dialog.setWindowTitle(UI_LABELS['SEARCH_PROGRESS_TITLE'])
         self.progress_dialog.setWindowModality(Qt.WindowModal)
         self.progress_dialog.canceled.connect(self.cancel_search)
         self.progress_dialog.show()
