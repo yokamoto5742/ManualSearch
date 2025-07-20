@@ -4,6 +4,8 @@ import socket
 from typing import Optional
 
 import chardet
+from PyQt5.QtCore import QTimer
+from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QMessageBox
 
 
@@ -72,4 +74,24 @@ def create_confirmation_dialog(parent, title: str, message: str,
     no_button.setStyleSheet(button_style)
 
     msg_box.setDefaultButton(default_button)
+
+    timer = QTimer()
+    timer.setSingleShot(True)
+    timer.timeout.connect(lambda: move_cursor_to_yes_button(yes_button))
+    timer.start(100)  # 指定時間後にマウスを移動
+    msg_box._cursor_timer = timer
+
     return msg_box
+
+
+def move_cursor_to_yes_button(yes_button):
+    try:
+        if yes_button.isVisible():
+            button_rect = yes_button.geometry()
+            button_center = button_rect.center()
+
+            global_center = yes_button.mapToGlobal(button_center)
+
+            QCursor.setPos(global_center)
+    except Exception as e:
+        print(f"マウスカーソル移動中にエラーが発生しました: {e}")
