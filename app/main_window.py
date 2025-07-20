@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
         self._connect_signals()
 
     def _setup_window_geometry(self) -> None:
-        geometry = self.config_manager.get_window_geometry()
+        geometry = self.config_manager.get_window_size_and_position()  # 新しいメソッドに変更
         self.setGeometry(*geometry)
 
     def _setup_font(self) -> None:
