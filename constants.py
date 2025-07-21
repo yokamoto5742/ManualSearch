@@ -185,4 +185,12 @@ SEARCH_TERM_SEPARATOR_PATTERN = r'[,、]'
 HIGHLIGHT_STYLE_TEMPLATE = 'background-color: {color}; padding: 2px; border-radius: 2px;'
 
 # プロセス名検索パターン
-ACROBAT_PROCESS_NAMES = ['acrobat']
+ACROBAT_PROCESS_NAMES = [
+    'acrobat',      # Adobe Acrobat (フルバージョン)
+    'acrord32',     # Adobe Acrobat Reader DC (32ビット版)
+    'acrord64',     # Adobe Acrobat Reader DC (64ビット版)
+    'acrobat.exe',  # 拡張子付きのパターン
+    'acrord32.exe', # 拡張子付きのパターン (32ビット版)
+    'acrord64.exe', # 拡張子付きのパターン (64ビット版)
+    'reader_sl',    # Reader起動用の一部プロセス
+]

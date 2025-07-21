@@ -41,14 +41,18 @@ def close_existing_acrobat_processes() -> None:
     try:
         acrobat_processes = []
         for proc in psutil.process_iter(['pid', 'name']):
-            if any(acrobat_name in proc.info['name'].lower() for acrobat_name in ACROBAT_PROCESS_NAMES):
-                acrobat_processes.append(proc)
+            proc_name = proc.info['name'].lower()
+            for acrobat_name in ACROBAT_PROCESS_NAMES:
+                if proc_name == acrobat_name.lower() or proc_name == f"{acrobat_name.lower()}.exe":
+                    acrobat_processes.append(proc)
+                    break
 
         if acrobat_processes:
             print(f"既存のAcrobatプロセスが{len(acrobat_processes)}個見つかりました。すべて終了します。")
 
             for proc in acrobat_processes:
                 try:
+                    print(f"プロセス終了中: {proc.info['name']} (PID: {proc.pid})")
                     proc.terminate()
 
                     try:
