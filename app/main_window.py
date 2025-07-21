@@ -90,11 +90,11 @@ class MainWindow(QMainWindow):
     def _setup_index_management_ui(self) -> None:
         index_button_layout = QHBoxLayout()
 
-        manage_index_button = QPushButton("インデックス管理")
+        manage_index_button = QPushButton("インデックス設定")
         manage_index_button.clicked.connect(self.open_index_management)
         index_button_layout.addWidget(manage_index_button)
 
-        self.index_search_checkbox = QCheckBox("インデックス検索を使用")
+        self.index_search_checkbox = QCheckBox("インデックス検索")
         self.index_search_checkbox.toggled.connect(self.toggle_index_search)
         index_button_layout.addWidget(self.index_search_checkbox)
 
@@ -160,9 +160,6 @@ class MainWindow(QMainWindow):
         # UIの状態を更新
         if hasattr(self, 'index_search_checkbox'):
             self.index_search_checkbox.setChecked(enabled)
-
-        status_message = "インデックス検索を有効にしました" if enabled else "従来の検索方法に切り替えました"
-        self.auto_close_message.show_message(status_message, 2000)
 
     def enable_open_buttons(self) -> None:
         self.directory_widget.enable_open_folder_button()
