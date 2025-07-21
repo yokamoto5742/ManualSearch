@@ -222,8 +222,7 @@ class SmartFileSearcher(IndexedFileSearcher):
                 self.index_status_changed.emit("インデックスが存在しないため作成します...")
                 self.create_or_update_index(directories)
                 return True
-            
-            # TODO: より高度な更新判定ロジック
+
             # - ディレクトリ内のファイル数とインデックス内のファイル数を比較
             # - 最終更新日時をチェック
             
