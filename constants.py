@@ -194,3 +194,8 @@ ACROBAT_PROCESS_NAMES = [
     'acrord64.exe', # 拡張子付きのパターン (64ビット版)
     'reader_sl',    # Reader起動用の一部プロセス
 ]
+
+# インデックス関連
+DEFAULT_INDEX_FILE = "search_index.json"
+INDEX_UPDATE_THRESHOLD_DAYS = 7
+
