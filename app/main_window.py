@@ -3,7 +3,7 @@ import os
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
-    QStyleFactory, QApplication, QMessageBox
+    QStyleFactory, QApplication, QMessageBox, QCheckBox
 )
 
 from app import __version__
@@ -31,6 +31,7 @@ class MainWindow(QMainWindow):
         self._setup_font()
         self._setup_main_layout()
         self._setup_widgets()
+        self._setup_index_management_ui()
         self._setup_close_button()
         self._connect_signals()
 
@@ -65,7 +66,7 @@ class MainWindow(QMainWindow):
         self.file_opener = FileOpener(self.config_manager)
         self.auto_close_message = AutoCloseMessage(self)
         self.index_dialog = None
-        self.use_index_search = True
+        self.use_index_search = False
 
     def _setup_close_button(self) -> None:
         close_button_layout = QHBoxLayout()

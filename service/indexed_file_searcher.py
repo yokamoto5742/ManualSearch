@@ -71,27 +71,29 @@ class IndexedFileSearcher(QThread):
     def _search_with_index(self) -> None:
         """インデックスを使用した検索"""
         self.index_status_changed.emit("インデックスで検索中...")
-        
+
         try:
             # インデックスから検索
             results = self.indexer.search_in_index(self.search_terms, self.search_type)
-            
+
             # 結果を処理
             total_results = len(results)
+            emitted_count = 0
             for i, (file_path, matches) in enumerate(results):
                 if self.cancel_flag:
                     break
-                
+
                 # ディレクトリフィルタリング
                 if self._should_include_file(file_path):
                     self.result_found.emit(file_path, matches)
-                
+                    emitted_count += 1
+
                 # 進行状況更新
                 progress = int((i + 1) / total_results * 100) if total_results > 0 else 100
                 self.progress_update.emit(progress)
-            
-            self.index_status_changed.emit(f"インデックス検索完了: {len(results)} ファイルを検索")
-            
+
+            self.index_status_changed.emit(f"インデックス検索完了: {emitted_count} ファイルを表示")
+
         except Exception as e:
             print(f"インデックス検索でエラー: {e}")
             self.index_status_changed.emit("インデックス検索でエラーが発生しました")
@@ -122,16 +124,24 @@ class IndexedFileSearcher(QThread):
 
     def _should_include_file(self, file_path: str) -> bool:
         """ファイルを結果に含めるべきかチェック"""
-        # 指定されたディレクトリ内のファイルかチェック
-        file_dir = os.path.dirname(file_path)
-        target_dir = os.path.normpath(self.directory)
-        
-        if self.include_subdirs:
-            # サブディレクトリを含む場合
-            return file_dir.startswith(target_dir)
-        else:
-            # 直下のファイルのみ
-            return os.path.normpath(file_dir) == target_dir
+        try:
+            # 指定されたディレクトリ内のファイルかチェック
+            file_dir = os.path.normpath(os.path.dirname(file_path))
+            target_dir = os.path.normpath(self.directory)
+
+            if self.include_subdirs:
+                # サブディレクトリを含む場合
+                result = file_dir.startswith(target_dir)
+                print(f"フィルタリング: {file_path} -> {result} (target: {target_dir})")
+                return result
+            else:
+                # 直下のファイルのみ
+                result = file_dir == target_dir
+                print(f"フィルタリング: {file_path} -> {result} (target: {target_dir})")
+                return result
+        except Exception as e:
+            print(f"フィルタリングエラー: {file_path} - {e}")
+            return True  # エラーの場合は表示する
 
     def cancel_search(self) -> None:
         """検索をキャンセル"""
@@ -144,11 +154,7 @@ class IndexedFileSearcher(QThread):
         self.index_status_changed.emit("インデックスを作成中...")
         
         try:
-            self.indexer.create_index(
-                directories, 
-                include_subdirs=True, 
-                progress_callback=progress_callback
-            )
+            self.indexer.create_index(directories, progress_callback=progress_callback)
             
             stats = self.indexer.get_index_stats()
             self.index_status_changed.emit(
