@@ -107,6 +107,7 @@ class ResultsWidget(QWidget):
         """インデックス検索用のSearcherをセットアップ"""
         file_extensions = self.config_manager.get_file_extensions()
         context_length = self.config_manager.get_context_length()
+        index_file_path = self.config_manager.get_index_file_path()  # 設定から取得
 
         self.index_searcher = SmartFileSearcher(
             directory=directory,
@@ -116,7 +117,8 @@ class ResultsWidget(QWidget):
             file_extensions=file_extensions,
             context_length=context_length,
             use_index=True,
-            search_mode=SearchMode.FALLBACK  # フォールバックモード
+            search_mode=SearchMode.FALLBACK,  # フォールバックモード
+            index_file_path=index_file_path  # 設定から取得したパスを渡す
         )
 
         # シグナルを接続

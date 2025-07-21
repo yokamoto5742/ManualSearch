@@ -35,6 +35,9 @@ class MainWindow(QMainWindow):
         self._setup_close_button()
         self._connect_signals()
 
+        # 設定からインデックス検索の状態を読み込み
+        self._load_index_search_setting()
+
     def _setup_window_geometry(self) -> None:
         geometry = self.config_manager.get_window_size_and_position()  # 新しいメソッドに変更
         self.setGeometry(*geometry)
@@ -92,11 +95,22 @@ class MainWindow(QMainWindow):
         index_button_layout.addWidget(manage_index_button)
 
         self.index_search_checkbox = QCheckBox("インデックス検索を使用")
-        self.index_search_checkbox.setChecked(self.use_index_search)
         self.index_search_checkbox.toggled.connect(self.toggle_index_search)
         index_button_layout.addWidget(self.index_search_checkbox)
 
         self.main_layout.addLayout(index_button_layout)
+
+    def _load_index_search_setting(self) -> None:
+        """設定からインデックス検索の状態を読み込み"""
+        try:
+            use_index = self.config_manager.get_use_index_search()
+            self.use_index_search = use_index
+            self.index_search_checkbox.setChecked(use_index)
+        except Exception as e:
+            print(f"インデックス検索設定の読み込みに失敗: {e}")
+            # デフォルト値を設定
+            self.use_index_search = False
+            self.index_search_checkbox.setChecked(False)
 
     def start_search(self) -> None:
         search_terms = self.search_widget.get_search_terms()
@@ -124,7 +138,6 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.auto_close_message.show_message(f"検索中にエラーが発生しました: {str(e)}", 5000)
 
-    # 5. 新しいメソッドを追加
     def open_index_management(self) -> None:
         """インデックス管理ダイアログを開く"""
         if self.index_dialog is None:
@@ -138,12 +151,15 @@ class MainWindow(QMainWindow):
         """インデックス検索の有効/無効を切り替え"""
         self.use_index_search = enabled
 
+        # 設定を保存
+        try:
+            self.config_manager.set_use_index_search(enabled)
+        except Exception as e:
+            print(f"インデックス検索設定の保存に失敗: {e}")
+
         # UIの状態を更新
         if hasattr(self, 'index_search_checkbox'):
             self.index_search_checkbox.setChecked(enabled)
-
-        # 設定を保存する場合
-        # self.config_manager.set_use_index_search(enabled)
 
         status_message = "インデックス検索を有効にしました" if enabled else "従来の検索方法に切り替えました"
         self.auto_close_message.show_message(status_message, 2000)

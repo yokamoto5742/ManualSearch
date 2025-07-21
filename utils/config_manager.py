@@ -15,6 +15,8 @@ from constants import (
     DEFAULT_PDF_TIMEOUT,
     DEFAULT_MAX_TEMP_FILES,
     DEFAULT_ACROBAT_PATH,
+    DEFAULT_INDEX_FILE,
+    DEFAULT_USE_INDEX_SEARCH,
     SUPPORTED_FILE_EXTENSIONS,
     MIN_FONT_SIZE,
     MAX_FONT_SIZE,
@@ -276,4 +278,36 @@ class ConfigManager:
         if CONFIG_SECTIONS['PDF_SETTINGS'] not in self.config:
             self.config[CONFIG_SECTIONS['PDF_SETTINGS']] = {}
         self.config[CONFIG_SECTIONS['PDF_SETTINGS']][CONFIG_KEYS['MAX_TEMP_FILES']] = str(max_files)
+        self.save_config()
+
+    # ========== インデックス関連の設定メソッド（新規追加） ==========
+
+    def get_index_file_path(self) -> str:
+        """インデックスファイルのパスを取得"""
+        return self.config.get(
+            CONFIG_SECTIONS['INDEX_SETTINGS'],
+            CONFIG_KEYS['INDEX_FILE_PATH'],
+            fallback=DEFAULT_INDEX_FILE
+        )
+
+    def set_index_file_path(self, path: str) -> None:
+        """インデックスファイルのパスを設定"""
+        if CONFIG_SECTIONS['INDEX_SETTINGS'] not in self.config:
+            self.config[CONFIG_SECTIONS['INDEX_SETTINGS']] = {}
+        self.config[CONFIG_SECTIONS['INDEX_SETTINGS']][CONFIG_KEYS['INDEX_FILE_PATH']] = path
+        self.save_config()
+
+    def get_use_index_search(self) -> bool:
+        """インデックス検索を使用するかどうかを取得"""
+        return self.config.getboolean(
+            CONFIG_SECTIONS['INDEX_SETTINGS'],
+            CONFIG_KEYS['USE_INDEX_SEARCH'],
+            fallback=DEFAULT_USE_INDEX_SEARCH
+        )
+
+    def set_use_index_search(self, use_index: bool) -> None:
+        """インデックス検索を使用するかどうかを設定"""
+        if CONFIG_SECTIONS['INDEX_SETTINGS'] not in self.config:
+            self.config[CONFIG_SECTIONS['INDEX_SETTINGS']] = {}
+        self.config[CONFIG_SECTIONS['INDEX_SETTINGS']][CONFIG_KEYS['USE_INDEX_SEARCH']] = str(use_index)
         self.save_config()

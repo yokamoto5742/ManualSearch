@@ -8,22 +8,22 @@ from service.file_searcher import FileSearcher as OriginalFileSearcher
 
 class IndexedFileSearcher(QThread):
     """インデックスを使用した高速検索クラス"""
-    
+
     result_found = pyqtSignal(str, list)
     progress_update = pyqtSignal(int)
     search_completed = pyqtSignal()
     index_status_changed = pyqtSignal(str)  # インデックス状態の変化を通知
 
     def __init__(
-        self,
-        directory: str,
-        search_terms: List[str],
-        include_subdirs: bool,
-        search_type: str,
-        file_extensions: List[str],
-        context_length: int,
-        use_index: bool = True,
-        index_file_path: str = "search_index.json"
+            self,
+            directory: str,
+            search_terms: List[str],
+            include_subdirs: bool,
+            search_type: str,
+            file_extensions: List[str],
+            context_length: int,
+            use_index: bool = True,
+            index_file_path: str = "search_index.json"  # デフォルト値を設定
     ):
         super().__init__()
         self.directory = directory
@@ -34,10 +34,10 @@ class IndexedFileSearcher(QThread):
         self.context_length = context_length
         self.use_index = use_index
         self.cancel_flag = False
-        
+
         # インデックス管理
         self.indexer = SearchIndexer(index_file_path)
-        
+
         # 従来の検索クラス（フォールバック用）
         self.fallback_searcher = None
 
@@ -58,13 +58,13 @@ class IndexedFileSearcher(QThread):
         if not os.path.exists(self.indexer.index_file_path):
             self.index_status_changed.emit("インデックスファイルが見つかりません")
             return False
-        
+
         # インデックスが古すぎる場合は無効とする
         stats = self.indexer.get_index_stats()
         if stats["files_count"] == 0:
             self.index_status_changed.emit("インデックスが空です")
             return False
-        
+
         self.index_status_changed.emit(f"インデックスを使用: {stats['files_count']} ファイル")
         return True
 
@@ -103,7 +103,7 @@ class IndexedFileSearcher(QThread):
     def _search_without_index(self) -> None:
         """従来の方法で検索（フォールバック）"""
         self.index_status_changed.emit("従来の検索方法を使用中...")
-        
+
         # 従来のFileSearcherを使用
         self.fallback_searcher = OriginalFileSearcher(
             self.directory,
@@ -113,12 +113,12 @@ class IndexedFileSearcher(QThread):
             self.file_extensions,
             self.context_length
         )
-        
+
         # シグナルを接続
         self.fallback_searcher.result_found.connect(self.result_found.emit)
         self.fallback_searcher.progress_update.connect(self.progress_update.emit)
         self.fallback_searcher.search_completed.connect(self.search_completed.emit)
-        
+
         # 検索実行
         self.fallback_searcher.run()
 
@@ -152,16 +152,16 @@ class IndexedFileSearcher(QThread):
     def create_or_update_index(self, directories: List[str], progress_callback: Optional[callable] = None) -> None:
         """インデックスを作成または更新"""
         self.index_status_changed.emit("インデックスを作成中...")
-        
+
         try:
             self.indexer.create_index(directories, progress_callback=progress_callback)
-            
+
             stats = self.indexer.get_index_stats()
             self.index_status_changed.emit(
                 f"インデックス作成完了: {stats['files_count']} ファイル, "
                 f"{stats['index_file_size_mb']:.1f}MB"
             )
-            
+
         except Exception as e:
             self.index_status_changed.emit(f"インデックス作成エラー: {e}")
             print(f"インデックス作成エラー: {e}")
@@ -183,24 +183,24 @@ class IndexedFileSearcher(QThread):
         try:
             # 既存のインデックスをクリア
             self.indexer._initialize_new_index()
-            
+
             # 新しいインデックスを作成
             self.create_or_update_index(directories)
-            
+
         except Exception as e:
             self.index_status_changed.emit(f"インデックス再構築エラー: {e}")
 
 
 class SearchMode:
     """検索モードの定数"""
-    INDEX_ONLY = "index_only"      # インデックスのみ使用
-    FALLBACK = "fallback"          # インデックス→従来の順で試行
-    TRADITIONAL = "traditional"    # 従来の検索のみ
+    INDEX_ONLY = "index_only"  # インデックスのみ使用
+    FALLBACK = "fallback"  # インデックス→従来の順で試行
+    TRADITIONAL = "traditional"  # 従来の検索のみ
 
 
 class SmartFileSearcher(IndexedFileSearcher):
     """賢い検索クラス - 状況に応じて最適な検索方法を選択"""
-    
+
     def __init__(self, *args, search_mode: str = SearchMode.FALLBACK, **kwargs):
         super().__init__(*args, **kwargs)
         self.search_mode = search_mode
@@ -222,18 +222,15 @@ class SmartFileSearcher(IndexedFileSearcher):
         """必要に応じてインデックスを自動更新"""
         try:
             stats = self.get_index_stats()
-            
+
             # インデックスが存在しない場合
             if stats["files_count"] == 0:
                 self.index_status_changed.emit("インデックスが存在しないため作成します...")
                 self.create_or_update_index(directories)
                 return True
 
-            # - ディレクトリ内のファイル数とインデックス内のファイル数を比較
-            # - 最終更新日時をチェック
-            
             return False
-            
+
         except Exception as e:
             print(f"インデックス自動更新チェックでエラー: {e}")
             return False

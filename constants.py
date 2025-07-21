@@ -105,7 +105,8 @@ CONFIG_SECTIONS = {
     'UI_SETTINGS': 'UISettings',
     'PATHS': 'Paths',
     'DIRECTORIES': 'Directories',
-    'PDF_SETTINGS': 'PDFSettings'
+    'PDF_SETTINGS': 'PDFSettings',
+    'INDEX_SETTINGS': 'IndexSettings'  # 新規追加
 }
 
 # 設定キー名
@@ -125,7 +126,9 @@ CONFIG_KEYS = {
     'HTML_FONT_SIZE': 'html_font_size',
     'TIMEOUT': 'timeout',
     'CLEANUP_TEMP_FILES': 'cleanup_temp_files',
-    'MAX_TEMP_FILES': 'max_temp_files'
+    'MAX_TEMP_FILES': 'max_temp_files',
+    'INDEX_FILE_PATH': 'index_file_path',  # 新規追加
+    'USE_INDEX_SEARCH': 'use_index_search'  # 新規追加
 }
 
 # エラーメッセージ
@@ -198,4 +201,4 @@ ACROBAT_PROCESS_NAMES = [
 # インデックス関連
 DEFAULT_INDEX_FILE = "search_index.json"
 INDEX_UPDATE_THRESHOLD_DAYS = 7
-
+DEFAULT_USE_INDEX_SEARCH = False
