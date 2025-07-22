@@ -94,10 +94,8 @@ class IndexedFileSearcher(QThread):
             self._search_without_index()
 
     def _search_without_index(self) -> None:
-        """従来の方法で検索（フォールバック）"""
-        self.index_status_changed.emit("従来の検索方法を使用中...")
+        self.index_status_changed.emit("インデックスなしで検索中...")
 
-        # 従来のFileSearcherを使用
         self.fallback_searcher = OriginalFileSearcher(
             self.directory,
             self.search_terms,
