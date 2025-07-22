@@ -210,7 +210,7 @@ class SearchIndexer:
         matches = []
         
         if file_path.lower().endswith('.pdf'):
-            pages = content.split('\n\n')  # 簡易的なページ分割
+            pages = content.split('\n\n')
             for page_num, page_content in enumerate(pages, 1):
                 for term in search_terms:
                     if term.lower() in page_content.lower():
@@ -218,7 +218,6 @@ class SearchIndexer:
                         matches.append((page_num, context))
                         break  # ページごとに1つのマッチのみ
         else:
-            # テキストファイルの場合は行単位で検索
             lines = content.split('\n')
             for line_num, line in enumerate(lines, 1):
                 for term in search_terms:
@@ -227,7 +226,6 @@ class SearchIndexer:
                         matches.append((line_num, context))
                         break  # 行ごとに1つのマッチのみ
 
-        # 結果が多すぎる場合は制限
         return matches[:200]
     
     def _extract_context(self, text: str, search_term: str, context_length: int) -> str:
