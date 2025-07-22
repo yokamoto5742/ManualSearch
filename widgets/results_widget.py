@@ -2,17 +2,13 @@ import os
 import re
 from typing import Dict, List, Tuple, Optional
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QListWidget, QListWidgetItem,
     QTextEdit, QProgressDialog, QLabel
 )
-
-from constants import (
-    HIGHLIGHT_COLORS,
-    UI_LABELS
-)
+from constants import HIGHLIGHT_COLORS,UI_LABELS
 from service.file_searcher import FileSearcher
 from service.indexed_file_searcher import SmartFileSearcher, SearchMode
 
@@ -34,18 +30,15 @@ class ResultsWidget(QWidget):
         self.current_position: Optional[int] = None
         self.searcher: Optional[FileSearcher] = None
         self.progress_dialog: Optional[QProgressDialog] = None
-
-        # インデックス検索用
         self.index_searcher: Optional[SmartFileSearcher] = None
 
     def _setup_ui(self) -> None:
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        # インデックス状態表示ラベル
         self.index_status_label = QLabel("")
-        self.index_status_label.setStyleSheet("color: blue; font-size: 10px; padding: 2px;")
-        self.index_status_label.setVisible(False)  # 初期状態では非表示
+        self.index_status_label.setStyleSheet("color: blue; font-size: 12px; padding: 2px;")
+        self.index_status_label.setVisible(False)
         layout.addWidget(self.index_status_label)
 
         self.results_list = QListWidget()
@@ -55,7 +48,6 @@ class ResultsWidget(QWidget):
 
         self.result_display = QTextEdit()
         self.result_display.setReadOnly(True)
-        # テキスト選択を有効にする
         self.result_display.setTextInteractionFlags(
             Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard
         )
@@ -71,7 +63,6 @@ class ResultsWidget(QWidget):
 
     def perform_search(self, directory: str, search_terms: List[str],
                        include_subdirs: bool, search_type: str) -> None:
-        """従来の検索を実行"""
         self._setup_search_colors(search_terms)
         self._setup_searcher(directory, search_terms, include_subdirs, search_type)
         self._setup_progress_dialog()
@@ -79,7 +70,6 @@ class ResultsWidget(QWidget):
 
     def perform_index_search(self, directory: str, search_terms: List[str],
                              include_subdirs: bool, search_type: str) -> None:
-        """インデックスを使用した検索を実行"""
         self._setup_search_colors(search_terms)
         self._setup_index_searcher(directory, search_terms, include_subdirs, search_type)
         self._setup_progress_dialog()
@@ -93,7 +83,6 @@ class ResultsWidget(QWidget):
 
     def _setup_searcher(self, directory: str, search_terms: List[str],
                         include_subdirs: bool, search_type: str) -> None:
-        """従来の検索クラスをセットアップ"""
         file_extensions = self.config_manager.get_file_extensions()
         context_length = self.config_manager.get_context_length()
         self.searcher = FileSearcher(directory, search_terms, include_subdirs,
@@ -104,10 +93,9 @@ class ResultsWidget(QWidget):
 
     def _setup_index_searcher(self, directory: str, search_terms: List[str],
                               include_subdirs: bool, search_type: str) -> None:
-        """インデックス検索用のSearcherをセットアップ"""
         file_extensions = self.config_manager.get_file_extensions()
         context_length = self.config_manager.get_context_length()
-        index_file_path = self.config_manager.get_index_file_path()  # 設定から取得
+        index_file_path = self.config_manager.get_index_file_path()
 
         self.index_searcher = SmartFileSearcher(
             directory=directory,
@@ -117,11 +105,9 @@ class ResultsWidget(QWidget):
             file_extensions=file_extensions,
             context_length=context_length,
             use_index=True,
-            search_mode=SearchMode.FALLBACK,  # フォールバックモード
-            index_file_path=index_file_path  # 設定から取得したパスを渡す
+            index_file_path=index_file_path
         )
 
-        # シグナルを接続
         self.index_searcher.result_found.connect(self.add_result)
         self.index_searcher.progress_update.connect(self.update_progress)
         self.index_searcher.search_completed.connect(self.search_completed)
@@ -143,7 +129,6 @@ class ResultsWidget(QWidget):
             self.progress_dialog.setValue(value)
 
     def update_index_status(self, status: str) -> None:
-        """インデックス状態を更新"""
         if self.index_status_label:
             self.index_status_label.setText(f"🔍 {status}")
             self.index_status_label.setVisible(bool(status.strip()))
@@ -157,14 +142,10 @@ class ResultsWidget(QWidget):
             self.index_searcher.cancel_search()
 
     def search_completed(self) -> None:
-        """検索完了時の処理"""
         if self.progress_dialog:
             self.progress_dialog.close()
 
-        # インデックス状態をクリア（少し遅らせて）
         if self.index_status_label:
-            # 3秒後に状態表示をクリア
-            from PyQt5.QtCore import QTimer
             QTimer.singleShot(3000, lambda: self.index_status_label.setVisible(False))
 
     def add_result(self, file_path: str, results: List[Tuple[int, str]]) -> None:
@@ -231,11 +212,9 @@ class ResultsWidget(QWidget):
         return highlighted
 
     def clear_results(self) -> None:
-        """結果をクリア"""
         self.results_list.clear()
         self.result_display.clear()
 
-        # インデックス状態もクリア
         if self.index_status_label:
             self.index_status_label.setText("")
             self.index_status_label.setVisible(False)
