@@ -1,5 +1,5 @@
-from typing import List, Optional
 from datetime import datetime
+from typing import List, Optional
 
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt5.QtWidgets import (
@@ -13,11 +13,10 @@ from utils.config_manager import ConfigManager
 
 
 class IndexBuildThread(QThread):
-    """インデックス作成用スレッド"""
 
-    progress_updated = pyqtSignal(int, int)  # processed, total
+    progress_updated = pyqtSignal(int, int)
     status_updated = pyqtSignal(str)
-    completed = pyqtSignal(bool)  # success
+    completed = pyqtSignal(bool)
 
     def __init__(self, directories: List[str], index_file_path: str):
         super().__init__()
@@ -27,17 +26,13 @@ class IndexBuildThread(QThread):
 
     def run(self):
         try:
-            self.status_updated.emit("インデックス作成を開始...")
+            self.status_updated.emit("インデックス作成開始...")
 
             def progress_callback(processed: int, total: int):
                 if not self.should_cancel:
                     self.progress_updated.emit(processed, total)
 
-            self.indexer.create_index(
-                self.directories,
-                include_subdirs=True,
-                progress_callback=progress_callback
-            )
+            self.indexer.create_index(self.directories, progress_callback=progress_callback)
 
             if not self.should_cancel:
                 self.status_updated.emit("インデックス作成完了")
@@ -55,15 +50,13 @@ class IndexBuildThread(QThread):
 
 
 class IndexManagementWidget(QWidget):
-    """インデックス管理用ウィジェット"""
 
-    index_updated = pyqtSignal()  # インデックスが更新された時のシグナル
+    index_updated = pyqtSignal()
 
     def __init__(self, config_manager: ConfigManager, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.config_manager = config_manager
 
-        # 設定からインデックスファイルパスを取得してSearchIndexerを初期化
         index_file_path = self.config_manager.get_index_file_path()
         self.indexer = SearchIndexer(index_file_path)
         self.build_thread: Optional[IndexBuildThread] = None
@@ -71,7 +64,6 @@ class IndexManagementWidget(QWidget):
         self._setup_ui()
         self._update_display()
 
-        # 定期的に統計情報を更新
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self._update_display)
         self.update_timer.start(5000)  # 5秒間隔
@@ -80,8 +72,7 @@ class IndexManagementWidget(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        # インデックス統計情報グループ
-        stats_group = QGroupBox("インデックス統計")
+        stats_group = QGroupBox("インデックス統計情報")
         stats_layout = QVBoxLayout()
 
         self.stats_label = QLabel("統計情報を読み込み中...")
@@ -90,11 +81,9 @@ class IndexManagementWidget(QWidget):
         stats_group.setLayout(stats_layout)
         layout.addWidget(stats_group)
 
-        # インデックス操作グループ
         operations_group = QGroupBox("インデックス操作")
         operations_layout = QVBoxLayout()
 
-        # ボタンレイアウト
         button_layout = QHBoxLayout()
 
         self.create_button = QPushButton("インデックス作成")
@@ -115,12 +104,10 @@ class IndexManagementWidget(QWidget):
 
         operations_layout.addLayout(button_layout)
 
-        # 設定
-        self.auto_update_checkbox = QCheckBox("検索時に自動的にインデックスを更新")
+        self.auto_update_checkbox = QCheckBox("検索時にインデックスを毎回更新")
         self.auto_update_checkbox.setChecked(True)
         operations_layout.addWidget(self.auto_update_checkbox)
 
-        # 進行状況
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
         operations_layout.addWidget(self.progress_bar)
@@ -131,7 +118,6 @@ class IndexManagementWidget(QWidget):
         operations_group.setLayout(operations_layout)
         layout.addWidget(operations_group)
 
-        # ログ表示
         log_group = QGroupBox("ログ")
         log_layout = QVBoxLayout()
 
@@ -144,7 +130,6 @@ class IndexManagementWidget(QWidget):
         layout.addWidget(log_group)
 
     def _update_display(self):
-        """表示内容を更新"""
         try:
             stats = self.indexer.get_index_stats()
 
@@ -163,7 +148,6 @@ class IndexManagementWidget(QWidget):
             self.stats_label.setText(f"統計情報の取得に失敗: {str(e)}")
 
     def _format_datetime(self, datetime_str: Optional[str]) -> str:
-        """日時文字列をフォーマット"""
         if not datetime_str:
             return "未設定"
 
@@ -183,7 +167,6 @@ class IndexManagementWidget(QWidget):
         self._start_index_operation("作成", directories)
 
     def _update_index(self):
-        """インデックスを更新"""
         directories = self.config_manager.get_directories()
         if not directories:
             QMessageBox.warning(self, "警告", "検索対象ディレクトリが設定されていません。")
@@ -192,17 +175,15 @@ class IndexManagementWidget(QWidget):
         self._start_index_operation("更新", directories)
 
     def _rebuild_index(self):
-        """インデックスを完全再構築"""
         reply = QMessageBox.question(
             self,
             "確認",
-            "インデックスを完全に再構築しますか？\n既存のインデックスは削除されます。",
+            "既存インデックスを削除して完全に再構築しますか？",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
 
         if reply == QMessageBox.Yes:
-            # 既存のインデックスをクリア
             self.indexer._initialize_new_index()
             self.indexer._save_index()
 
@@ -210,9 +191,8 @@ class IndexManagementWidget(QWidget):
             self._start_index_operation("再構築", directories)
 
     def _start_index_operation(self, operation_name: str, directories: List[str]):
-        """インデックス操作を開始"""
         if self.build_thread and self.build_thread.isRunning():
-            QMessageBox.information(self, "情報", "インデックス操作が既に実行中です。")
+            QMessageBox.information(self, "情報", "インデックス操作を実行中です。")
             return
 
         self._log(f"インデックス{operation_name}を開始します...")
@@ -222,7 +202,6 @@ class IndexManagementWidget(QWidget):
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
 
-        # スレッドを開始（設定からインデックスファイルパスを取得）
         index_file_path = self.config_manager.get_index_file_path()
         self.build_thread = IndexBuildThread(directories, index_file_path)
         self.build_thread.progress_updated.connect(self._on_progress_updated)
@@ -231,10 +210,9 @@ class IndexManagementWidget(QWidget):
         self.build_thread.start()
 
     def _cleanup_index(self):
-        """インデックスをクリーンアップ"""
         try:
             removed_count = self.indexer.remove_missing_files()
-            message = f"クリーンアップ完了: {removed_count} 個のファイルを削除しました。"
+            message = f"クリーンアップ完了: {removed_count} 個の存在しないファイルをインデックスから削除しました。"
             self._log(message)
             QMessageBox.information(self, "クリーンアップ完了", message)
             self._update_display()
@@ -246,19 +224,16 @@ class IndexManagementWidget(QWidget):
             QMessageBox.critical(self, "エラー", error_msg)
 
     def _on_progress_updated(self, processed: int, total: int):
-        """進行状況の更新"""
         if total > 0:
             progress = int((processed / total) * 100)
             self.progress_bar.setValue(progress)
             self.status_label.setText(f"処理中: {processed}/{total} ({progress}%)")
 
     def _on_status_updated(self, status: str):
-        """ステータスの更新"""
         self.status_label.setText(status)
         self._log(status)
 
     def _on_operation_completed(self, success: bool):
-        """操作完了時の処理"""
         self._set_buttons_enabled(True)
         self.progress_bar.setVisible(False)
 
@@ -270,14 +245,12 @@ class IndexManagementWidget(QWidget):
             self.status_label.setText("操作が失敗しました")
 
     def _set_buttons_enabled(self, enabled: bool):
-        """ボタンの有効/無効を設定"""
         self.create_button.setEnabled(enabled)
         self.update_button.setEnabled(enabled)
         self.cleanup_button.setEnabled(enabled)
         self.rebuild_button.setEnabled(enabled)
 
     def _log(self, message: str):
-        """ログメッセージを追加"""
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.log_text.append(f"[{timestamp}] {message}")
 
@@ -286,7 +259,6 @@ class IndexManagementWidget(QWidget):
         return self.auto_update_checkbox.isChecked()
 
     def closeEvent(self, event):
-        """ウィジェット終了時の処理"""
         if self.build_thread and self.build_thread.isRunning():
             self.build_thread.cancel()
             self.build_thread.wait(3000)  # 3秒待機
@@ -298,7 +270,6 @@ class IndexManagementWidget(QWidget):
 
 
 class IndexManagementDialog(QDialog):
-    """インデックス管理ダイアログ"""
 
     def __init__(self, config_manager: ConfigManager, parent: Optional[QWidget] = None):
         super().__init__(parent)
@@ -309,16 +280,13 @@ class IndexManagementDialog(QDialog):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        # インデックス管理ウィジェット
         self.index_widget = IndexManagementWidget(config_manager, self)
         layout.addWidget(self.index_widget)
 
-        # ボタン
         button_box = QDialogButtonBox(QDialogButtonBox.Close)
         button_box.rejected.connect(self.close)
         layout.addWidget(button_box)
 
     def closeEvent(self, event):
-        """ダイアログ終了時の処理"""
         self.index_widget.closeEvent(event)
         super().closeEvent(event)
