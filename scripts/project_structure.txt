@@ -1,7 +1,7 @@
 ============================================================
 プロジェクト構造: ManualSearch
 パス: C:\Users\yokam\PycharmProjects\ManualSearch
-生成日時: 2025-07-17 18:31:32
+生成日時: 2025-07-22 14:26:13
 ============================================================
 
 └── ManualSearch
@@ -15,13 +15,19 @@
     │   ├── README.md
     │   └── LICENSE
     ├── scripts
-    │   └── __init__.py
+    │   ├── __init__.py
+    │   ├── project_structure.py
+    │   └── version_manager.py
     ├── service
     │   ├── __init__.py
     │   ├── file_opener.py
     │   ├── file_searcher.py
+    │   ├── indexed_file_searcher.py
     │   ├── pdf_handler.py
+    │   ├── search_indexer.py
     │   └── text_handler.py
+    ├── templates
+    │   └── text_viewer.html
     ├── utils
     │   ├── config.ini
     │   ├── config_manager.py
@@ -30,10 +36,9 @@
     │   ├── __init__.py
     │   ├── auto_close_message_widget.py
     │   ├── directory_widget.py
+    │   ├── index_management_widget.py
     │   ├── results_widget.py
     │   └── search_widget.py
     ├── requirements.txt
-    ├── main.py
-    ├── version.py
-    ├── version.txt
-    └── version_manager.py
+    ├── constants.py
+    └── main.py
