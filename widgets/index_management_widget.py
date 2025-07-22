@@ -19,7 +19,7 @@ class IndexBuildThread(QThread):
     status_updated = pyqtSignal(str)
     completed = pyqtSignal(bool)  # success
 
-    def __init__(self, directories: List[str], index_file_path: str):
+    def __init__(self, directories: List[str], index_file_path: str = "search_index.json"):
         super().__init__()
         self.directories = directories
         self.indexer = SearchIndexer(index_file_path)
@@ -62,10 +62,7 @@ class IndexManagementWidget(QWidget):
     def __init__(self, config_manager: ConfigManager, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.config_manager = config_manager
-
-        # 設定からインデックスファイルパスを取得してSearchIndexerを初期化
-        index_file_path = self.config_manager.get_index_file_path()
-        self.indexer = SearchIndexer(index_file_path)
+        self.indexer = SearchIndexer()
         self.build_thread: Optional[IndexBuildThread] = None
 
         self._setup_ui()
@@ -152,7 +149,6 @@ class IndexManagementWidget(QWidget):
 ファイル数: {stats['files_count']:,} 個
 総サイズ: {stats['total_size_mb']:.1f} MB
 インデックスファイルサイズ: {stats['index_file_size_mb']:.1f} MB
-インデックスファイルパス: {self.indexer.index_file_path}
 作成日時: {self._format_datetime(stats['created_at'])}
 最終更新: {self._format_datetime(stats['last_updated'])}
             """.strip()
@@ -222,9 +218,8 @@ class IndexManagementWidget(QWidget):
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
 
-        # スレッドを開始（設定からインデックスファイルパスを取得）
-        index_file_path = self.config_manager.get_index_file_path()
-        self.build_thread = IndexBuildThread(directories, index_file_path)
+        # スレッドを開始
+        self.build_thread = IndexBuildThread(directories)
         self.build_thread.progress_updated.connect(self._on_progress_updated)
         self.build_thread.status_updated.connect(self._on_status_updated)
         self.build_thread.completed.connect(self._on_operation_completed)
