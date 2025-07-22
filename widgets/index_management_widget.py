@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
     QProgressBar, QTextEdit, QGroupBox, QCheckBox, QMessageBox,
@@ -10,46 +10,11 @@ from PyQt5.QtWidgets import (
 
 from service.search_indexer import SearchIndexer
 from utils.config_manager import ConfigManager
-
-
-class IndexBuildThread(QThread):
-
-    progress_updated = pyqtSignal(int, int)
-    status_updated = pyqtSignal(str)
-    completed = pyqtSignal(bool)
-
-    def __init__(self, directories: List[str], index_file_path: str):
-        super().__init__()
-        self.directories = directories
-        self.indexer = SearchIndexer(index_file_path)
-        self.should_cancel = False
-
-    def run(self):
-        try:
-            self.status_updated.emit("インデックス作成開始...")
-
-            def progress_callback(processed: int, total: int):
-                if not self.should_cancel:
-                    self.progress_updated.emit(processed, total)
-
-            self.indexer.create_index(self.directories, progress_callback=progress_callback)
-
-            if not self.should_cancel:
-                self.status_updated.emit("インデックス作成完了")
-                self.completed.emit(True)
-            else:
-                self.status_updated.emit("インデックス作成がキャンセルされました")
-                self.completed.emit(False)
-
-        except Exception as e:
-            self.status_updated.emit(f"エラー: {str(e)}")
-            self.completed.emit(False)
-
-    def cancel(self):
-        self.should_cancel = True
+from widgets.index_build_thread import IndexBuildThread
 
 
 class IndexManagementWidget(QWidget):
+    """インデックス管理UIウィジェット"""
 
     index_updated = pyqtSignal()
 
@@ -270,6 +235,7 @@ class IndexManagementWidget(QWidget):
 
 
 class IndexManagementDialog(QDialog):
+    """インデックス管理ダイアログ"""
 
     def __init__(self, config_manager: ConfigManager, parent: Optional[QWidget] = None):
         super().__init__(parent)
