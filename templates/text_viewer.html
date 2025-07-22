@@ -137,7 +137,7 @@
             <button onclick="changeFontSize(-1)">文字を小さく</button>
         </div>
         <div style="margin-top: 8px;">
-            <button onclick="toggleWordWrap()">文字の折り返し</button>
+            <button onclick="toggleWordWrap()">文字を折り返す</button>
             <button onclick="scrollToTop()">ページ上部へ</button>
         </div>
     </div>
@@ -180,7 +180,6 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // 検索語のハイライト効果を追加
         function highlightSearchTerms() {
             var highlights = document.querySelectorAll('span[style*="background-color"]');
             highlights.forEach(function(highlight) {
@@ -188,19 +187,15 @@
             });
         }
 
-        // ページ読み込み時の初期化
         document.addEventListener('DOMContentLoaded', function() {
-            // 保存されたフォントサイズを復元
             var savedFontSize = localStorage.getItem('textViewerFontSize');
             if (savedFontSize) {
                 currentFontSize = parseInt(savedFontSize);
                 document.body.style.fontSize = currentFontSize + 'px';
             }
 
-            // ハイライト効果を適用
             highlightSearchTerms();
 
-            // キーボードショートカットを追加
             document.addEventListener('keydown', function(e) {
                 if (e.ctrlKey) {
                     switch(e.key) {
