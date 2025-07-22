@@ -112,7 +112,6 @@ def wait_for_acrobat(pid: int, timeout: int = ACROBAT_WAIT_TIMEOUT) -> bool:
                                            for acrobat_name in ['acrobat', 'adobe']):
                         return True
                 except Exception:
-                    # ウィンドウタイトル取得に失敗しても継続
                     pass
 
         except psutil.NoSuchProcess:
