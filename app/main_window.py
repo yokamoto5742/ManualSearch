@@ -34,8 +34,6 @@ class MainWindow(QMainWindow):
         self._setup_index_management_ui()
         self._setup_close_button()
         self._connect_signals()
-
-        # 設定からインデックス検索の状態を読み込み
         self._load_index_search_setting()
 
     def _setup_window_geometry(self) -> None:
@@ -101,14 +99,12 @@ class MainWindow(QMainWindow):
         self.main_layout.addLayout(index_button_layout)
 
     def _load_index_search_setting(self) -> None:
-        """設定からインデックス検索の状態を読み込み"""
         try:
             use_index = self.config_manager.get_use_index_search()
             self.use_index_search = use_index
             self.index_search_checkbox.setChecked(use_index)
         except Exception as e:
-            print(f"インデックス検索設定の読み込みに失敗: {e}")
-            # デフォルト値を設定
+            print(f"インデックス設定の読み込みに失敗: {e}")
             self.use_index_search = False
             self.index_search_checkbox.setChecked(False)
 
@@ -125,13 +121,11 @@ class MainWindow(QMainWindow):
         self.directory_widget.disable_open_folder_button()
 
         try:
-            # 新しいインデックス検索を使用
             if self.use_index_search:
                 self.results_widget.perform_index_search(
                     directory, search_terms, include_subdirs, search_type
                 )
             else:
-                # 従来の検索を使用
                 self.results_widget.perform_search(
                     directory, search_terms, include_subdirs, search_type
                 )
@@ -139,7 +133,6 @@ class MainWindow(QMainWindow):
             self.auto_close_message.show_message(f"検索中にエラーが発生しました: {str(e)}", 5000)
 
     def open_index_management(self) -> None:
-        """インデックス管理ダイアログを開く"""
         if self.index_dialog is None:
             self.index_dialog = IndexManagementDialog(self.config_manager, self)
 
@@ -148,16 +141,13 @@ class MainWindow(QMainWindow):
         self.index_dialog.activateWindow()
 
     def toggle_index_search(self, enabled: bool) -> None:
-        """インデックス検索の有効/無効を切り替え"""
         self.use_index_search = enabled
 
-        # 設定を保存
         try:
             self.config_manager.set_use_index_search(enabled)
         except Exception as e:
-            print(f"インデックス検索設定の保存に失敗: {e}")
+            print(f"インデックス設定の保存に失敗: {e}")
 
-        # UIの状態を更新
         if hasattr(self, 'index_search_checkbox'):
             self.index_search_checkbox.setChecked(enabled)
 
