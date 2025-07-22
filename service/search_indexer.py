@@ -1,19 +1,18 @@
+import hashlib
 import json
 import os
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-from datetime import datetime
-import hashlib
 
 import fitz
-from utils.helpers import read_file_with_auto_encoding
+
 from constants import SUPPORTED_FILE_EXTENSIONS
+from utils.helpers import read_file_with_auto_encoding
 
 
 class SearchIndexer:
-    """検索インデックスの作成と管理を行うクラス"""
-    
     def __init__(self, index_file_path: str = "search_index.json"):
         self.index_file_path = index_file_path
         self.index_data = {
@@ -25,10 +24,9 @@ class SearchIndexer:
         self._load_existing_index()
     
     def _load_existing_index(self) -> None:
-        """既存のインデックスファイルを読み込み"""
         if os.path.exists(self.index_file_path):
             try:
-                with open(self.index_file_path, 'r', encoding='utf-8') as f:
+                with open(self.index_file_path, encoding='utf-8') as f:
                     self.index_data = json.load(f)
                 print(f"既存のインデックスを読み込みました: {len(self.index_data.get('files', {}))} ファイル")
             except (json.JSONDecodeError, FileNotFoundError) as e:
@@ -48,10 +46,7 @@ class SearchIndexer:
     
     def create_index(self, directories: List[str], include_subdirs: bool = True, 
                     progress_callback: Optional[callable] = None) -> None:
-        """指定されたディレクトリのインデックスを作成"""
-        print("インデックス作成を開始します...")
-        
-        # ファイルリストの取得
+
         file_list = self._get_file_list(directories, include_subdirs)
         total_files = len(file_list)
         print(f"対象ファイル数: {total_files}")
@@ -69,21 +64,18 @@ class SearchIndexer:
                 
                 if progress_callback:
                     progress_callback(processed, total_files)
-                
-                # 進行状況を表示（10%刻み）
+
                 if processed % max(1, total_files // 10) == 0:
                     print(f"進行状況: {processed}/{total_files} ({(processed/total_files)*100:.1f}%)")
                     
             except Exception as e:
                 print(f"ファイル処理エラー: {file_path} - {e}")
-        
-        # インデックスを保存
+
         self._save_index()
         
         print(f"インデックス作成完了: {updated_files} ファイルを更新")
     
     def _get_file_list(self, directories: List[str], include_subdirs: bool) -> List[str]:
-        """対象ファイルのリストを取得"""
         file_list = []
         
         for directory in directories:
@@ -106,11 +98,9 @@ class SearchIndexer:
         return file_list
     
     def _is_supported_file(self, file_path: str) -> bool:
-        """サポートされているファイル形式かチェック"""
         return any(file_path.lower().endswith(ext) for ext in SUPPORTED_FILE_EXTENSIONS)
     
     def _should_update_file(self, file_path: str) -> bool:
-        """ファイルを更新すべきかチェック"""
         try:
             current_mtime = os.path.getmtime(file_path)
             current_size = os.path.getsize(file_path)
@@ -119,8 +109,7 @@ class SearchIndexer:
                 return True
             
             stored_info = self.index_data["files"][file_path]
-            
-            # ファイルサイズや更新日時が変わっていれば更新
+
             return (stored_info.get("mtime", 0) != current_mtime or 
                    stored_info.get("size", 0) != current_size)
         
@@ -128,13 +117,11 @@ class SearchIndexer:
             return False
     
     def _process_file(self, file_path: str) -> None:
-        """ファイルを処理してインデックスに追加"""
         try:
             content = self._extract_text_content(file_path)
             if content:
                 file_stats = os.stat(file_path)
-                
-                # ファイルハッシュを計算（重複検知用）
+
                 file_hash = self._calculate_file_hash(file_path)
                 
                 self.index_data["files"][file_path] = {
@@ -149,7 +136,6 @@ class SearchIndexer:
             print(f"ファイル処理エラー: {file_path} - {e}")
     
     def _extract_text_content(self, file_path: str) -> str:
-        """ファイルからテキストコンテンツを抽出"""
         file_extension = os.path.splitext(file_path)[1].lower()
         
         if file_extension == '.pdf':
@@ -158,7 +144,6 @@ class SearchIndexer:
             return self._extract_text_file_content(file_path)
     
     def _extract_pdf_content(self, file_path: str) -> str:
-        """PDFファイルからテキストを抽出"""
         content = ""
         try:
             doc = fitz.open(file_path)
@@ -171,7 +156,6 @@ class SearchIndexer:
         return content
     
     def _extract_text_file_content(self, file_path: str) -> str:
-        """テキストファイルからコンテンツを抽出"""
         try:
             return read_file_with_auto_encoding(file_path)
         except Exception as e:
@@ -179,11 +163,9 @@ class SearchIndexer:
             return ""
     
     def _calculate_file_hash(self, file_path: str) -> str:
-        """ファイルのハッシュ値を計算"""
         hash_md5 = hashlib.md5()
         try:
             with open(file_path, "rb") as f:
-                # 大きなファイルの場合は先頭部分のみでハッシュ計算
                 chunk = f.read(8192)
                 hash_md5.update(chunk)
         except Exception:
@@ -203,7 +185,6 @@ class SearchIndexer:
             print(f"インデックス保存エラー: {e}")
     
     def search_in_index(self, search_terms: List[str], search_type: str = "AND") -> List[Tuple[str, List[Tuple[int, str]]]]:
-        """インデックスから検索を実行"""
         results = []
         
         for file_path, file_info in self.index_data["files"].items():
@@ -217,7 +198,6 @@ class SearchIndexer:
         return results
     
     def _match_search_terms(self, content: str, search_terms: List[str], search_type: str) -> bool:
-        """検索条件にマッチするかチェック"""
         content_lower = content.lower()
         
         if search_type == "AND":
@@ -227,11 +207,9 @@ class SearchIndexer:
     
     def _find_matches_in_content(self, content: str, search_terms: List[str], 
                                file_path: str, context_length: int = 100) -> List[Tuple[int, str]]:
-        """コンテンツ内でマッチした箇所を特定"""
         matches = []
         
         if file_path.lower().endswith('.pdf'):
-            # PDFの場合はページ単位で検索
             pages = content.split('\n\n')  # 簡易的なページ分割
             for page_num, page_content in enumerate(pages, 1):
                 for term in search_terms:
@@ -248,12 +226,11 @@ class SearchIndexer:
                         context = self._extract_context(line, term, context_length)
                         matches.append((line_num, context))
                         break  # 行ごとに1つのマッチのみ
-        
+
         # 結果が多すぎる場合は制限
-        return matches[:100]
+        return matches[:200]
     
     def _extract_context(self, text: str, search_term: str, context_length: int) -> str:
-        """検索語の周辺テキストを抽出"""
         term_index = text.lower().find(search_term.lower())
         if term_index == -1:
             return text[:context_length * 2]
@@ -264,7 +241,6 @@ class SearchIndexer:
         return text[start:end]
     
     def get_index_stats(self) -> Dict:
-        """インデックスの統計情報を取得"""
         files_count = len(self.index_data.get("files", {}))
         total_size = sum(info.get("size", 0) for info in self.index_data.get("files", {}).values())
         
@@ -277,7 +253,6 @@ class SearchIndexer:
         }
     
     def remove_missing_files(self) -> int:
-        """存在しないファイルをインデックスから削除"""
         missing_files = []
         
         for file_path in self.index_data["files"]:
