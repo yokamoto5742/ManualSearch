@@ -1,9 +1,17 @@
 import os
 import tempfile
 import shutil
+import warnings
 from pathlib import Path
 import pytest
 from PyQt5.QtWidgets import QApplication
+
+# PyQt5とSwig関連の警告を抑制
+warnings.filterwarnings("ignore", category=DeprecationWarning, module=".*_bootstrap.*")
+warnings.filterwarnings("ignore", "builtin type.*has no __module__ attribute", DeprecationWarning)
+
+# 環境変数でQt関連のログレベルを設定
+os.environ.setdefault('QT_LOGGING_RULES', '*.debug=false;qt.qpa.*=false')
 
 
 @pytest.fixture(scope='session')
@@ -63,7 +71,7 @@ use_index_search = False
 """
     with open(config_path, 'w', encoding='utf-8') as f:
         f.write(config_content)
-    
+
     yield config_path
 
 
@@ -79,7 +87,7 @@ Pythonプログラミングのテストです。
 """
     with open(text_path, 'w', encoding='utf-8') as f:
         f.write(content)
-    
+
     yield text_path
 
 
@@ -105,7 +113,7 @@ def test_function():
 """
     with open(md_path, 'w', encoding='utf-8') as f:
         f.write(content)
-    
+
     yield md_path
 
 
