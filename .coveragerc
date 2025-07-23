@@ -1,0 +1,42 @@
+[run]
+source = .
+omit = 
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */venv/*
+    */env/*
+    setup.py
+    main.py
+
+[report]
+exclude_lines =
+    # デバッグ用のコード
+    pragma: no cover
+    def __repr__
+    def __str__
+    
+    # 防御的プログラミング
+    raise AssertionError
+    raise NotImplementedError
+    
+    # 実行されない条件
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    
+    # 抽象メソッド
+    @abstractmethod
+    
+    # プロトコルメソッド
+    @typing.overload
+    
+    # Qt関連のイベントハンドラ（GUIテストで別途カバー）
+    def closeEvent
+    def paintEvent
+    def resizeEvent
+
+[html]
+directory = htmlcov
+
+[xml]
+output = coverage.xml
