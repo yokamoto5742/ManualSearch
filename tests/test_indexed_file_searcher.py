@@ -282,12 +282,13 @@ class TestSmartFileSearcher:
         with patch.object(smart_searcher, '_is_index_available', return_value=False):
             smart_searcher.run()
             # 検索が実行されないことを確認（search_completedシグナルのみ発出）
-    
+
     def test_search_mode_fallback(self, smart_searcher):
         """FALLBACKモードのテスト（親クラスの動作）"""
         smart_searcher.search_mode = SearchMode.FALLBACK
-        
-        with patch('service.indexed_file_searcher.SmartFileSearcher.__bases__[0].run') as mock_parent_run:
+
+        # 直接親クラスのrunメソッドを呼び出す代わりに、スーパークラスの動作をモック
+        with patch.object(IndexedFileSearcher, 'run') as mock_parent_run:
             smart_searcher.run()
             mock_parent_run.assert_called_once()
     

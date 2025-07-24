@@ -1,8 +1,15 @@
 import os
 import tempfile
 import json
+import re
+import subprocess
 import pytest
 from unittest.mock import patch, MagicMock, mock_open, call
+
+import fitz
+import psutil
+from jinja2 import TemplateNotFound
+
 from service.pdf_handler import (
     highlight_pdf, cleanup_temp_files, close_existing_acrobat_processes,
     wait_for_acrobat, navigate_to_page, open_pdf
@@ -418,19 +425,18 @@ def search_function(terms):
             mock_env.get_template.return_value = mock_template
             mock_create_env.return_value = mock_env
             yield mock_env, mock_template
-    
+
     def test_get_template_directory_frozen(self):
         """Pyinstaller実行時のテンプレートディレクトリ取得テスト"""
-        with patch('sys.frozen', True), \
-             patch('sys._MEIPASS', '/frozen/app/path'):
-            
+        with patch('sys.frozen', True, create=True), \
+                patch('sys._MEIPASS', '/frozen/app/path', create=True):
             result = get_template_directory()
             expected = os.path.join('/frozen/app/path', TEMPLATE_DIRECTORY)
             assert result == expected
-    
+
     def test_get_template_directory_normal(self):
         """通常実行時のテンプレートディレクトリ取得テスト"""
-        with patch('sys.frozen', False):
+        with patch('sys.frozen', False, create=True):
             result = get_template_directory()
             assert TEMPLATE_DIRECTORY in result
             assert os.path.isabs(result)
