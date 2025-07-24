@@ -222,8 +222,8 @@ indexer.create_index(
 
 ```ini
 [WindowSettings]
-window_width = 1200
-window_height = 900
+window_width = 1150
+window_height = 800
 font_size = 14
 
 [Paths]
@@ -248,17 +248,9 @@ context_length = 100
 
 ### 開発環境のセットアップ
 
-1. **開発用依存関係のインストール**
    ```bash
    pip install -r requirements.txt
    pip install pytest pytest-qt  # テスト用（必要に応じて）
-   ```
-
-2. **コード品質チェック**
-   ```bash
-   # 型チェック（オプション）
-   pip install mypy
-   mypy service/ utils/
    ```
 
 ### アーキテクチャ
@@ -327,14 +319,6 @@ context_length = 100
 
 - **バージョン**: 1.1.3
 - **リリース日**: 2025-07-24
-- **互換性**: Windows 11, Python 3.11+
-
-## 貢献
-
-プロジェクトへの貢献を歓迎します：
-1. Issueの報告
-2. 機能要望の提案
-3. プルリクエストの送信
 
 ## ライセンス
 
