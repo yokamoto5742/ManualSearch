@@ -12,13 +12,13 @@ class ProjectStructureGenerator:
             '.venv', 'venv', '.env', 'env', 'tests',
             '.vscode', '.idea', '*.swp', '*.swo', '*~',
             '.git', '.gitignore', '.hg', '.svn',
-            '.DS_Store', 'Thumbs.db', 'desktop.ini',
+            '.DS_Store', 'Thumbs.db', 'desktop.ini','pytest.ini',
             'node_modules', '.npm',
             '*.log', '*.tmp', '.cache', 'project_structure.txt'
         }
 
         self.important_files = {
-            'README_test.md', 'README.txt', 'requirements.txt',
+            'README.txt', 'requirements.txt',
             'setup.py', 'pyproject.toml', 'Dockerfile',
             'config.ini', 'alembic.ini', '.env', 'Procfile'
         }

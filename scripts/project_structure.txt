@@ -1,7 +1,7 @@
 ============================================================
 プロジェクト構造: ManualSearch
 パス: C:\Users\yokam\PycharmProjects\ManualSearch
-生成日時: 2025-07-22 14:26:13
+生成日時: 2025-07-24 18:51:53
 ============================================================
 
 └── ManualSearch
@@ -12,8 +12,8 @@
     │   ├── ManualSearch.ico
     │   └── ManualSearch.png
     ├── docs
-    │   ├── README.md
-    │   └── LICENSE
+    │   ├── LICENSE
+    │   └── README.md
     ├── scripts
     │   ├── __init__.py
     │   ├── project_structure.py
