@@ -166,7 +166,7 @@ def highlight_pdf(pdf_path: str, search_terms: List[str]) -> str:
 
         for page in doc:
             for i, term in enumerate(search_terms):
-                if not term.strip():
+                if not term or not term.strip():
                     continue
 
                 text_instances = page.search_for(term.strip())

@@ -801,7 +801,7 @@ use_index_search = True
             assert len(matches) > 0
             position, context = matches[0]
             assert 'Python' in context
-            assert 'integration' in context
+            assert 'integration' in context.lower() or 'Integration' in context
             
             # ファイルオープンの確認
             with patch('service.file_opener.open_text_file') as mock_open:

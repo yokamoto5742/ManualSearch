@@ -101,23 +101,25 @@ class IndexedFileSearcher(QThread):
 
     def _should_include_file(self, file_path: str) -> bool:
         try:
+            if not os.path.isabs(file_path):
+                file_path = os.path.abspath(file_path)
+
             file_dir = os.path.normpath(os.path.dirname(file_path))
-            target_dir = os.path.normpath(self.directory)
+            target_dir = os.path.normpath(os.path.abspath(self.directory))
 
             if self.include_subdirs:
-                result = file_dir.startswith(target_dir)
+                result = os.path.commonpath([file_dir, target_dir]) == target_dir
                 print(f"フィルタリング: {file_path} -> {result} (target: {target_dir})")
                 return result
             else:
                 result = file_dir == target_dir
                 print(f"フィルタリング: {file_path} -> {result} (target: {target_dir})")
                 return result
-        except Exception as e:
+        except (ValueError, OSError) as e:
             print(f"フィルタリングエラー: {file_path} - {e}")
             return True
 
     def cancel_search(self) -> None:
-        """検索をキャンセル"""
         self.cancel_flag = True
         if self.fallback_searcher:
             self.fallback_searcher.cancel_search()

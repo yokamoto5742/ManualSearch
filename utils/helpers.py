@@ -19,11 +19,32 @@ from constants import (
 
 
 def normalize_path(file_path: str) -> str:
-    normalized_path = os.path.normpath(file_path.replace('\\', '/'))
-    return re.sub('/+', '/', normalized_path)
+    if not file_path:
+        return ''
+
+    if file_path.startswith('\\\\'):
+        return file_path.replace('\\', '/')
+
+    if len(file_path) >= 2 and file_path[1] == ':':
+        return file_path.replace('\\', '/')
+
+    normalized = os.path.normpath(file_path.replace('\\', '/'))
+    return re.sub('/+', '/', normalized)
 
 
 def is_network_file(file_path: str) -> bool:
+    if not file_path:
+        return False
+
+    # UNCパス判定（\\server\share または //server/share）
+    if file_path.startswith('\\\\') or file_path.startswith('//'):
+        return True
+
+    # ドライブレター判定（C:, D: など）
+    if len(file_path) >= 2 and file_path[1] == ':':
+        return True
+
+    # その他のネットワークパス判定
     normalized_path = normalize_path(file_path)
     return normalized_path.startswith('//') or ':' in normalized_path[:2]
 
@@ -46,6 +67,10 @@ def read_file_with_auto_encoding(file_path: str) -> Optional[str]:
     except IOError as e:
         raise IOError(f"ファイルの読み込みに失敗しました: {file_path}") from e
 
+    # 空ファイルの場合
+    if len(raw_data) == 0:
+        return ""
+
     try:
         result = chardet.detect(raw_data)
         encoding = result['encoding']
@@ -53,11 +78,25 @@ def read_file_with_auto_encoding(file_path: str) -> Optional[str]:
         raise ValueError(f"{ERROR_MESSAGES['ENCODING_DETECTION_FAILED']}: {file_path}") from e
 
     if encoding is None:
-        raise ValueError(f"{ERROR_MESSAGES['ENCODING_DETECTION_FAILED']}: {file_path}")
+        try:
+            return raw_data.decode()
+        except UnicodeDecodeError:
+            try:
+                return raw_data.decode('latin-1')
+            except:
+                raise ValueError(f"{ERROR_MESSAGES['ENCODING_DETECTION_FAILED']}: {file_path}")
 
     try:
         return raw_data.decode(encoding)
     except UnicodeDecodeError as e:
+        fallback_encodings = ['utf-8', 'cp1252', 'latin-1']
+        for fallback_encoding in fallback_encodings:
+            if fallback_encoding != encoding:
+                try:
+                    return raw_data.decode(fallback_encoding)
+                except UnicodeDecodeError:
+                    continue
+
         raise ValueError(f"{ERROR_MESSAGES['FILE_DECODE_FAILED']}: {file_path}") from e
 
 
