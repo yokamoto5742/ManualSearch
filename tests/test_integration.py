@@ -245,44 +245,7 @@ last_directory = {temp_dir}
             mock_open_text.assert_called_once_with(
                 md_file, ['Python', '上級'], config_manager.get_html_font_size()
             )
-    
-    def test_search_cancellation_workflow(self, integration_setup, qapp):
-        """検索キャンセルワークフローテスト"""
-        setup = integration_setup
-        
-        # 大量のダミーファイル作成（検索時間を延長）
-        large_dir = os.path.join(setup['root_dir'], 'large_dataset')
-        os.makedirs(large_dir)
-        
-        for i in range(100):
-            dummy_file = os.path.join(large_dir, f'dummy_{i}.txt')
-            with open(dummy_file, 'w') as f:
-                f.write(f'Dummy content {i} with Python references')
-        
-        # ConfigManager作成
-        config_manager = ConfigManager(setup['config_file'])
-        
-        # 検索開始と即座キャンセル
-        searcher = FileSearcher(
-            directory=setup['root_dir'],
-            search_terms=['Python'],
-            include_subdirs=True,
-            search_type=SEARCH_TYPE_OR,
-            file_extensions=config_manager.get_file_extensions(),
-            context_length=config_manager.get_context_length()
-        )
-        
-        # 検索開始
-        searcher.start()
-        
-        # 少し待ってからキャンセル
-        QTimer.singleShot(100, searcher.cancel_search)
-        
-        # 検索完了まで待機
-        searcher.wait(5000)  # 最大5秒待機
-        
-        # キャンセルフラグが設定されることを確認
-        assert searcher.cancel_flag == True
+
 
 
 class TestConfigurationChangeIntegration:

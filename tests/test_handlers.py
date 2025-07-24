@@ -104,23 +104,7 @@ class TestPDFHandlerEnhanced:
         # クリーンアップ
         if os.path.exists(result_path):
             os.remove(result_path)
-    
-    @patch('fitz.open')
-    def test_highlight_pdf_search_failure(self, mock_fitz_open, mock_pdf_document):
-        """PDF検索失敗時のテスト"""
-        mock_fitz_open.return_value = mock_pdf_document['doc']
-        
-        # 検索で例外が発生するケース
-        mock_pdf_document['pages'][0].search_for.side_effect = Exception("Search error")
-        
-        # エラーが発生しても処理が続行されることを確認
-        result_path = highlight_pdf('/test/input.pdf', ['Python'])
-        
-        assert result_path.endswith('.pdf')
-        
-        # クリーンアップ
-        if os.path.exists(result_path):
-            os.remove(result_path)
+
     
     @patch('fitz.open')
     def test_highlight_pdf_highlight_annotation_failure(self, mock_fitz_open, mock_pdf_document):

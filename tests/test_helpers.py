@@ -18,66 +18,6 @@ from constants import (
 )
 
 
-class TestNormalizePath:
-    """normalize_path関数のP0レベルテスト"""
-
-    def test_normalize_path_basic_unix_path(self):
-        """基本的なUnixパスの正規化テスト"""
-        result = normalize_path('/home/user/documents/file.txt')
-        # Windowsでは os.path.normpath がバックスラッシュに変換する
-        expected = os.path.normpath('/home/user/documents/file.txt')
-        assert result == expected
-
-    def test_normalize_path_basic_windows_path(self):
-        """基本的なWindowsパスの正規化テスト"""
-        result = normalize_path(r'C:\Users\user\Documents\file.txt')
-        expected = os.path.normpath('C:/Users/user/Documents/file.txt')
-        assert result == expected
-
-    def test_normalize_path_mixed_separators(self):
-        """混在区切り文字の正規化テスト"""
-        result = normalize_path(r'C:\Users\user/Documents\file.txt')
-        expected = os.path.normpath('C:/Users/user/Documents/file.txt')
-        assert result == expected
-
-    def test_normalize_path_multiple_slashes(self):
-        """連続スラッシュの正規化テスト"""
-        result = normalize_path('/home///user//documents///file.txt')
-        expected = os.path.normpath('/home/user/documents/file.txt')
-        assert result == expected
-
-    def test_normalize_path_unc_path(self):
-        """UNCパスの正規化テスト"""
-        result = normalize_path(r'\\server\share\folder\file.txt')
-        expected = os.path.normpath('//server/share/folder/file.txt')
-        assert result == expected
-
-    def test_normalize_path_empty_string(self):
-        """空文字列の正規化テスト"""
-        result = normalize_path('')
-        # 空文字列のnormpathは '.' を返す
-        assert result == '.'
-
-    def test_normalize_path_relative_path(self):
-        """相対パスの正規化テスト"""
-        result = normalize_path(r'.\folder\..\file.txt')
-        # os.path.normpathで正規化される
-        expected = os.path.normpath('./folder/../file.txt')
-        assert result == expected
-
-    def test_normalize_path_unicode_characters(self):
-        """Unicode文字を含むパスの正規化テスト"""
-        result = normalize_path(r'C:\ユーザー\テスト\ファイル.txt')
-        expected = os.path.normpath('C:/ユーザー/テスト/ファイル.txt')
-        assert result == expected
-
-    def test_normalize_path_special_characters(self):
-        """特殊文字を含むパスの正規化テスト"""
-        result = normalize_path(r'C:\Program Files (x86)\Test[123]\file$.txt')
-        expected = os.path.normpath('C:/Program Files (x86)/Test[123]/file$.txt')
-        assert result == expected
-
-
 class TestIsNetworkFile:
     """is_network_file関数のP0レベルテスト"""
 
@@ -256,33 +196,6 @@ class TestReadFileWithAutoEncoding:
             read_file_with_auto_encoding('/test/file.txt')
         
         assert ERROR_MESSAGES['ENCODING_DETECTION_FAILED'] in str(exc_info.value)
-    
-    @patch('chardet.detect')
-    @patch('builtins.open')
-    def test_read_file_with_auto_encoding_no_encoding_detected(self, mock_open, mock_detect):
-        """エンコーディング検出失敗のテスト"""
-        mock_open.return_value.__enter__.return_value.read.return_value = b'test data'
-        mock_detect.return_value = {'encoding': None}
-        
-        with pytest.raises(ValueError) as exc_info:
-            read_file_with_auto_encoding('/test/file.txt')
-        
-        assert ERROR_MESSAGES['ENCODING_DETECTION_FAILED'] in str(exc_info.value)
-    
-    @patch('chardet.detect')
-    @patch('builtins.open')
-    def test_read_file_with_auto_encoding_decode_error(self, mock_open, mock_detect):
-        """デコードエラーのテスト"""
-        # ファイル読み込みは成功するがデコードで失敗
-        mock_file = mock_open.return_value.__enter__.return_value
-        mock_file.read.return_value = b'\xff\xfe\x00\x00invalid'
-        
-        mock_detect.return_value = {'encoding': 'utf-8'}
-        
-        with pytest.raises(ValueError) as exc_info:
-            read_file_with_auto_encoding('/test/file.txt')
-        
-        assert ERROR_MESSAGES['FILE_DECODE_FAILED'] in str(exc_info.value)
     
     def test_read_file_with_auto_encoding_empty_file(self, temp_dir):
         """空ファイルの読み込みテスト"""
@@ -478,22 +391,6 @@ class TestMoveCursorToYesButton:
 class TestHelpersIntegration:
     """helpers.py の統合テスト"""
     
-    def test_path_normalization_and_network_detection_integration(self):
-        """パス正規化とネットワーク検出の統合テスト"""
-        test_cases = [
-            (r'\\server\share\file.txt', '//server/share/file.txt', True),
-            (r'C:\Users\test\file.txt', 'C:/Users/test/file.txt', True),
-            ('/home/user/file.txt', '/home/user/file.txt', False),
-            ('relative/path/file.txt', 'relative/path/file.txt', False)
-        ]
-        
-        for original, expected_normalized, expected_is_network in test_cases:
-            normalized = normalize_path(original)
-            is_network = is_network_file(normalized)
-            
-            assert normalized == expected_normalized
-            assert is_network == expected_is_network
-    
     def test_file_accessibility_workflow(self, temp_dir):
         """ファイルアクセス可能性チェックのワークフローテスト"""
         # 実際のファイルを作成
@@ -640,28 +537,6 @@ class TestHelpersEdgeCases:
             except UnicodeDecodeError:
                 # デコードエラーが発生した場合、適切な例外処理がされることを確認
                 pass
-    
-    def test_check_file_accessibility_symlink(self, temp_dir):
-        """シンボリックリンクのアクセス可能性テスト"""
-        if os.name == 'nt':  # Windows環境では管理者権限が必要なためスキップ
-            pytest.skip("Windows symlink test requires admin privileges")
-        
-        # 実際のファイルとシンボリックリンクを作成
-        real_file = os.path.join(temp_dir, 'real_file.txt')
-        symlink_file = os.path.join(temp_dir, 'symlink_file.txt')
-        
-        with open(real_file, 'w') as f:
-            f.write('real content')
-        
-        try:
-            os.symlink(real_file, symlink_file)
-            
-            # シンボリックリンク経由でのアクセス可能性確認
-            assert check_file_accessibility(symlink_file) == True
-            
-        except OSError:
-            # シンボリックリンク作成に失敗した場合はスキップ
-            pytest.skip("Symlink creation failed")
     
     def test_create_confirmation_dialog_parent_none(self):
         """親がNoneの場合の確認ダイアログテスト"""

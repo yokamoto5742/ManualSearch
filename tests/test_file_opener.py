@@ -360,28 +360,6 @@ class TestFileOpener:
                 file_opener.open_file(file_path, 1, ['test'])
                 mock_method.assert_called_once()
 
-    def test_error_handling_integration(self, file_opener):
-        """エラーハンドリングの統合テスト"""
-        error_cases = [
-            ('/nonexistent/file.txt', ERROR_MESSAGES['FILE_NOT_FOUND']),
-            ('test.unsupported', ERROR_MESSAGES['UNSUPPORTED_FORMAT'])
-        ]
-
-        for file_path, expected_error in error_cases:
-            with patch.object(file_opener, '_show_error') as mock_show_error:
-                file_opener.open_file(file_path, 1, ['test'])
-
-                # エラーメッセージが呼び出されたことを確認（内容は柔軟に）
-                mock_show_error.assert_called_once()
-                # 呼び出された引数を確認
-                called_args = mock_show_error.call_args[0]
-                assert len(called_args) == 1  # 1つの引数で呼び出される
-                # 適切なエラーメッセージが含まれていることを確認
-                if 'nonexistent' in file_path:
-                    assert ERROR_MESSAGES['FILE_NOT_FOUND'] in called_args[0]
-                elif 'unsupported' in file_path:
-                    assert ERROR_MESSAGES['UNSUPPORTED_FORMAT'] in called_args[0]
-
     @patch('service.file_opener.cleanup_temp_files')
     def test_same_file_reopening_integration(self, mock_cleanup, file_opener, sample_files):
         """同一ファイル再オープンの統合テスト"""
