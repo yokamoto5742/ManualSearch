@@ -119,8 +119,8 @@ def enhanced_config_file(temp_dir):
 extensions = .pdf,.txt,.md,.py,.json
 
 [WindowSettings]
-window_width = 1400
-window_height = 1000
+window_width = 1200
+window_height = 900
 window_x = 100
 window_y = 100
 font_size = 16
