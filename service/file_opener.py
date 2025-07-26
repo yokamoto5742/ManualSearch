@@ -12,6 +12,7 @@ from constants import (
 )
 from service.pdf_handler import open_pdf, highlight_pdf, cleanup_temp_files
 from service.text_handler import open_text_file
+from utils.helpers import is_network_file
 
 
 class FileOpener:
@@ -96,7 +97,12 @@ class FileOpener:
 
     def open_folder(self, folder_path: str) -> None:
         try:
+            if is_network_file(folder_path):
+                if folder_path.startswith('//'):
+                    folder_path = folder_path.replace('/', '\\')
+
             os.startfile(folder_path)
+
         except FileNotFoundError:
             self._show_error(ERROR_MESSAGES['FOLDER_NOT_FOUND'])
         except OSError as e:
