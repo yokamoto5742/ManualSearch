@@ -153,7 +153,7 @@ UI_LABELS = {
     'ADD_BUTTON': '追加',
     'EDIT_BUTTON': '編集',
     'DELETE_BUTTON': '削除',
-    'INCLUDE_SUBDIRS': 'サブフォルダを含む',
+    'INCLUDE_SUBDIRS': 'サブフォルダ含む',
     'OPEN_FOLDER': 'フォルダを開く',
     'AND_SEARCH_LABEL': 'AND検索(1ページに複数の検索語をすべて含む)',
     'OR_SEARCH_LABEL': 'OR検索(1ページに複数の検索語のいずれかを含む)',
