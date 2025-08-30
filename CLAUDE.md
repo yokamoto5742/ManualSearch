@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - If more than 3 files tell me why and what
 
 ## Automatic Notifications (Hooks)
-自動通知は`.claude/settings.json` で設定済み：
+自動通知は`.claude/settings.local.json` で設定済み：
 
 - **Stop Hook**: ユーザーがClaude Codeを停止した時に「作業が完了しました」と通知
 - **SessionEnd Hook**: セッション終了時に「Claude Code セッションが終了しました」と通知
