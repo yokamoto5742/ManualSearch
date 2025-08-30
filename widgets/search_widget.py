@@ -38,9 +38,6 @@ class SearchWidget(QWidget):
         self.search_type_combo = self._create_search_type_combo()
         layout.addWidget(self.search_type_combo)
 
-        self.global_search_checkbox = self._create_global_search_checkbox()
-        layout.addWidget(self.global_search_checkbox)
-
     def _create_search_layout(self) -> QHBoxLayout:
         search_layout = QHBoxLayout()
         self.search_input = QLineEdit()
@@ -63,9 +60,6 @@ class SearchWidget(QWidget):
         ])
         return search_type_combo
 
-    @staticmethod
-    def _create_global_search_checkbox() -> QCheckBox:
-        return QCheckBox(UI_LABELS['GLOBAL_SEARCH'])
 
     def get_search_terms(self) -> List[str]:
         try:
@@ -88,9 +82,3 @@ class SearchWidget(QWidget):
             print("検索タイプコンボボックスが正しく初期化されていません")
             return SEARCH_TYPE_AND
 
-    def is_global_search(self) -> bool:
-        try:
-            return self.global_search_checkbox.isChecked()
-        except AttributeError:
-            print("全フォルダ検索チェックボックスが正しく初期化されていません")
-            return False

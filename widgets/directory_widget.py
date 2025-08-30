@@ -62,6 +62,9 @@ class DirectoryWidget(QWidget):
         self.include_subdirs_checkbox = QCheckBox(UI_LABELS['INCLUDE_SUBDIRS'])
         self.include_subdirs_checkbox.setChecked(True)
 
+        self.global_search_checkbox = QCheckBox(UI_LABELS['GLOBAL_SEARCH'])
+        self.global_search_checkbox.setChecked(True)
+
         self.open_folder_button = QPushButton(UI_LABELS['OPEN_FOLDER'])
         self.open_folder_button.clicked.connect(self.open_folder_requested.emit)
         self.open_folder_button.setEnabled(False)
@@ -70,6 +73,7 @@ class DirectoryWidget(QWidget):
         button_layout.addWidget(dir_edit_button)
         button_layout.addWidget(dir_delete_button)
         button_layout.addWidget(self.include_subdirs_checkbox)
+        button_layout.addWidget(self.global_search_checkbox)
         button_layout.addStretch(1)
         button_layout.addWidget(self.open_folder_button)
 
@@ -86,6 +90,9 @@ class DirectoryWidget(QWidget):
 
     def include_subdirs(self) -> bool:
         return self.include_subdirs_checkbox.isChecked()
+
+    def is_global_search(self) -> bool:
+        return self.global_search_checkbox.isChecked()
 
     def update_last_directory(self, directory: str) -> None:
         if os.path.isdir(directory):

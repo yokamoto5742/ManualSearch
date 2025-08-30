@@ -113,7 +113,7 @@ class MainWindow(QMainWindow):
         directory = self.directory_widget.get_selected_directory()
         include_subdirs = self.directory_widget.include_subdirs()
         search_type = self.search_widget.get_search_type()
-        is_global_search = self.search_widget.is_global_search()
+        is_global_search = self.directory_widget.is_global_search()
 
         if not search_terms:
             return
