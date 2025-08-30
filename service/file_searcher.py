@@ -27,7 +27,9 @@ class FileSearcher(QThread):
         include_subdirs: bool,
         search_type: str,
         file_extensions: List[str],
-        context_length: int
+        context_length: int,
+        global_search: bool = False,
+        global_directories: List[str] = None
     ):
         super().__init__()
         self.directory = directory
@@ -36,13 +38,63 @@ class FileSearcher(QThread):
         self.search_type = search_type
         self.file_extensions = file_extensions
         self.context_length = context_length
+        self.global_search = global_search
+        self.global_directories = global_directories or []
         self.cancel_flag = False
 
     def run(self) -> None:
+        if self.global_search and self.global_directories:
+            self._run_global_search()
+        else:
+            self._run_single_directory_search()
+        
+        self.search_completed.emit()
+
+    def _run_global_search(self) -> None:
+        total_files = 0
+        processed_files = 0
+        
+        # Count total files across all directories
+        for directory in self.global_directories:
+            if os.path.isdir(directory):
+                try:
+                    if self.include_subdirs:
+                        total_files += sum(len(files) for _, _, files in os.walk(directory))
+                    else:
+                        total_files += len([f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))])
+                except OSError:
+                    continue
+        
+        with ThreadPoolExecutor() as executor:
+            for directory in self.global_directories:
+                if self.cancel_flag or not os.path.isdir(directory):
+                    break
+                    
+                if self.include_subdirs:
+                    try:
+                        for root, _, files in os.walk(directory):
+                            if self.cancel_flag:
+                                break
+                            self.process_files(executor, root, files)
+                            processed_files += len(files)
+                            if total_files > 0:
+                                self.progress_update.emit(int((processed_files / total_files) * 100))
+                    except OSError:
+                        continue
+                else:
+                    try:
+                        files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+                        self.process_files(executor, directory, files)
+                        processed_files += len(files)
+                        if total_files > 0:
+                            self.progress_update.emit(int((processed_files / total_files) * 100))
+                    except (OSError, FileNotFoundError):
+                        continue
+
+    def _run_single_directory_search(self) -> None:
         try:
             total_files = sum(len(files) for _, _, files in os.walk(self.directory))
         except OSError:
-            self.search_completed.emit()
             return
 
         processed_files = 0
@@ -66,8 +118,6 @@ class FileSearcher(QThread):
                     self.progress_update.emit(100)
                 except (OSError, FileNotFoundError):
                     pass
-
-        self.search_completed.emit()
 
     def process_files(self, executor: ThreadPoolExecutor, root: str, files: List[str]) -> None:
         futures = []

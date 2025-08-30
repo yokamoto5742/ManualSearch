@@ -75,6 +75,13 @@ class ResultsWidget(QWidget):
         self._setup_progress_dialog()
         self.index_searcher.start()
 
+    def perform_global_search(self, directories: List[str], search_terms: List[str],
+                              include_subdirs: bool, search_type: str) -> None:
+        self._setup_search_colors(search_terms)
+        self._setup_global_searcher(directories, search_terms, include_subdirs, search_type)
+        self._setup_progress_dialog()
+        self.searcher.start()
+
     def _setup_search_colors(self, search_terms: List[str]) -> None:
         self.search_term_colors = {
             term: HIGHLIGHT_COLORS[i % len(HIGHLIGHT_COLORS)]
@@ -87,6 +94,20 @@ class ResultsWidget(QWidget):
         context_length = self.config_manager.get_context_length()
         self.searcher = FileSearcher(directory, search_terms, include_subdirs,
                                      search_type, file_extensions, context_length)
+        self.searcher.result_found.connect(self.add_result)
+        self.searcher.progress_update.connect(self.update_progress)
+        self.searcher.search_completed.connect(self.search_completed)
+
+    def _setup_global_searcher(self, directories: List[str], search_terms: List[str],
+                               include_subdirs: bool, search_type: str) -> None:
+        file_extensions = self.config_manager.get_file_extensions()
+        context_length = self.config_manager.get_context_length()
+        # Use the first directory as base directory (required parameter)
+        # but enable global search mode with all directories
+        base_directory = directories[0] if directories else ""
+        self.searcher = FileSearcher(base_directory, search_terms, include_subdirs,
+                                     search_type, file_extensions, context_length,
+                                     global_search=True, global_directories=directories)
         self.searcher.result_found.connect(self.add_result)
         self.searcher.progress_update.connect(self.update_progress)
         self.searcher.search_completed.connect(self.search_completed)

@@ -113,22 +113,40 @@ class MainWindow(QMainWindow):
         directory = self.directory_widget.get_selected_directory()
         include_subdirs = self.directory_widget.include_subdirs()
         search_type = self.search_widget.get_search_type()
+        is_global_search = self.search_widget.is_global_search()
 
-        if not directory or not search_terms:
+        if not search_terms:
+            return
+            
+        # For global search, we don't need a specific directory
+        if not is_global_search and not directory:
             return
 
         self.results_widget.clear_results()
         self.directory_widget.disable_open_folder_button()
 
         try:
-            if self.use_index_search:
-                self.results_widget.perform_index_search(
-                    directory, search_terms, include_subdirs, search_type
-                )
+            if is_global_search:
+                global_directories = self.config_manager.get_directories()
+                if self.use_index_search:
+                    # For now, global search uses direct file search
+                    # Index search across multiple directories could be implemented later
+                    self.results_widget.perform_global_search(
+                        global_directories, search_terms, include_subdirs, search_type
+                    )
+                else:
+                    self.results_widget.perform_global_search(
+                        global_directories, search_terms, include_subdirs, search_type
+                    )
             else:
-                self.results_widget.perform_search(
-                    directory, search_terms, include_subdirs, search_type
-                )
+                if self.use_index_search:
+                    self.results_widget.perform_index_search(
+                        directory, search_terms, include_subdirs, search_type
+                    )
+                else:
+                    self.results_widget.perform_search(
+                        directory, search_terms, include_subdirs, search_type
+                    )
         except Exception as e:
             self.auto_close_message.show_message(f"検索中にエラーが発生しました: {str(e)}", 5000)
 
