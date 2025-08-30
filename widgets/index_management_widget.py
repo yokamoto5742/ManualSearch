@@ -51,15 +51,15 @@ class IndexManagementWidget(QWidget):
 
         button_layout = QHBoxLayout()
 
-        self.create_button = QPushButton("インデックス作成")
+        self.create_button = QPushButton("初回作成")
         self.create_button.clicked.connect(self._create_index)
         button_layout.addWidget(self.create_button)
 
-        self.update_button = QPushButton("インデックス更新")
+        self.update_button = QPushButton("ファイル追加更新")
         self.update_button.clicked.connect(self._update_index)
         button_layout.addWidget(self.update_button)
 
-        self.cleanup_button = QPushButton("クリーンアップ")
+        self.cleanup_button = QPushButton("ファイル削除更新")
         self.cleanup_button.clicked.connect(self._cleanup_index)
         button_layout.addWidget(self.cleanup_button)
 

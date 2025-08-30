@@ -1,5 +1,4 @@
 import subprocess
-import sys
 
 from scripts.version_manager import update_version
 
@@ -8,7 +7,7 @@ def build_executable():
     new_version = update_version()
     subprocess.run([
         "pyinstaller",
-        "--name=ManualSearch",
+        "--name=マニュアル検索",
         "--windowed",
         "--icon=assets/ManualSearch.ico",
         "--add-data", "utils/config.ini:.",
