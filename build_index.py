@@ -4,7 +4,7 @@ def build_executable():
     subprocess.run([
         "pyinstaller",
         "--windowed",
-        "rebuild_index.py"
+        "scripts/rebuild_index.py"
     ])
 
     print(f"Executable built successfully.")
