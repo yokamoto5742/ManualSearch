@@ -8,7 +8,6 @@ from PyQt5.QtWidgets import (
 
 from app import __version__
 from service.file_opener import FileOpener
-from service.indexed_file_searcher import SmartFileSearcher, SearchMode
 from service.pdf_handler import cleanup_temp_files
 from utils.config_manager import ConfigManager
 from utils.helpers import create_confirmation_dialog

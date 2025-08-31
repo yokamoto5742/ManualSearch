@@ -3,14 +3,15 @@ import re
 from typing import Dict, List, Tuple, Optional
 
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtGui import QFont, QColor
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QListWidget, QListWidgetItem,
     QTextEdit, QProgressDialog, QLabel
 )
-from constants import HIGHLIGHT_COLORS,UI_LABELS
+
+from constants import HIGHLIGHT_COLORS, UI_LABELS
 from service.file_searcher import FileSearcher
-from service.indexed_file_searcher import SmartFileSearcher, SearchMode
+from service.indexed_file_searcher import SmartFileSearcher
 
 
 class ResultsWidget(QWidget):

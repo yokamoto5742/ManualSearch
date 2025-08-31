@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
+from PyQt5.QtCore import pyqtSignal, QTimer
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
     QProgressBar, QTextEdit, QGroupBox, QCheckBox, QMessageBox,
