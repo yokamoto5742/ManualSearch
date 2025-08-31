@@ -1,10 +1,16 @@
 ============================================================
 プロジェクト構造: ManualSearch
 パス: C:\Users\yokam\PycharmProjects\ManualSearch
-生成日時: 2025-07-24 18:51:53
+生成日時: 2025-08-31 19:17:00
 ============================================================
 
 └── ManualSearch
+    ├── .claude
+    │   ├── hooks
+    │   │   ├── PostToolUse.ps1
+    │   │   ├── SessionEnd.ps1
+    │   │   └── Stop.ps1
+    │   └── settings.local.json
     ├── app
     │   ├── __init__.py
     │   └── main_window.py
@@ -40,5 +46,6 @@
     │   ├── results_widget.py
     │   └── search_widget.py
     ├── requirements.txt
+    ├── CLAUDE.md
     ├── constants.py
     └── main.py
