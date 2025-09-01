@@ -16,7 +16,15 @@
       "Bash(claude config list)",
       "Bash(powershell:*)",
       "Bash(claude config get hooks)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(move teststest_config_manager.py testsutils )",
+      "Bash(move teststest_helpers.py testsutils )",
+      "Bash(move teststest_file_searcher.py testsservice )",
+      "Bash(move teststest_search_indexer.py testsservice )",
+      "Bash(move teststest_indexed_file_searcher.py testsservice )",
+      "Bash(move teststest_file_opener.py testsservice )",
+      "Bash(move teststest_handlers.py testsservice)",
+      "Bash(python -m pytest tests/ -v --tb=short --disable-warnings)"
     ],
     "deny": [
       "Bash(sudo:*)",
@@ -70,7 +78,7 @@
     ],
     "SessionEnd": [
       {
-        "matcher": "*", 
+        "matcher": "*",
         "hooks": [
           {
             "type": "command",

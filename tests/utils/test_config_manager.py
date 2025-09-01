@@ -1,12 +1,12 @@
 import os
+
 import pytest
-from utils.config_manager import ConfigManager
+
 from constants import (
-    DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT,
-    MIN_WINDOW_WIDTH, MAX_WINDOW_WIDTH,
-    MIN_WINDOW_HEIGHT, MAX_WINDOW_HEIGHT,  # 追加
-    MIN_FONT_SIZE, MAX_FONT_SIZE
+    MAX_WINDOW_WIDTH,
+    MIN_WINDOW_HEIGHT,
 )
+from utils.config_manager import ConfigManager
 
 
 class TestConfigManager:

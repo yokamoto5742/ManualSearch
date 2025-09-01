@@ -1,25 +1,18 @@
 import os
-import json
-import shutil
-import tempfile
-import time
-import pytest
-from unittest.mock import patch, MagicMock, mock_open
-from PyQt5.QtCore import QCoreApplication, QTimer
-from PyQt5.QtWidgets import QApplication
+from unittest.mock import patch
 
+import pytest
+
+from constants import (
+    SEARCH_TYPE_AND, SEARCH_TYPE_OR
+)
+from service.file_opener import FileOpener
 from service.file_searcher import FileSearcher
 from service.indexed_file_searcher import SmartFileSearcher, SearchMode
 from service.search_indexer import SearchIndexer
-from service.file_opener import FileOpener
 from service.text_handler import highlight_text_file
-from service.pdf_handler import highlight_pdf
 from utils.config_manager import ConfigManager
-from utils.helpers import read_file_with_auto_encoding, normalize_path
-from constants import (
-    SEARCH_TYPE_AND, SEARCH_TYPE_OR, SUPPORTED_FILE_EXTENSIONS,
-    DEFAULT_CONTEXT_LENGTH, DEFAULT_FONT_SIZE
-)
+from utils.helpers import normalize_path
 
 
 class TestSearchWorkflowIntegration:

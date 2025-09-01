@@ -1,7 +1,8 @@
 import os
-import json
-import pytest
 from unittest.mock import patch, MagicMock
+
+import pytest
+
 from service.search_indexer import SearchIndexer
 
 
@@ -76,7 +77,7 @@ class TestSearchIndexer:
         indexer.create_index([temp_dir])
         
         # 両方のキーワードを含むファイルを検索
-        results = indexer.search_in_index(['Python', 'テスト'], 'AND')
+        results = indexer.search_in_index(['Python', 'テスト'])
         assert len(results) >= 1
         
         # 結果の検証

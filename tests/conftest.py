@@ -1,10 +1,10 @@
-import os
-import tempfile
-import shutil
-import warnings
-import psutil
 import gc
-from pathlib import Path
+import os
+import shutil
+import tempfile
+import warnings
+
+import psutil
 import pytest
 from PyQt5.QtWidgets import QApplication
 

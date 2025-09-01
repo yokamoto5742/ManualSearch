@@ -1,9 +1,10 @@
 import os
-import pytest
 from unittest.mock import patch, MagicMock
-from PyQt5.QtCore import QCoreApplication
-from service.file_searcher import FileSearcher
+
+import pytest
+
 from constants import SEARCH_TYPE_AND, SEARCH_TYPE_OR
+from service.file_searcher import FileSearcher
 
 
 class TestFileSearcher:

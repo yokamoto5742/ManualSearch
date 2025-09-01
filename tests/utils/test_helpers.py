@@ -1,20 +1,18 @@
 import os
 import socket
-import tempfile
-import pytest
 from unittest.mock import patch, MagicMock, mock_open, Mock
-from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QCursor
+
+import pytest
 from PyQt5.QtWidgets import QMessageBox, QPushButton
 
+from constants import (
+    NETWORK_TIMEOUT, DNS_TEST_HOST, DNS_TEST_PORT,
+    ERROR_MESSAGES, UI_LABELS
+)
 from utils.helpers import (
     normalize_path, is_network_file, check_file_accessibility,
     read_file_with_auto_encoding, create_confirmation_dialog,
     move_cursor_to_yes_button
-)
-from constants import (
-    NETWORK_TIMEOUT, DNS_TEST_HOST, DNS_TEST_PORT,
-    CURSOR_MOVE_DELAY, ERROR_MESSAGES, UI_LABELS
 )
 
 

@@ -1,15 +1,18 @@
 import os
-import tempfile
-import json
 import re
 import subprocess
-import pytest
-from unittest.mock import patch, MagicMock, mock_open, call
+import tempfile
+from unittest.mock import patch, MagicMock
 
 import fitz
 import psutil
+import pytest
 from jinja2 import TemplateNotFound
 
+from constants import (
+    PAGE_NAVIGATION_RETRY_COUNT, PROCESS_CLEANUP_DELAY, TEMPLATE_DIRECTORY, TEXT_VIEWER_TEMPLATE, MARKDOWN_EXTENSIONS,
+    MIN_FONT_SIZE, MAX_FONT_SIZE
+)
 from service.pdf_handler import (
     highlight_pdf, cleanup_temp_files, close_existing_acrobat_processes,
     wait_for_acrobat, navigate_to_page, open_pdf
@@ -19,13 +22,6 @@ from service.text_handler import (
     create_temp_html_file, generate_html_content, get_template_directory,
     create_jinja_environment, open_text_file, validate_template_file,
     get_available_templates
-)
-from constants import (
-    PDF_HIGHLIGHT_COLORS, ACROBAT_WAIT_TIMEOUT, ACROBAT_WAIT_INTERVAL,
-    PAGE_NAVIGATION_RETRY_COUNT, PAGE_NAVIGATION_DELAY, PROCESS_TERMINATE_TIMEOUT,
-    PROCESS_CLEANUP_DELAY, ACROBAT_PROCESS_NAMES, HIGHLIGHT_COLORS,
-    TEMPLATE_DIRECTORY, TEXT_VIEWER_TEMPLATE, MARKDOWN_EXTENSIONS,
-    HIGHLIGHT_STYLE_TEMPLATE, MIN_FONT_SIZE, MAX_FONT_SIZE
 )
 
 
@@ -608,7 +604,7 @@ def search_function(terms):
         assert result_path.endswith('.html')
         
         # 内容確認
-        with open(result_path, 'r', encoding='utf-8') as f:
+        with open(result_path, encoding='utf-8') as f:
             content = f.read()
         assert content == test_content
         
@@ -772,7 +768,7 @@ def search(term):
             assert result_path.endswith('.html')
             
             # 結果内容確認
-            with open(result_path, 'r', encoding='utf-8') as f:
+            with open(result_path, encoding='utf-8') as f:
                 html_content = f.read()
             
             # Markdownが処理されHTMLに含まれることを確認
@@ -809,7 +805,7 @@ def search(term):
             assert os.path.exists(result_path)
             
             # 結果確認（全てのPythonがハイライトされる）
-            with open(result_path, 'r', encoding='utf-8') as f:
+            with open(result_path, encoding='utf-8') as f:
                 html_content = f.read()
             
             highlight_count = html_content.count('<span style=')
@@ -848,7 +844,7 @@ def search(term):
                     # 各エンコーディングファイルが正常処理されることを確認
                     assert os.path.exists(result_path)
                     
-                    with open(result_path, 'r', encoding='utf-8') as f:
+                    with open(result_path, encoding='utf-8') as f:
                         html_content = f.read()
                     
                     assert 'Python' in html_content

@@ -4,14 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## House Rules:
 - Return patch diffs, not prose.
-- Respect /CONTEXT.md constraints.
 - If unsure, propose 2 options with trade-offs (≤80 words).
 - Keep changes surgical: max 3 files unless I expand scope.
 - If more than 3 files tell me why and what
+- Pythonコードのimport文は以下の適切な順序に並べ替えてください。
+標準ライブラリ
+サードパーティライブラリ
+カスタムモジュール 
+それぞれアルファベット順に並べます。importが先でfromは後です。
 
 ## Automatic Notifications (Hooks)
-自動通知は`.claude/settings.local.json` で設定済み：
-
+自動通知は`.claude/settings.local.json` で設定：
 - **Stop Hook**: ユーザーがClaude Codeを停止した時に「作業が完了しました」と通知
 - **SessionEnd Hook**: セッション終了時に「Claude Code セッションが終了しました」と通知
 

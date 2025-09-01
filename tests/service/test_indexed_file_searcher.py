@@ -1,13 +1,14 @@
-import os
 import json
+import os
+from unittest.mock import patch, MagicMock
+
 import pytest
-from unittest.mock import patch, MagicMock, PropertyMock
-from PyQt5.QtCore import QCoreApplication
+
+from constants import SEARCH_TYPE_AND, SEARCH_TYPE_OR
 from service.indexed_file_searcher import (
     IndexedFileSearcher, SmartFileSearcher, SearchMode
 )
 from service.search_indexer import SearchIndexer
-from constants import SEARCH_TYPE_AND, SEARCH_TYPE_OR
 
 
 class TestIndexedFileSearcher:
@@ -17,16 +18,9 @@ class TestIndexedFileSearcher:
     def searcher(self, temp_dir, qapp):
         """基本的なIndexedFileSearcherインスタンス"""
         index_path = os.path.join(temp_dir, 'test_index.json')
-        return IndexedFileSearcher(
-            directory=temp_dir,
-            search_terms=['Python', 'テスト'],
-            include_subdirs=True,
-            search_type=SEARCH_TYPE_AND,
-            file_extensions=['.txt', '.md', '.pdf'],
-            context_length=100,
-            use_index=True,
-            index_file_path=index_path
-        )
+        return IndexedFileSearcher(directory=temp_dir, search_terms=['Python', 'テスト'], include_subdirs=True,
+                                   search_type=SEARCH_TYPE_AND, file_extensions=['.txt', '.md', '.pdf'],
+                                   context_length=100, index_file_path=index_path)
     
     @pytest.fixture
     def mock_index_available(self):
@@ -246,17 +240,9 @@ class TestSmartFileSearcher:
     def smart_searcher(self, temp_dir, qapp):
         """SmartFileSearcherインスタンス"""
         index_path = os.path.join(temp_dir, 'smart_index.json')
-        return SmartFileSearcher(
-            directory=temp_dir,
-            search_terms=['Python'],
-            include_subdirs=True,
-            search_type=SEARCH_TYPE_OR,
-            file_extensions=['.txt', '.py'],
-            context_length=50,
-            use_index=True,
-            index_file_path=index_path,
-            search_mode=SearchMode.FALLBACK
-        )
+        return SmartFileSearcher(directory=temp_dir, search_terms=['Python'], include_subdirs=True,
+                                 search_type=SEARCH_TYPE_OR, file_extensions=['.txt', '.py'], context_length=50,
+                                 use_index=True, index_file_path=index_path)
     
     def test_search_mode_traditional(self, smart_searcher):
         """TRADITIONAL検索モードのテスト"""
@@ -402,16 +388,9 @@ class TestIndexedFileSearcherIntegration:
             results.append((file_path, matches))
         
         # IndexedFileSearcher作成
-        searcher = IndexedFileSearcher(
-            directory=setup['temp_dir'],
-            search_terms=['Python'],
-            include_subdirs=True,
-            search_type=SEARCH_TYPE_OR,
-            file_extensions=['.txt'],
-            context_length=50,
-            use_index=True,
-            index_file_path=setup['index_path']
-        )
+        searcher = IndexedFileSearcher(directory=setup['temp_dir'], search_terms=['Python'], include_subdirs=True,
+                                       search_type=SEARCH_TYPE_OR, file_extensions=['.txt'], context_length=50,
+                                       index_file_path=setup['index_path'])
         
         searcher.result_found.connect(collect_result)
         
@@ -437,16 +416,9 @@ class TestIndexedFileSearcherIntegration:
             results.append((file_path, matches))
         
         # IndexedFileSearcher作成
-        searcher = IndexedFileSearcher(
-            directory=setup['temp_dir'],
-            search_terms=['Python'],
-            include_subdirs=True,
-            search_type=SEARCH_TYPE_OR,
-            file_extensions=['.txt'],
-            context_length=50,
-            use_index=True,
-            index_file_path=fake_index_path
-        )
+        searcher = IndexedFileSearcher(directory=setup['temp_dir'], search_terms=['Python'], include_subdirs=True,
+                                       search_type=SEARCH_TYPE_OR, file_extensions=['.txt'], context_length=50,
+                                       index_file_path=fake_index_path)
         
         searcher.result_found.connect(collect_result)
         
