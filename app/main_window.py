@@ -128,9 +128,7 @@ class MainWindow(QMainWindow):
             if is_global_search:
                 global_directories = self.config_manager.get_directories()
                 if self.use_index_search:
-                    # For now, global search uses direct file search
-                    # Index search across multiple directories could be implemented later
-                    self.results_widget.perform_global_search(
+                    self.results_widget.perform_global_index_search(
                         global_directories, search_terms, include_subdirs, search_type
                     )
                 else:

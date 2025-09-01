@@ -83,6 +83,13 @@ class ResultsWidget(QWidget):
         self._setup_progress_dialog()
         self.searcher.start()
 
+    def perform_global_index_search(self, directories: List[str], search_terms: List[str],
+                                    include_subdirs: bool, search_type: str) -> None:
+        self._setup_search_colors(search_terms)
+        self._setup_global_index_searcher(directories, search_terms, include_subdirs, search_type)
+        self._setup_progress_dialog()
+        self.index_searcher.start()
+
     def _setup_search_colors(self, search_terms: List[str]) -> None:
         self.search_term_colors = {
             term: HIGHLIGHT_COLORS[i % len(HIGHLIGHT_COLORS)]
@@ -128,6 +135,30 @@ class ResultsWidget(QWidget):
             context_length=context_length,
             use_index=True,
             index_file_path=index_file_path
+        )
+
+        self.index_searcher.result_found.connect(self.add_result)
+        self.index_searcher.progress_update.connect(self.update_progress)
+        self.index_searcher.search_completed.connect(self.search_completed)
+        self.index_searcher.index_status_changed.connect(self.update_index_status)
+
+    def _setup_global_index_searcher(self, directories: List[str], search_terms: List[str],
+                                     include_subdirs: bool, search_type: str) -> None:
+        file_extensions = self.config_manager.get_file_extensions()
+        context_length = self.config_manager.get_context_length()
+        index_file_path = self.config_manager.get_index_file_path()
+
+        base_directory = directories[0] if directories else ""
+        self.index_searcher = SmartFileSearcher(
+            directory=base_directory,
+            search_terms=search_terms,
+            include_subdirs=include_subdirs,
+            search_type=search_type,
+            file_extensions=file_extensions,
+            context_length=context_length,
+            use_index=True,
+            index_file_path=index_file_path,
+            cross_folder_search=True
         )
 
         self.index_searcher.result_found.connect(self.add_result)

@@ -22,7 +22,8 @@ class IndexedFileSearcher(QThread):
             file_extensions: List[str],
             context_length: int,
             use_index: bool = True,
-            index_file_path: str = "search_index.json"
+            index_file_path: str = "search_index.json",
+            cross_folder_search: bool = False
     ):
         super().__init__()
         self.directory = directory
@@ -32,6 +33,7 @@ class IndexedFileSearcher(QThread):
         self.file_extensions = file_extensions
         self.context_length = context_length
         self.use_index = use_index
+        self.cross_folder_search = cross_folder_search
         self.cancel_flag = False
 
         self.indexer = SearchIndexer(index_file_path)
@@ -100,6 +102,9 @@ class IndexedFileSearcher(QThread):
         self.fallback_searcher.run()
 
     def _should_include_file(self, file_path: str) -> bool:
+        if self.cross_folder_search:
+            return True
+            
         try:
             if not os.path.isabs(file_path):
                 file_path = os.path.abspath(file_path)
