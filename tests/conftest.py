@@ -8,14 +8,19 @@ import psutil
 import pytest
 from PyQt5.QtWidgets import QApplication
 
-# PyQt5とSwig関連の警告を抑制
 warnings.filterwarnings("ignore", category=DeprecationWarning, module=".*_bootstrap.*")
-warnings.filterwarnings("ignore", "builtin type.*has no __module__ attribute", DeprecationWarning)
+warnings.filterwarnings("ignore", "builtin type SwigPyPacked has no __module__ attribute", DeprecationWarning)
+warnings.filterwarnings("ignore", "builtin type SwigPyObject has no __module__ attribute", DeprecationWarning)
+warnings.filterwarnings("ignore", "builtin type swigvarlink has no __module__ attribute", DeprecationWarning)
 
-# 環境変数でQt関連のログレベルを設定
+try:
+    import fitz
+    warnings.filterwarnings("ignore", category=DeprecationWarning, module="fitz")
+except ImportError:
+    pass
+
 os.environ.setdefault('QT_LOGGING_RULES', '*.debug=false;qt.qpa.*=false')
 
-# メモリ使用量追跡用グローバル変数
 _initial_memory = None
 
 
