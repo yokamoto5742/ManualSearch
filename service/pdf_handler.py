@@ -9,7 +9,7 @@ import fitz
 import psutil
 import pyautogui
 
-from constants import (
+from utils.constants import (
     PDF_HIGHLIGHT_COLORS,
     ACROBAT_WAIT_TIMEOUT,
     ACROBAT_WAIT_INTERVAL,

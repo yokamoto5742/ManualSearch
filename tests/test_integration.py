@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from constants import (
+from utils.constants import (
     SEARCH_TYPE_AND, SEARCH_TYPE_OR
 )
 from service.file_opener import FileOpener

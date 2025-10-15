@@ -9,7 +9,7 @@ import psutil
 import pytest
 from jinja2 import TemplateNotFound
 
-from constants import (
+from utils.constants import (
     PAGE_NAVIGATION_RETRY_COUNT, PROCESS_CLEANUP_DELAY, TEMPLATE_DIRECTORY, TEXT_VIEWER_TEMPLATE, MARKDOWN_EXTENSIONS,
     MIN_FONT_SIZE, MAX_FONT_SIZE
 )

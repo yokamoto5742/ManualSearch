@@ -8,7 +8,7 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QMessageBox
 
-from constants import (
+from utils.constants import (
     NETWORK_TIMEOUT,
     DNS_TEST_HOST,
     DNS_TEST_PORT,

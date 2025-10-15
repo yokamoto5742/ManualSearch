@@ -6,7 +6,7 @@ from typing import List, Tuple, Optional
 import fitz
 from PyQt5.QtCore import QThread, pyqtSignal
 
-from constants import (
+from utils.constants import (
     SEARCH_METHODS_MAPPING,
     MAX_SEARCH_RESULTS_PER_FILE,
     SEARCH_TYPE_AND,

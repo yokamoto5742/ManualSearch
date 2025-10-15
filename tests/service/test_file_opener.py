@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock, mock_open, call
 from PyQt5.QtWidgets import QMessageBox
 
 from service.file_opener import FileOpener
-from constants import (
+from utils.constants import (
     FILE_HANDLER_MAPPING, ERROR_MESSAGES, PROCESS_CLEANUP_DELAY
 )
 

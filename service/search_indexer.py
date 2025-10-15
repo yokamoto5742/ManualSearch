@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Tuple
 
 import fitz
 
-from constants import SUPPORTED_FILE_EXTENSIONS
+from utils.constants import SUPPORTED_FILE_EXTENSIONS
 from utils.helpers import read_file_with_auto_encoding
 
 

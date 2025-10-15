@@ -1,9 +1,9 @@
 import configparser
 import os
 import sys
-from typing import List
+from typing import List, Optional
 
-from constants import (
+from utils.constants import (
     CONFIG_FILENAME,
     DEFAULT_WINDOW_WIDTH,
     DEFAULT_WINDOW_HEIGHT,
@@ -128,6 +128,39 @@ class ConfigManager:
             CONFIG_KEYS['ACROBAT_PATH'],
             fallback=DEFAULT_ACROBAT_PATH
         )
+
+    def get_acrobat_reader_path(self) -> str:
+        """Acrobat Reader DCのパスを取得"""
+        return self.config.get(
+            CONFIG_SECTIONS['PATHS'],
+            CONFIG_KEYS['ACROBAT_READER_PATH'],
+            fallback=r'C:\Program Files\Adobe\Acrobat Reader DC\Reader\AcroRd32.exe'
+        )
+
+    def get_acrobat_reader_x86_path(self) -> str:
+        """Acrobat Reader DC (x86)のパスを取得"""
+        return self.config.get(
+            CONFIG_SECTIONS['PATHS'],
+            CONFIG_KEYS['ACROBAT_READER_X86_PATH'],
+            fallback=r'C:\Program Files (x86)\Adobe\Acrobat Reader DC\Reader\AcroRd32.exe'
+        )
+
+    def find_available_acrobat_path(self) -> Optional[str]:
+        """利用可能なAcrobatパスを優先順位で探す
+
+        Returns:
+            最初に見つかった有効なパス、見つからない場合はNone
+        """
+        paths_to_check = [
+            self.get_acrobat_path(),
+            self.get_acrobat_reader_path(),
+            self.get_acrobat_reader_x86_path()
+        ]
+
+        for path in paths_to_check:
+            if os.path.exists(path):
+                return path
+        return None
 
     def set_file_extensions(self, extensions: List[str]) -> None:
         if CONFIG_SECTIONS['FILE_TYPES'] not in self.config:

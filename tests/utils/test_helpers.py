@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock, mock_open, Mock
 import pytest
 from PyQt5.QtWidgets import QMessageBox, QPushButton
 
-from constants import (
+from utils.constants import (
     NETWORK_TIMEOUT, DNS_TEST_HOST, DNS_TEST_PORT,
     ERROR_MESSAGES, UI_LABELS
 )

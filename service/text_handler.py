@@ -10,7 +10,7 @@ from dataclasses import dataclass
 import markdown
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
-from constants import (
+from utils.constants import (
     HIGHLIGHT_COLORS,
     TEMPLATE_DIRECTORY,
     TEXT_VIEWER_TEMPLATE,

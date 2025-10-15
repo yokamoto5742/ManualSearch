@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QFileDialog, QInputDialog, QMessageBox, QLineEdit, QSizePolicy
 )
 
-from constants import (
+from utils.constants import (
     UI_LABELS
 )
 from utils.config_manager import ConfigManager

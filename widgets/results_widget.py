@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (
     QTextEdit, QProgressDialog, QLabel
 )
 
-from constants import HIGHLIGHT_COLORS, UI_LABELS
+from utils.constants import HIGHLIGHT_COLORS, UI_LABELS
 from service.file_searcher import FileSearcher
 from service.indexed_file_searcher import SmartFileSearcher
 

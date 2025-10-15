@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from constants import (
+from utils.constants import (
     MAX_WINDOW_WIDTH,
     MIN_WINDOW_HEIGHT,
 )

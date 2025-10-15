@@ -5,7 +5,7 @@ from typing import List
 
 from PyQt5.QtWidgets import QMessageBox
 
-from constants import (
+from utils.constants import (
     FILE_HANDLER_MAPPING,
     ERROR_MESSAGES,
     PROCESS_CLEANUP_DELAY
@@ -18,7 +18,12 @@ from utils.helpers import is_network_file
 class FileOpener:
     def __init__(self, config_manager):
         self.config_manager = config_manager
-        self.acrobat_path: str = self.config_manager.get_acrobat_path()
+        # 利用可能なAcrobatパスを探す
+        acrobat_path = self.config_manager.find_available_acrobat_path()
+        if acrobat_path is None:
+            self.acrobat_path = ""
+        else:
+            self.acrobat_path = acrobat_path
         self._last_opened_file: str = ""
 
     SUPPORTED_EXTENSIONS = FILE_HANDLER_MAPPING
@@ -59,8 +64,8 @@ class FileOpener:
             if not self._check_pdf_accessibility(file_path):
                 raise IOError(ERROR_MESSAGES['PDF_ACCESS_FAILED'])
 
-            if not os.path.exists(self.acrobat_path):
-                raise FileNotFoundError(f"{ERROR_MESSAGES['ACROBAT_NOT_FOUND']}: {self.acrobat_path}")
+            if not self.acrobat_path or not os.path.exists(self.acrobat_path):
+                raise FileNotFoundError(ERROR_MESSAGES['ALL_ACROBAT_PATHS_NOT_FOUND'])
 
             open_pdf(file_path, self.acrobat_path, position, search_terms)
 

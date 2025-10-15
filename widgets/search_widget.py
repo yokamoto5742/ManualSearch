@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
     QComboBox,
 )
 
-from constants import (
+from utils.constants import (
     UI_LABELS,
     SEARCH_TYPE_AND,
     SEARCH_TYPE_OR,
