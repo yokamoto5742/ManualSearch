@@ -1,3 +1,4 @@
+import logging
 import os
 
 from PyQt5.QtGui import QFont
@@ -16,6 +17,8 @@ from widgets.directory_widget import DirectoryWidget
 from widgets.index_management_widget import IndexManagementDialog
 from widgets.results_widget import ResultsWidget
 from widgets.search_widget import SearchWidget
+
+logger = logging.getLogger(__name__)
 
 
 class MainWindow(QMainWindow):
@@ -103,7 +106,7 @@ class MainWindow(QMainWindow):
             self.use_index_search = use_index
             self.index_search_checkbox.setChecked(use_index)
         except Exception as e:
-            print(f"インデックス設定の読み込みに失敗: {e}")
+            logger.error(f"インデックス設定の読み込みに失敗: {e}")
             self.use_index_search = False
             self.index_search_checkbox.setChecked(False)
 
@@ -116,11 +119,12 @@ class MainWindow(QMainWindow):
 
         if not search_terms:
             return
-            
+
         # For global search, we don't need a specific directory
         if not is_global_search and not directory:
             return
 
+        logger.info(f"検索開始: 検索語={search_terms}, タイプ={search_type}, グローバル検索={is_global_search}")
         self.results_widget.clear_results()
         self.directory_widget.disable_open_folder_button()
 
@@ -157,11 +161,12 @@ class MainWindow(QMainWindow):
 
     def toggle_index_search(self, enabled: bool) -> None:
         self.use_index_search = enabled
+        logger.info(f"インデックス検索を{'有効' if enabled else '無効'}にしました")
 
         try:
             self.config_manager.set_use_index_search(enabled)
         except Exception as e:
-            print(f"インデックス設定の保存に失敗: {e}")
+            logger.error(f"インデックス設定の保存に失敗: {e}")
 
         if hasattr(self, 'index_search_checkbox'):
             self.index_search_checkbox.setChecked(enabled)
@@ -206,11 +211,12 @@ class MainWindow(QMainWindow):
 
         reply = msg_box.exec_()
         if reply == QMessageBox.Yes:
+            logger.info("アプリケーションを終了します")
             try:
                 self.file_opener.cleanup_resources()
                 cleanup_temp_files()
             except Exception as e:
-                print(f"終了時のクリーンアップでエラー: {e}")
+                logger.error(f"終了時のクリーンアップでエラー: {e}")
 
             QApplication.instance().quit()
 
@@ -224,6 +230,6 @@ class MainWindow(QMainWindow):
             cleanup_temp_files()
 
         except Exception as e:
-            print(f"ウィンドウ終了処理中にエラーが発生しました: {str(e)}")
+            logger.error(f"ウィンドウ終了処理中にエラーが発生しました: {str(e)}")
         finally:
             super().closeEvent(event)

@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from concurrent.futures import ThreadPoolExecutor
@@ -13,6 +14,8 @@ from utils.constants import (
     SEARCH_TYPE_OR
 )
 from utils.helpers import normalize_path, check_file_accessibility, read_file_with_auto_encoding
+
+logger = logging.getLogger(__name__)
 
 
 class FileSearcher(QThread):
@@ -152,13 +155,13 @@ class FileSearcher(QThread):
 
         search_method = search_methods.get(file_extension)
         if not search_method:
-            print(f"サポートされていないファイル形式: {file_extension}")
+            logger.warning(f"サポートされていないファイル形式: {file_extension}")
             return None
 
         try:
             return search_method(normalized_path)
         except Exception as e:
-            print(f"検索エラー: {normalized_path} - {e}")
+            logger.error(f"検索エラー: {normalized_path} - {e}")
             return None
 
     def search_pdf(self, file_path: str) -> Optional[Tuple[str, List[Tuple[int, str]]]]:
@@ -178,7 +181,7 @@ class FileSearcher(QThread):
                 if len(results) >= MAX_SEARCH_RESULTS_PER_FILE:
                     break
         except Exception as e:
-            print(f"PDFの処理中にエラーが発生しました: {file_path} - {str(e)}")
+            logger.error(f"PDFの処理中にエラーが発生しました: {file_path} - {str(e)}")
         finally:
             if doc is not None:
                 doc.close()
@@ -197,9 +200,9 @@ class FileSearcher(QThread):
                         line_number = content.count('\n', 0, match.start()) + 1
                         results.append((line_number, context))
         except UnicodeDecodeError as e:
-            print(f"ファイルのデコードエラー: {file_path} - {str(e)}")
+            logger.error(f"ファイルのデコードエラー: {file_path} - {str(e)}")
         except ValueError as e:
-            print(f"ファイルの読み込みに失敗しました: {file_path} - {str(e)}")
+            logger.error(f"ファイルの読み込みに失敗しました: {file_path} - {str(e)}")
         return (file_path, results) if results else None
 
     def match_search_terms(self, text: str) -> bool:

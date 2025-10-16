@@ -1,3 +1,4 @@
+import logging
 import os
 import subprocess
 import time
@@ -13,6 +14,8 @@ from utils.constants import (
 from service.pdf_handler import open_pdf, highlight_pdf, cleanup_temp_files
 from service.text_handler import open_text_file
 from utils.helpers import is_network_file
+
+logger = logging.getLogger(__name__)
 
 
 class FileOpener:
@@ -41,7 +44,7 @@ class FileOpener:
             return
 
         if file_path == self._last_opened_file and file_extension == '.pdf':
-            print(f"同じPDFファイルを再度開きます: {os.path.basename(file_path)}")
+            logger.info(f"同じPDFファイルを再度開きます: {os.path.basename(file_path)}")
             cleanup_temp_files()
             time.sleep(PROCESS_CLEANUP_DELAY)
 
@@ -120,7 +123,7 @@ class FileOpener:
             cleanup_temp_files()
             self._last_opened_file = ""
         except Exception as e:
-            print(f"リソースクリーンアップ中にエラー: {e}")
+            logger.error(f"リソースクリーンアップ中にエラー: {e}")
 
     @staticmethod
     def _show_error(message: str) -> None:

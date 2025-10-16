@@ -1,4 +1,5 @@
 import html
+import logging
 import os
 import re
 import sys
@@ -21,6 +22,8 @@ from utils.constants import (
     MAX_FONT_SIZE
 )
 from utils.helpers import read_file_with_auto_encoding
+
+logger = logging.getLogger(__name__)
 
 
 def get_template_directory() -> str:
@@ -91,7 +94,7 @@ def highlight_search_terms(content: str, search_terms: List[str]) -> str:
                 flags=re.IGNORECASE
             )
         except re.error as e:
-            print(f"ハイライト処理でエラーが発生しました: {term} - {e}")
+            logger.warning(f"ハイライト処理でエラーが発生しました: {term} - {e}")
             continue
 
     return content

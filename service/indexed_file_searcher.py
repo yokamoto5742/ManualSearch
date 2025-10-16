@@ -1,9 +1,12 @@
+import logging
 import os
 from typing import List, Tuple, Optional
 from PyQt5.QtCore import QThread, pyqtSignal
 
 from service.search_indexer import SearchIndexer
 from service.file_searcher import FileSearcher as OriginalFileSearcher
+
+logger = logging.getLogger(__name__)
 
 
 class IndexedFileSearcher(QThread):
@@ -46,7 +49,7 @@ class IndexedFileSearcher(QThread):
             else:
                 self._search_without_index()
         except Exception as e:
-            print(f"検索中にエラーが発生しました: {e}")
+            logger.error(f"検索中にエラーが発生しました: {e}")
         finally:
             self.search_completed.emit()
 
@@ -80,7 +83,7 @@ class IndexedFileSearcher(QThread):
                 self.progress_update.emit(progress)
 
         except Exception as e:
-            print(f"インデックス検索でエラー: {e}")
+            logger.error(f"インデックス検索でエラー: {e}")
             self.index_status_changed.emit("インデックス検索でエラーが発生しました")
             self._search_without_index()
 
@@ -114,14 +117,14 @@ class IndexedFileSearcher(QThread):
 
             if self.include_subdirs:
                 result = os.path.commonpath([file_dir, target_dir]) == target_dir
-                print(f"フィルタリング: {file_path} -> {result} (target: {target_dir})")
+                logger.debug(f"フィルタリング: {file_path} -> {result} (target: {target_dir})")
                 return result
             else:
                 result = file_dir == target_dir
-                print(f"フィルタリング: {file_path} -> {result} (target: {target_dir})")
+                logger.debug(f"フィルタリング: {file_path} -> {result} (target: {target_dir})")
                 return result
         except (ValueError, OSError) as e:
-            print(f"フィルタリングエラー: {file_path} - {e}")
+            logger.error(f"フィルタリングエラー: {file_path} - {e}")
             return True
 
     def cancel_search(self) -> None:
@@ -143,7 +146,7 @@ class IndexedFileSearcher(QThread):
 
         except Exception as e:
             self.index_status_changed.emit(f"インデックス作成エラー: {e}")
-            print(f"インデックス作成エラー: {e}")
+            logger.error(f"インデックス作成エラー: {e}")
 
     def get_index_stats(self) -> dict:
         return self.indexer.get_index_stats()
@@ -199,5 +202,5 @@ class SmartFileSearcher(IndexedFileSearcher):
             return False
 
         except Exception as e:
-            print(f"インデックス自動更新チェックでエラー: {e}")
+            logger.error(f"インデックス自動更新チェックでエラー: {e}")
             return False

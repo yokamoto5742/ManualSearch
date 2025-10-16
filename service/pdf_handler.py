@@ -1,8 +1,9 @@
+import atexit
+import logging
+import os
 import subprocess
 import tempfile
 import time
-import os
-import atexit
 from typing import List, Tuple, Optional
 
 import fitz
@@ -20,6 +21,8 @@ from utils.constants import (
     ACROBAT_PROCESS_NAMES
 )
 
+logger = logging.getLogger(__name__)
+
 _temp_files: List[str] = []
 
 
@@ -31,7 +34,7 @@ def cleanup_temp_files() -> None:
                 os.remove(temp_file)
             _temp_files.remove(temp_file)
         except (OSError, ValueError) as e:
-            print(f"一時ファイルの削除に失敗: {temp_file} - {e}")
+            logger.warning(f"一時ファイルの削除に失敗: {temp_file} - {e}")
 
 
 atexit.register(cleanup_temp_files)
@@ -48,34 +51,34 @@ def close_existing_acrobat_processes() -> None:
                     break
 
         if acrobat_processes:
-            print(f"既存のAcrobatプロセスが{len(acrobat_processes)}個見つかりました。すべて終了します。")
+            logger.info(f"既存のAcrobatプロセスが{len(acrobat_processes)}個見つかりました。すべて終了します。")
 
             for proc in acrobat_processes:
                 try:
-                    print(f"プロセス終了中: {proc.info['name']} (PID: {proc.pid})")
+                    logger.info(f"プロセス終了中: {proc.info['name']} (PID: {proc.pid})")
                     proc.terminate()
 
                     try:
                         proc.wait(timeout=PROCESS_TERMINATE_TIMEOUT)
-                        print(f"Acrobatプロセス (PID: {proc.pid}) を正常に終了しました")
+                        logger.info(f"Acrobatプロセス (PID: {proc.pid}) を正常に終了しました")
                     except psutil.TimeoutExpired:
                         proc.kill()
-                        print(f"Acrobatプロセス (PID: {proc.pid}) を強制終了しました")
+                        logger.warning(f"Acrobatプロセス (PID: {proc.pid}) を強制終了しました")
 
                 except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                    print(f"プロセス終了中にエラー: {e}")
+                    logger.error(f"プロセス終了中にエラー: {e}")
                 except Exception as e:
-                    print(f"予期せぬエラー: {e}")
+                    logger.error(f"予期せぬエラー: {e}")
 
             time.sleep(PROCESS_CLEANUP_DELAY)
 
         else:
-            print("既存のAcrobatプロセスは見つかりませんでした")
+            logger.debug("既存のAcrobatプロセスは見つかりませんでした")
 
     except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-        print(f"プロセス確認中にエラー: {e}")
+        logger.error(f"プロセス確認中にエラー: {e}")
     except Exception as e:
-        print(f"予期せぬエラー: {e}")
+        logger.error(f"予期せぬエラー: {e}")
 
 
 def open_pdf(file_path: str, acrobat_path: str, current_position: int, search_terms: List[str]) -> None:
@@ -88,7 +91,7 @@ def open_pdf(file_path: str, acrobat_path: str, current_position: int, search_te
             time.sleep(PROCESS_CLEANUP_DELAY)
             navigate_to_page(current_position)
         else:
-            print("Acrobatの起動確認に失敗しました")
+            logger.warning("Acrobatの起動確認に失敗しました")
 
     except FileNotFoundError:
         raise FileNotFoundError(f"指定されたファイルが見つかりません: {file_path}")
@@ -117,11 +120,11 @@ def wait_for_acrobat(pid: int, timeout: int = ACROBAT_WAIT_TIMEOUT) -> bool:
         except psutil.NoSuchProcess:
             return False
         except Exception as e:
-            print(f"Acrobat待機中にエラー: {e}")
+            logger.error(f"Acrobat待機中にエラー: {e}")
 
         time.sleep(ACROBAT_WAIT_INTERVAL)
 
-    print(f"Acrobat起動のタイムアウト（{timeout}秒）")
+    logger.warning(f"Acrobat起動のタイムアウト（{timeout}秒）")
     return False
 
 
@@ -145,12 +148,12 @@ def navigate_to_page(page_number: int) -> None:
                 break
 
             except Exception as e:
-                print(f"ページ移動試行{attempt + 1}でエラー: {e}")
+                logger.warning(f"ページ移動試行{attempt + 1}でエラー: {e}")
                 if attempt < PAGE_NAVIGATION_RETRY_COUNT - 1:  # 最後の試行でなければ少し待つ
                     time.sleep(PROCESS_CLEANUP_DELAY)
 
     except Exception as e:
-        print(f"ページ移動中にエラーが発生しました: {str(e)}")
+        logger.error(f"ページ移動中にエラーが発生しました: {str(e)}")
 
 
 def highlight_pdf(pdf_path: str, search_terms: List[str]) -> str:
@@ -176,7 +179,7 @@ def highlight_pdf(pdf_path: str, search_terms: List[str]) -> str:
                         highlight.set_colors(stroke=PDF_HIGHLIGHT_COLORS[i % len(PDF_HIGHLIGHT_COLORS)])
                         highlight.update()
                     except Exception as e:
-                        print(f"ハイライト追加エラー (term: {term}): {e}")
+                        logger.warning(f"ハイライト追加エラー (term: {term}): {e}")
                         continue
 
         doc.save(tmp_path)
@@ -191,7 +194,7 @@ def highlight_pdf(pdf_path: str, search_terms: List[str]) -> str:
             try:
                 doc.close()
             except Exception as e:
-                print(f"PDF document クローズ時にエラー: {e}")
+                logger.error(f"PDF document クローズ時にエラー: {e}")
 
 
 def cleanup_single_temp_file(file_path: str) -> None:
@@ -202,4 +205,4 @@ def cleanup_single_temp_file(file_path: str) -> None:
         if file_path in _temp_files:
             _temp_files.remove(file_path)
     except (OSError, ValueError) as e:
-        print(f"一時ファイルの削除に失敗: {file_path} - {e}")
+        logger.warning(f"一時ファイルの削除に失敗: {file_path} - {e}")
