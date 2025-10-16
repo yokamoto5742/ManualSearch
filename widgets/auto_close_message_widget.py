@@ -1,7 +1,7 @@
 from typing import Optional
 
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 
 class AutoCloseMessage(QWidget):

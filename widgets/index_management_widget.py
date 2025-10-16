@@ -1,11 +1,10 @@
 from datetime import datetime
 from typing import List, Optional
 
-from PyQt5.QtCore import pyqtSignal, QTimer
+from PyQt5.QtCore import QTimer, pyqtSignal
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
-    QProgressBar, QTextEdit, QGroupBox, QCheckBox, QMessageBox,
-    QDialog, QDialogButtonBox
+    QCheckBox, QDialog, QDialogButtonBox, QGroupBox, QHBoxLayout, QLabel,
+    QMessageBox, QProgressBar, QPushButton, QTextEdit, QVBoxLayout, QWidget
 )
 
 from service.search_indexer import SearchIndexer

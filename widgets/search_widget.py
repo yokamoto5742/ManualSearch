@@ -3,19 +3,11 @@ from typing import List
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLineEdit,
-    QPushButton,
-    QComboBox,
+    QComboBox, QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
 )
 
 from utils.constants import (
-    UI_LABELS,
-    SEARCH_TYPE_AND,
-    SEARCH_TYPE_OR,
-    SEARCH_TERM_SEPARATOR_PATTERN
+    SEARCH_TERM_SEPARATOR_PATTERN, SEARCH_TYPE_AND, SEARCH_TYPE_OR, UI_LABELS
 )
 
 

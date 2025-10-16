@@ -2,14 +2,12 @@ import os
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QPushButton, QCheckBox,
-    QFileDialog, QInputDialog, QMessageBox, QLineEdit, QSizePolicy
+    QCheckBox, QComboBox, QFileDialog, QHBoxLayout, QInputDialog, QLineEdit,
+    QMessageBox, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 )
 
-from utils.constants import (
-    UI_LABELS
-)
 from utils.config_manager import ConfigManager
+from utils.constants import UI_LABELS
 from utils.helpers import create_confirmation_dialog
 
 

@@ -1,10 +1,11 @@
 import logging
 import os
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
+
 from PyQt5.QtCore import QThread, pyqtSignal
 
-from service.search_indexer import SearchIndexer
 from service.file_searcher import FileSearcher as OriginalFileSearcher
+from service.search_indexer import SearchIndexer
 
 logger = logging.getLogger(__name__)
 

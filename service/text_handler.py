@@ -5,8 +5,8 @@ import re
 import sys
 import tempfile
 import webbrowser
-from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 import markdown
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound

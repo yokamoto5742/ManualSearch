@@ -6,13 +6,13 @@ from typing import List
 
 from PyQt5.QtWidgets import QMessageBox
 
+from service.pdf_handler import open_pdf, highlight_pdf, cleanup_temp_files
+from service.text_handler import open_text_file
 from utils.constants import (
     FILE_HANDLER_MAPPING,
     ERROR_MESSAGES,
     PROCESS_CLEANUP_DELAY
 )
-from service.pdf_handler import open_pdf, highlight_pdf, cleanup_temp_files
-from service.text_handler import open_text_file
 from utils.helpers import is_network_file
 
 logger = logging.getLogger(__name__)

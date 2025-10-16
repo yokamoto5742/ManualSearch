@@ -4,7 +4,7 @@ import os
 import subprocess
 import tempfile
 import time
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
 import fitz
 import psutil
