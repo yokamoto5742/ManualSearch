@@ -55,7 +55,6 @@ class TempFileManager:
             logger.warning(f"一時ファイルの削除に失敗: {file_path} - {e}")
 
 
-# シングルトンインスタンス
 temp_file_manager = TempFileManager()
 
 
@@ -70,11 +69,8 @@ def cleanup_single_temp_file(file_path: str) -> None:
 
 
 class AcrobatProcessManager:
-    """Acrobatプロセス管理クラス"""
-    
     @staticmethod
     def close_all_processes() -> None:
-        """既存のAcrobatプロセスをすべて終了"""
         try:
             acrobat_processes = AcrobatProcessManager._find_processes()
             
@@ -94,7 +90,6 @@ class AcrobatProcessManager:
     
     @staticmethod
     def _find_processes() -> List[psutil.Process]:
-        """Acrobatプロセスを検索"""
         acrobat_processes = []
         
         for proc in psutil.process_iter(['pid', 'name']):
@@ -107,7 +102,6 @@ class AcrobatProcessManager:
     
     @staticmethod
     def _is_acrobat_process(process_name: str) -> bool:
-        """Acrobatプロセスかどうかを判定"""
         return any(
             process_name in [name.lower(), f"{name.lower()}.exe"]
             for name in ACROBAT_PROCESS_NAMES
@@ -115,7 +109,6 @@ class AcrobatProcessManager:
     
     @staticmethod
     def _terminate_process(proc: psutil.Process) -> None:
-        """プロセスを終了"""
         try:
             logger.info(f"プロセス終了中: {proc.info['name']} (PID: {proc.pid})")
             proc.terminate()
@@ -142,8 +135,7 @@ class AcrobatProcessManager:
                 if process.status() != psutil.STATUS_RUNNING:
                     time.sleep(ACROBAT_WAIT_INTERVAL)
                     continue
-                
-                # ウィンドウのアクティブ化を確認
+
                 time.sleep(ACROBAT_WAIT_INTERVAL)
                 
                 try:
@@ -165,17 +157,13 @@ class AcrobatProcessManager:
     
     @staticmethod
     def _is_acrobat_window(window_title: str) -> bool:
-        """Acrobatのウィンドウかどうかを判定"""
         window_lower = window_title.lower()
         return any(keyword in window_lower for keyword in ['acrobat', 'adobe'])
 
 
 class PDFNavigator:
-    """PDF内のナビゲーションを管理するクラス"""
-    
     @staticmethod
     def navigate_to_page(page_number: int) -> None:
-        """指定されたページに移動"""
         if page_number == 1:
             return
         
@@ -190,7 +178,6 @@ class PDFNavigator:
     
     @staticmethod
     def _execute_navigation(page_number: int) -> None:
-        """ページナビゲーションを実行"""
         # ページ番号入力ダイアログを開く
         pyautogui.hotkey('ctrl', 'shift', 'n')
         time.sleep(PAGE_NAVIGATION_DELAY)
@@ -208,11 +195,8 @@ class PDFNavigator:
 
 
 class PDFHighlighter:
-    """PDFハイライト処理を管理するクラス"""
-    
     @staticmethod
     def highlight_pdf(pdf_path: str, search_terms: List[str]) -> str:
-        """PDFにハイライトを追加して一時ファイルを作成"""
         temp_path = PDFHighlighter._create_temp_file()
         
         try:
@@ -238,7 +222,6 @@ class PDFHighlighter:
     
     @staticmethod
     def _add_highlights(doc: fitz.Document, search_terms: List[str]) -> None:
-        """ドキュメントにハイライトを追加"""
         for page in doc:
             for i, term in enumerate(search_terms):
                 if not term or not term.strip():
@@ -248,7 +231,6 @@ class PDFHighlighter:
     
     @staticmethod
     def _highlight_term_in_page(page: fitz.Page, term: str, color_index: int) -> None:
-        """ページ内の検索語にハイライトを追加"""
         text_instances = page.search_for(term.strip())
         
         for inst in text_instances:
@@ -267,7 +249,6 @@ def open_pdf(
     current_position: int, 
     search_terms: List[str]
 ) -> None:
-    """PDFファイルを開く（メイン関数）"""
     try:
         # 既存のAcrobatプロセスを終了
         AcrobatProcessManager.close_all_processes()
