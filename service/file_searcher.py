@@ -19,8 +19,6 @@ logger = logging.getLogger(__name__)
 
 
 class FileSearcher(QThread):
-    """ファイル検索を行うスレッドクラス（改善版）"""
-    
     result_found = pyqtSignal(str, list)
     progress_update = pyqtSignal(int)
     search_completed = pyqtSignal()
@@ -54,13 +52,11 @@ class FileSearcher(QThread):
         self.search_completed.emit()
 
     def _get_target_directories(self) -> List[str]:
-        """検索対象ディレクトリを取得"""
         if self.global_search and self.global_directories:
             return self.global_directories
         return [self.directory]
 
     def _execute_search(self, directories: List[str]) -> None:
-        """ディレクトリリストに対して検索を実行"""
         total_files = self._count_total_files(directories)
         processed_files = 0
 
@@ -77,7 +73,6 @@ class FileSearcher(QThread):
                     self.progress_update.emit(progress)
 
     def _count_total_files(self, directories: List[str]) -> int:
-        """検索対象のファイル総数をカウント"""
         total = 0
         for directory in directories:
             if not os.path.isdir(directory):
@@ -96,7 +91,6 @@ class FileSearcher(QThread):
         return total
 
     def _search_in_directory(self, executor: ThreadPoolExecutor, directory: str) -> int:
-        """ディレクトリ内のファイルを検索"""
         try:
             if self.include_subdirs:
                 return self._search_with_subdirs(executor, directory)
@@ -107,7 +101,6 @@ class FileSearcher(QThread):
             return 0
 
     def _search_with_subdirs(self, executor: ThreadPoolExecutor, directory: str) -> int:
-        """サブディレクトリを含めて検索"""
         processed = 0
         for root, _, files in os.walk(directory):
             if self.cancel_flag:
@@ -117,14 +110,12 @@ class FileSearcher(QThread):
         return processed
 
     def _search_without_subdirs(self, executor: ThreadPoolExecutor, directory: str) -> int:
-        """サブディレクトリを含めずに検索"""
         files = [f for f in os.listdir(directory) 
                 if os.path.isfile(os.path.join(directory, f))]
         self.process_files(executor, directory, files)
         return len(files)
 
     def process_files(self, executor: ThreadPoolExecutor, root: str, files: List[str]) -> None:
-        """ファイルリストを処理"""
         futures = []
         
         for file in files:
@@ -149,15 +140,12 @@ class FileSearcher(QThread):
                 self.result_found.emit(file_path, matches)
 
     def _is_supported_file(self, filename: str) -> bool:
-        """サポートされているファイル形式かチェック"""
         return any(filename.endswith(ext) for ext in self.file_extensions)
 
     def cancel_search(self) -> None:
-        """検索をキャンセル"""
         self.cancel_flag = True
 
     def search_file(self, file_path: str) -> Optional[Tuple[str, List[Tuple[int, str]]]]:
-        """単一ファイルを検索"""
         normalized_path = normalize_path(file_path)
         
         if not check_file_accessibility(normalized_path):
@@ -177,14 +165,12 @@ class FileSearcher(QThread):
             return None
 
     def _get_search_method(self, file_extension: str):
-        """ファイル拡張子に対応する検索メソッドを取得"""
         method_name = SEARCH_METHODS_MAPPING.get(file_extension)
         if method_name:
             return getattr(self, method_name, None)
         return None
 
     def search_pdf(self, file_path: str) -> Optional[Tuple[str, List[Tuple[int, str]]]]:
-        """PDFファイルを検索"""
         results = []
         
         try:
@@ -214,7 +200,6 @@ class FileSearcher(QThread):
         return (file_path, results) if results else None
 
     def search_text(self, file_path: str) -> Optional[Tuple[str, List[Tuple[int, str]]]]:
-        """テキストファイルを検索"""
         results = []
         
         try:
@@ -235,7 +220,6 @@ class FileSearcher(QThread):
         return (file_path, results) if results else None
 
     def _extract_contexts(self, text: str, search_term: str) -> List[str]:
-        """テキストから検索語周辺のコンテキストを抽出"""
         contexts = []
         
         for match in re.finditer(re.escape(search_term), text, re.IGNORECASE):
@@ -251,7 +235,6 @@ class FileSearcher(QThread):
         content: str, 
         search_term: str
     ) -> List[Tuple[int, str]]:
-        """テキストから行番号付きでコンテキストを抽出"""
         contexts = []
         
         for match in re.finditer(re.escape(search_term), content, re.IGNORECASE):
@@ -264,7 +247,6 @@ class FileSearcher(QThread):
         return contexts
 
     def match_search_terms(self, text: str) -> bool:
-        """検索語がテキストにマッチするかチェック"""
         text_lower = text.lower()
         
         if self.search_type == SEARCH_TYPE_AND:
