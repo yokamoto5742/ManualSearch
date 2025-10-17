@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
@@ -44,6 +44,7 @@ class IndexedFileSearcher(QThread):
         self.fallback_searcher = None
 
     def run(self) -> None:
+        """インデックスの有無に応じた検索を実行"""
         try:
             if self.use_index and self._is_index_available():
                 self._search_with_index()
@@ -180,6 +181,7 @@ class SmartFileSearcher(IndexedFileSearcher):
         self.search_mode = search_mode
 
     def run(self) -> None:
+        """検索モードに応じた検索を実行"""
         if self.search_mode == SearchMode.TRADITIONAL:
             self._search_without_index()
         elif self.search_mode == SearchMode.INDEX_ONLY:
@@ -188,7 +190,7 @@ class SmartFileSearcher(IndexedFileSearcher):
             else:
                 self.index_status_changed.emit("インデックスが利用できません")
                 self.search_completed.emit()
-        else:  # FALLBACK
+        else:
             super().run()
 
     def auto_update_index_if_needed(self, directories: List[str]) -> bool:
