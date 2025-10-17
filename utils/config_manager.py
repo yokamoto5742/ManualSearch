@@ -35,7 +35,6 @@ from utils.helpers import read_file_with_auto_encoding
 
 
 def get_config_path() -> str:
-    """設定ファイルのパスを取得"""
     if getattr(sys, 'frozen', False):
         base_path = sys._MEIPASS
     else:
@@ -47,9 +46,6 @@ CONFIG_PATH = get_config_path()
 
 
 class ConfigValueValidator:
-    """設定値のバリデーションを行うクラス"""
-    
-    # 設定値の範囲定義
     RANGES: Dict[str, Tuple[int, int]] = {
         'window_width': (MIN_WINDOW_WIDTH, MAX_WINDOW_WIDTH),
         'window_height': (MIN_WINDOW_HEIGHT, MAX_WINDOW_HEIGHT),
@@ -63,7 +59,6 @@ class ConfigValueValidator:
     
     @classmethod
     def validate_and_clamp(cls, key: str, value: int) -> int:
-        """値を検証し、範囲内にクランプ"""
         if key in cls.RANGES:
             min_val, max_val = cls.RANGES[key]
             return max(min_val, min(max_val, value))
@@ -71,7 +66,6 @@ class ConfigValueValidator:
     
     @classmethod
     def validate_range(cls, key: str, value: int) -> None:
-        """値が範囲内にあるかチェック（例外を発生）"""
         if key in cls.RANGES:
             min_val, max_val = cls.RANGES[key]
             if not min_val <= value <= max_val:
@@ -79,9 +73,6 @@ class ConfigValueValidator:
 
 
 class ConfigManager:
-    """設定管理クラス（改善版）"""
-    
-    # デフォルト値の定義
     DEFAULTS: Dict[str, Any] = {
         'window_width': DEFAULT_WINDOW_WIDTH,
         'window_height': DEFAULT_WINDOW_HEIGHT,
@@ -107,7 +98,6 @@ class ConfigManager:
         self.load_config()
 
     def load_config(self) -> None:
-        """設定ファイルを読み込み"""
         if not os.path.exists(self.config_file):
             return
         
@@ -119,17 +109,13 @@ class ConfigManager:
             self.config.read_string(content)
 
     def save_config(self) -> None:
-        """設定ファイルを保存"""
         try:
             with open(self.config_file, 'w', encoding='utf-8') as configfile:
                 self.config.write(configfile)
         except IOError as e:
             print(f"設定の保存に失敗: {e}")
 
-    # ========== 汎用的な取得/設定メソッド ==========
-    
     def _get_int(self, section: str, key: str, validate: bool = True) -> int:
-        """整数値を取得（範囲チェック付き）"""
         default = self.DEFAULTS.get(key, 0)
         value = self.config.getint(section, key, fallback=default)
         
@@ -139,7 +125,6 @@ class ConfigManager:
         return value
     
     def _set_int(self, section: str, key: str, value: int, validate: bool = True) -> None:
-        """整数値を設定（範囲チェック付き）"""
         if validate:
             ConfigValueValidator.validate_range(key, value)
         
@@ -148,33 +133,26 @@ class ConfigManager:
         self.save_config()
     
     def _get_str(self, section: str, key: str) -> str:
-        """文字列値を取得"""
         default = self.DEFAULTS.get(key, '')
         return self.config.get(section, key, fallback=default)
     
     def _set_str(self, section: str, key: str, value: str) -> None:
-        """文字列値を設定"""
         self._ensure_section(section)
         self.config[section][key] = value
         self.save_config()
     
     def _get_bool(self, section: str, key: str) -> bool:
-        """真偽値を取得"""
         default = self.DEFAULTS.get(key, False)
         return self.config.getboolean(section, key, fallback=default)
     
     def _set_bool(self, section: str, key: str, value: bool) -> None:
-        """真偽値を設定"""
         self._ensure_section(section)
         self.config[section][key] = str(value)
         self.save_config()
     
     def _ensure_section(self, section: str) -> None:
-        """セクションが存在しない場合は作成"""
         if section not in self.config:
             self.config[section] = {}
-
-    # ========== ウィンドウ設定 ==========
     
     def get_window_width(self) -> int:
         return self._get_int(CONFIG_SECTIONS['WINDOW_SETTINGS'], CONFIG_KEYS['WINDOW_WIDTH'])
@@ -195,7 +173,6 @@ class ConfigManager:
         return self._get_int(CONFIG_SECTIONS['WINDOW_SETTINGS'], CONFIG_KEYS['WINDOW_Y'], validate=False)
     
     def get_window_size_and_position(self) -> List[int]:
-        """ウィンドウサイズと位置を一括取得"""
         return [
             self.get_window_x(),
             self.get_window_y(),
@@ -204,11 +181,9 @@ class ConfigManager:
         ]
     
     def set_window_size_and_position(self, x: int, y: int, width: int, height: int) -> None:
-        """ウィンドウサイズと位置を一括設定"""
         section = CONFIG_SECTIONS['WINDOW_SETTINGS']
         self._ensure_section(section)
-        
-        # 範囲チェック付きで設定
+
         width = ConfigValueValidator.validate_and_clamp('window_width', width)
         height = ConfigValueValidator.validate_and_clamp('window_height', height)
         
@@ -218,8 +193,6 @@ class ConfigManager:
         self.config[section][CONFIG_KEYS['WINDOW_HEIGHT']] = str(height)
         
         self.save_config()
-
-    # ========== フォント設定 ==========
     
     def get_font_size(self) -> int:
         return self._get_int(CONFIG_SECTIONS['WINDOW_SETTINGS'], CONFIG_KEYS['FONT_SIZE'])
@@ -244,8 +217,6 @@ class ConfigManager:
     
     def set_html_font_size(self, size: int) -> None:
         self._set_int(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['HTML_FONT_SIZE'], size)
-
-    # ========== Acrobat設定 ==========
     
     def get_acrobat_path(self) -> str:
         return self._get_str(CONFIG_SECTIONS['PATHS'], CONFIG_KEYS['ACROBAT_PATH'])
@@ -260,7 +231,6 @@ class ConfigManager:
         return self._get_str(CONFIG_SECTIONS['PATHS'], CONFIG_KEYS['ACROBAT_READER_X86_PATH'])
     
     def find_available_acrobat_path(self) -> Optional[str]:
-        """利用可能なAcrobatパスを探す"""
         paths_to_check = [
             self.get_acrobat_path(),
             self.get_acrobat_reader_path(),
@@ -272,16 +242,12 @@ class ConfigManager:
                 return path
         
         return None
-
-    # ========== ディレクトリ設定 ==========
     
     def get_directories(self) -> List[str]:
-        """ディレクトリリストを取得"""
         directories_str = self._get_str(CONFIG_SECTIONS['DIRECTORIES'], CONFIG_KEYS['DIRECTORY_LIST'])
         return [d.strip() for d in directories_str.split(',') if d.strip()]
     
     def set_directories(self, directories: List[str]) -> None:
-        """ディレクトリリストを設定"""
         self._set_str(CONFIG_SECTIONS['DIRECTORIES'], CONFIG_KEYS['DIRECTORY_LIST'], ','.join(directories))
     
     def get_last_directory(self) -> str:
@@ -289,27 +255,19 @@ class ConfigManager:
     
     def set_last_directory(self, directory: str) -> None:
         self._set_str(CONFIG_SECTIONS['DIRECTORIES'], CONFIG_KEYS['LAST_DIRECTORY'], directory)
-
-    # ========== ファイルタイプ設定 ==========
     
     def get_file_extensions(self) -> List[str]:
-        """ファイル拡張子リストを取得"""
         extensions_str = self._get_str(CONFIG_SECTIONS['FILE_TYPES'], CONFIG_KEYS['EXTENSIONS'])
         return [ext.strip() for ext in extensions_str.split(',') if ext.strip()]
     
     def set_file_extensions(self, extensions: List[str]) -> None:
-        """ファイル拡張子リストを設定"""
         self._set_str(CONFIG_SECTIONS['FILE_TYPES'], CONFIG_KEYS['EXTENSIONS'], ','.join(extensions))
-
-    # ========== 検索設定 ==========
     
     def get_context_length(self) -> int:
         return self._get_int(CONFIG_SECTIONS['SEARCH_SETTINGS'], CONFIG_KEYS['CONTEXT_LENGTH'], validate=False)
     
     def set_context_length(self, length: int) -> None:
         self._set_int(CONFIG_SECTIONS['SEARCH_SETTINGS'], CONFIG_KEYS['CONTEXT_LENGTH'], length, validate=False)
-
-    # ========== PDF設定 ==========
     
     def get_pdf_timeout(self) -> int:
         return self._get_int(CONFIG_SECTIONS['PDF_SETTINGS'], CONFIG_KEYS['TIMEOUT'])
@@ -328,8 +286,6 @@ class ConfigManager:
     
     def set_max_temp_files(self, max_files: int) -> None:
         self._set_int(CONFIG_SECTIONS['PDF_SETTINGS'], CONFIG_KEYS['MAX_TEMP_FILES'], max_files)
-
-    # ========== インデックス設定 ==========
     
     def get_index_file_path(self) -> str:
         return self._get_str(CONFIG_SECTIONS['INDEX_SETTINGS'], CONFIG_KEYS['INDEX_FILE_PATH'])

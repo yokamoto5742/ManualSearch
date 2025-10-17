@@ -6,7 +6,7 @@ from typing import List
 
 from PyQt5.QtWidgets import QMessageBox
 
-from service.pdf_handler import open_pdf, highlight_pdf, cleanup_temp_files
+from service.pdf_handler import open_pdf, cleanup_temp_files
 from service.text_handler import open_text_file
 from utils.constants import (
     FILE_HANDLER_MAPPING,
@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 class FileOpener:
     def __init__(self, config_manager):
         self.config_manager = config_manager
-        # 利用可能なAcrobatパスを探す
         acrobat_path = self.config_manager.find_available_acrobat_path()
         if acrobat_path is None:
             self.acrobat_path = ""

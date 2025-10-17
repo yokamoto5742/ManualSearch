@@ -120,7 +120,6 @@ class MainWindow(QMainWindow):
         if not search_terms:
             return
 
-        # For global search, we don't need a specific directory
         if not is_global_search and not directory:
             return
 
@@ -222,10 +221,6 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         try:
-            # geometry = self.geometry()
-            # self.config_manager.set_window_size_and_position(
-            #     geometry.x(), geometry.y(), geometry.width(), geometry.height()
-            # ) # 自動保存機能をコメントアウト
             self.file_opener.cleanup_resources()
             cleanup_temp_files()
 
