@@ -4,205 +4,297 @@ import os
 import subprocess
 import tempfile
 import time
-from typing import List, Optional, Tuple
+from typing import List
 
 import fitz
 import psutil
 import pyautogui
 
 from utils.constants import (
-    PDF_HIGHLIGHT_COLORS,
-    ACROBAT_WAIT_TIMEOUT,
+    ACROBAT_PROCESS_NAMES,
     ACROBAT_WAIT_INTERVAL,
-    PAGE_NAVIGATION_RETRY_COUNT,
+    ACROBAT_WAIT_TIMEOUT,
     PAGE_NAVIGATION_DELAY,
-    PROCESS_TERMINATE_TIMEOUT,
+    PAGE_NAVIGATION_RETRY_COUNT,
+    PDF_HIGHLIGHT_COLORS,
     PROCESS_CLEANUP_DELAY,
-    ACROBAT_PROCESS_NAMES
+    PROCESS_TERMINATE_TIMEOUT,
 )
 
 logger = logging.getLogger(__name__)
 
-_temp_files: List[str] = []
+
+class TempFileManager:
+    """一時ファイル管理クラス"""
+    
+    def __init__(self):
+        self._temp_files: List[str] = []
+        atexit.register(self.cleanup_all)
+    
+    def add(self, file_path: str) -> None:
+        """一時ファイルを追加"""
+        self._temp_files.append(file_path)
+    
+    def cleanup_all(self) -> None:
+        """すべての一時ファイルを削除"""
+        for temp_file in self._temp_files[:]:
+            self._cleanup_file(temp_file)
+    
+    def cleanup_single(self, file_path: str) -> None:
+        """特定の一時ファイルを削除"""
+        self._cleanup_file(file_path)
+    
+    def _cleanup_file(self, file_path: str) -> None:
+        """ファイルを削除"""
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            if file_path in self._temp_files:
+                self._temp_files.remove(file_path)
+        except (OSError, ValueError) as e:
+            logger.warning(f"一時ファイルの削除に失敗: {file_path} - {e}")
+
+
+# シングルトンインスタンス
+temp_file_manager = TempFileManager()
 
 
 def cleanup_temp_files() -> None:
-    global _temp_files
-    for temp_file in _temp_files[:]:
+    """すべての一時ファイルを削除（後方互換性のため残す）"""
+    temp_file_manager.cleanup_all()
+
+
+def cleanup_single_temp_file(file_path: str) -> None:
+    """特定の一時ファイルを削除（後方互換性のため残す）"""
+    temp_file_manager.cleanup_single(file_path)
+
+
+class AcrobatProcessManager:
+    """Acrobatプロセス管理クラス"""
+    
+    @staticmethod
+    def close_all_processes() -> None:
+        """既存のAcrobatプロセスをすべて終了"""
         try:
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
-            _temp_files.remove(temp_file)
-        except (OSError, ValueError) as e:
-            logger.warning(f"一時ファイルの削除に失敗: {temp_file} - {e}")
-
-
-atexit.register(cleanup_temp_files)
-
-
-def close_existing_acrobat_processes() -> None:
-    try:
+            acrobat_processes = AcrobatProcessManager._find_processes()
+            
+            if not acrobat_processes:
+                logger.debug("既存のAcrobatプロセスは見つかりませんでした")
+                return
+            
+            logger.info(f"既存のAcrobatプロセスが{len(acrobat_processes)}個見つかりました")
+            
+            for proc in acrobat_processes:
+                AcrobatProcessManager._terminate_process(proc)
+            
+            time.sleep(PROCESS_CLEANUP_DELAY)
+            
+        except Exception as e:
+            logger.error(f"プロセス確認中にエラー: {e}")
+    
+    @staticmethod
+    def _find_processes() -> List[psutil.Process]:
+        """Acrobatプロセスを検索"""
         acrobat_processes = []
+        
         for proc in psutil.process_iter(['pid', 'name']):
             proc_name = proc.info['name'].lower()
-            for acrobat_name in ACROBAT_PROCESS_NAMES:
-                if proc_name == acrobat_name.lower() or proc_name == f"{acrobat_name.lower()}.exe":
-                    acrobat_processes.append(proc)
-                    break
-
-        if acrobat_processes:
-            logger.info(f"既存のAcrobatプロセスが{len(acrobat_processes)}個見つかりました。すべて終了します。")
-
-            for proc in acrobat_processes:
-                try:
-                    logger.info(f"プロセス終了中: {proc.info['name']} (PID: {proc.pid})")
-                    proc.terminate()
-
-                    try:
-                        proc.wait(timeout=PROCESS_TERMINATE_TIMEOUT)
-                        logger.info(f"Acrobatプロセス (PID: {proc.pid}) を正常に終了しました")
-                    except psutil.TimeoutExpired:
-                        proc.kill()
-                        logger.warning(f"Acrobatプロセス (PID: {proc.pid}) を強制終了しました")
-
-                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                    logger.error(f"プロセス終了中にエラー: {e}")
-                except Exception as e:
-                    logger.error(f"予期せぬエラー: {e}")
-
-            time.sleep(PROCESS_CLEANUP_DELAY)
-
-        else:
-            logger.debug("既存のAcrobatプロセスは見つかりませんでした")
-
-    except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-        logger.error(f"プロセス確認中にエラー: {e}")
-    except Exception as e:
-        logger.error(f"予期せぬエラー: {e}")
-
-
-def open_pdf(file_path: str, acrobat_path: str, current_position: int, search_terms: List[str]) -> None:
-    try:
-        close_existing_acrobat_processes()
-        highlighted_pdf_path = highlight_pdf(file_path, search_terms)
-        process = subprocess.Popen([acrobat_path, highlighted_pdf_path])
-
-        if wait_for_acrobat(process.pid):
-            time.sleep(PROCESS_CLEANUP_DELAY)
-            navigate_to_page(current_position)
-        else:
-            logger.warning("Acrobatの起動確認に失敗しました")
-
-    except FileNotFoundError:
-        raise FileNotFoundError(f"指定されたファイルが見つかりません: {file_path}")
-    except subprocess.SubprocessError as e:
-        raise RuntimeError(f"Acrobat Readerの起動に失敗しました: {e}")
-    except Exception as e:
-        raise RuntimeError(f"PDFを開く際に予期せぬエラーが発生しました: {str(e)}")
-
-
-def wait_for_acrobat(pid: int, timeout: int = ACROBAT_WAIT_TIMEOUT) -> bool:
-    start_time = time.time()
-
-    while time.time() - start_time < timeout:
+            
+            if AcrobatProcessManager._is_acrobat_process(proc_name):
+                acrobat_processes.append(proc)
+        
+        return acrobat_processes
+    
+    @staticmethod
+    def _is_acrobat_process(process_name: str) -> bool:
+        """Acrobatプロセスかどうかを判定"""
+        return any(
+            process_name in [name.lower(), f"{name.lower()}.exe"]
+            for name in ACROBAT_PROCESS_NAMES
+        )
+    
+    @staticmethod
+    def _terminate_process(proc: psutil.Process) -> None:
+        """プロセスを終了"""
         try:
-            process = psutil.Process(pid)
-            if process.status() == psutil.STATUS_RUNNING:
+            logger.info(f"プロセス終了中: {proc.info['name']} (PID: {proc.pid})")
+            proc.terminate()
+            
+            try:
+                proc.wait(timeout=PROCESS_TERMINATE_TIMEOUT)
+                logger.info(f"Acrobatプロセス (PID: {proc.pid}) を正常に終了しました")
+            except psutil.TimeoutExpired:
+                proc.kill()
+                logger.warning(f"Acrobatプロセス (PID: {proc.pid}) を強制終了しました")
+                
+        except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+            logger.error(f"プロセス終了中にエラー: {e}")
+    
+    @staticmethod
+    def wait_for_startup(pid: int, timeout: int = ACROBAT_WAIT_TIMEOUT) -> bool:
+        """Acrobatの起動を待機"""
+        start_time = time.time()
+        
+        while time.time() - start_time < timeout:
+            try:
+                process = psutil.Process(pid)
+                
+                if process.status() != psutil.STATUS_RUNNING:
+                    time.sleep(ACROBAT_WAIT_INTERVAL)
+                    continue
+                
+                # ウィンドウのアクティブ化を確認
                 time.sleep(ACROBAT_WAIT_INTERVAL)
+                
                 try:
                     active_window = pyautogui.getActiveWindowTitle()
-                    if active_window and any(acrobat_name in active_window.lower() 
-                                           for acrobat_name in ['acrobat', 'adobe']):
+                    if active_window and AcrobatProcessManager._is_acrobat_window(active_window):
                         return True
                 except Exception:
                     pass
+                
+            except psutil.NoSuchProcess:
+                return False
+            except Exception as e:
+                logger.error(f"Acrobat待機中にエラー: {e}")
+            
+            time.sleep(ACROBAT_WAIT_INTERVAL)
+        
+        logger.warning(f"Acrobat起動のタイムアウト（{timeout}秒）")
+        return False
+    
+    @staticmethod
+    def _is_acrobat_window(window_title: str) -> bool:
+        """Acrobatのウィンドウかどうかを判定"""
+        window_lower = window_title.lower()
+        return any(keyword in window_lower for keyword in ['acrobat', 'adobe'])
 
-        except psutil.NoSuchProcess:
-            return False
-        except Exception as e:
-            logger.error(f"Acrobat待機中にエラー: {e}")
 
-        time.sleep(ACROBAT_WAIT_INTERVAL)
-
-    logger.warning(f"Acrobat起動のタイムアウト（{timeout}秒）")
-    return False
-
-
-def navigate_to_page(page_number: int) -> None:
-    if page_number == 1:
-        return
-
-    try:
+class PDFNavigator:
+    """PDF内のナビゲーションを管理するクラス"""
+    
+    @staticmethod
+    def navigate_to_page(page_number: int) -> None:
+        """指定されたページに移動"""
+        if page_number == 1:
+            return
+        
         for attempt in range(PAGE_NAVIGATION_RETRY_COUNT):
             try:
-                pyautogui.hotkey('ctrl', 'shift', 'n')
-                time.sleep(PAGE_NAVIGATION_DELAY)
-
-                pyautogui.hotkey('ctrl', 'a')
-                time.sleep(0.2)
-
-                pyautogui.write(str(page_number))
-                time.sleep(PAGE_NAVIGATION_DELAY)
-                pyautogui.press('enter')
-
+                PDFNavigator._execute_navigation(page_number)
                 break
-
             except Exception as e:
                 logger.warning(f"ページ移動試行{attempt + 1}でエラー: {e}")
-                if attempt < PAGE_NAVIGATION_RETRY_COUNT - 1:  # 最後の試行でなければ少し待つ
+                if attempt < PAGE_NAVIGATION_RETRY_COUNT - 1:
                     time.sleep(PROCESS_CLEANUP_DELAY)
+    
+    @staticmethod
+    def _execute_navigation(page_number: int) -> None:
+        """ページナビゲーションを実行"""
+        # ページ番号入力ダイアログを開く
+        pyautogui.hotkey('ctrl', 'shift', 'n')
+        time.sleep(PAGE_NAVIGATION_DELAY)
+        
+        # 既存の入力をクリア
+        pyautogui.hotkey('ctrl', 'a')
+        time.sleep(0.2)
+        
+        # ページ番号を入力
+        pyautogui.write(str(page_number))
+        time.sleep(PAGE_NAVIGATION_DELAY)
+        
+        # Enterで確定
+        pyautogui.press('enter')
 
-    except Exception as e:
-        logger.error(f"ページ移動中にエラーが発生しました: {str(e)}")
 
-
-def highlight_pdf(pdf_path: str, search_terms: List[str]) -> str:
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
-        tmp_path = tmp_file.name
-
-    global _temp_files
-    _temp_files.append(tmp_path)
-
-    doc = None
-    try:
-        doc = fitz.open(pdf_path)
-
+class PDFHighlighter:
+    """PDFハイライト処理を管理するクラス"""
+    
+    @staticmethod
+    def highlight_pdf(pdf_path: str, search_terms: List[str]) -> str:
+        """PDFにハイライトを追加して一時ファイルを作成"""
+        temp_path = PDFHighlighter._create_temp_file()
+        
+        try:
+            with fitz.open(pdf_path) as doc:
+                PDFHighlighter._add_highlights(doc, search_terms)
+                doc.save(temp_path)
+            
+            return temp_path
+        
+        except fitz.FileDataError as e:
+            raise ValueError(f"無効なPDFファイル: {pdf_path}") from e
+        except Exception as e:
+            raise RuntimeError(f"PDFのハイライト処理中にエラー: {e}") from e
+    
+    @staticmethod
+    def _create_temp_file() -> str:
+        """一時ファイルを作成"""
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+            tmp_path = tmp_file.name
+        
+        temp_file_manager.add(tmp_path)
+        return tmp_path
+    
+    @staticmethod
+    def _add_highlights(doc: fitz.Document, search_terms: List[str]) -> None:
+        """ドキュメントにハイライトを追加"""
         for page in doc:
             for i, term in enumerate(search_terms):
                 if not term or not term.strip():
                     continue
-
-                text_instances = page.search_for(term.strip())
-                for inst in text_instances:
-                    try:
-                        highlight = page.add_highlight_annot(inst)
-                        highlight.set_colors(stroke=PDF_HIGHLIGHT_COLORS[i % len(PDF_HIGHLIGHT_COLORS)])
-                        highlight.update()
-                    except Exception as e:
-                        logger.warning(f"ハイライト追加エラー (term: {term}): {e}")
-                        continue
-
-        doc.save(tmp_path)
-        return tmp_path
-
-    except fitz.FileDataError:
-        raise ValueError(f"無効なPDFファイル: {pdf_path}")
-    except Exception as e:
-        raise RuntimeError(f"PDFのハイライト処理中にエラーが発生しました: {str(e)}")
-    finally:
-        if doc is not None:
+                
+                PDFHighlighter._highlight_term_in_page(page, term, i)
+    
+    @staticmethod
+    def _highlight_term_in_page(page: fitz.Page, term: str, color_index: int) -> None:
+        """ページ内の検索語にハイライトを追加"""
+        text_instances = page.search_for(term.strip())
+        
+        for inst in text_instances:
             try:
-                doc.close()
+                highlight = page.add_highlight_annot(inst)
+                color = PDF_HIGHLIGHT_COLORS[color_index % len(PDF_HIGHLIGHT_COLORS)]
+                highlight.set_colors(stroke=color)
+                highlight.update()
             except Exception as e:
-                logger.error(f"PDF document クローズ時にエラー: {e}")
+                logger.warning(f"ハイライト追加エラー (term: {term}): {e}")
 
 
-def cleanup_single_temp_file(file_path: str) -> None:
-    global _temp_files
+def open_pdf(
+    file_path: str, 
+    acrobat_path: str, 
+    current_position: int, 
+    search_terms: List[str]
+) -> None:
+    """PDFファイルを開く（メイン関数）"""
     try:
-        if os.path.exists(file_path):
-            os.remove(file_path)
-        if file_path in _temp_files:
-            _temp_files.remove(file_path)
-    except (OSError, ValueError) as e:
-        logger.warning(f"一時ファイルの削除に失敗: {file_path} - {e}")
+        # 既存のAcrobatプロセスを終了
+        AcrobatProcessManager.close_all_processes()
+        
+        # ハイライト付きPDFを作成
+        highlighted_pdf_path = PDFHighlighter.highlight_pdf(file_path, search_terms)
+        
+        # Acrobatで開く
+        process = subprocess.Popen([acrobat_path, highlighted_pdf_path])
+        
+        # 起動を待機
+        if AcrobatProcessManager.wait_for_startup(process.pid):
+            time.sleep(PROCESS_CLEANUP_DELAY)
+            PDFNavigator.navigate_to_page(current_position)
+        else:
+            logger.warning("Acrobatの起動確認に失敗しました")
+    
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"指定されたファイルが見つかりません: {file_path}") from e
+    except subprocess.SubprocessError as e:
+        raise RuntimeError(f"Acrobat Readerの起動に失敗しました: {e}") from e
+    except Exception as e:
+        raise RuntimeError(f"PDFを開く際に予期せぬエラーが発生しました: {e}") from e
+
+
+# 後方互換性のための関数エイリアス
+close_existing_acrobat_processes = AcrobatProcessManager.close_all_processes
+wait_for_acrobat = AcrobatProcessManager.wait_for_startup
+navigate_to_page = PDFNavigator.navigate_to_page
+highlight_pdf = PDFHighlighter.highlight_pdf

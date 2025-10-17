@@ -1,346 +1,344 @@
 import configparser
 import os
 import sys
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from utils.constants import (
     CONFIG_FILENAME,
-    DEFAULT_WINDOW_WIDTH,
-    DEFAULT_WINDOW_HEIGHT,
-    DEFAULT_WINDOW_X,
-    DEFAULT_WINDOW_Y,
+    CONFIG_KEYS,
+    CONFIG_SECTIONS,
+    DEFAULT_ACROBAT_PATH,
+    DEFAULT_CONTEXT_LENGTH,
     DEFAULT_FONT_SIZE,
     DEFAULT_HTML_FONT_SIZE,
-    DEFAULT_CONTEXT_LENGTH,
-    DEFAULT_PDF_TIMEOUT,
-    DEFAULT_MAX_TEMP_FILES,
-    DEFAULT_ACROBAT_PATH,
     DEFAULT_INDEX_FILE,
+    DEFAULT_MAX_TEMP_FILES,
+    DEFAULT_PDF_TIMEOUT,
     DEFAULT_USE_INDEX_SEARCH,
-    SUPPORTED_FILE_EXTENSIONS,
-    MIN_FONT_SIZE,
+    DEFAULT_WINDOW_HEIGHT,
+    DEFAULT_WINDOW_WIDTH,
+    DEFAULT_WINDOW_X,
+    DEFAULT_WINDOW_Y,
     MAX_FONT_SIZE,
-    MIN_WINDOW_WIDTH,
-    MAX_WINDOW_WIDTH,
-    MIN_WINDOW_HEIGHT,
-    MAX_WINDOW_HEIGHT,
-    MIN_PDF_TIMEOUT,
-    MAX_PDF_TIMEOUT,
-    MIN_MAX_TEMP_FILES,
     MAX_MAX_TEMP_FILES,
-    CONFIG_SECTIONS,
-    CONFIG_KEYS
+    MAX_PDF_TIMEOUT,
+    MAX_WINDOW_HEIGHT,
+    MAX_WINDOW_WIDTH,
+    MIN_FONT_SIZE,
+    MIN_MAX_TEMP_FILES,
+    MIN_PDF_TIMEOUT,
+    MIN_WINDOW_HEIGHT,
+    MIN_WINDOW_WIDTH,
+    SUPPORTED_FILE_EXTENSIONS,
 )
 from utils.helpers import read_file_with_auto_encoding
 
 
 def get_config_path() -> str:
-    base_path = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.dirname(__file__)
+    """設定ファイルのパスを取得"""
+    if getattr(sys, 'frozen', False):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.dirname(__file__)
     return os.path.join(base_path, CONFIG_FILENAME)
 
 
 CONFIG_PATH = get_config_path()
 
 
+class ConfigValueValidator:
+    """設定値のバリデーションを行うクラス"""
+    
+    # 設定値の範囲定義
+    RANGES: Dict[str, Tuple[int, int]] = {
+        'window_width': (MIN_WINDOW_WIDTH, MAX_WINDOW_WIDTH),
+        'window_height': (MIN_WINDOW_HEIGHT, MAX_WINDOW_HEIGHT),
+        'font_size': (MIN_FONT_SIZE, MAX_FONT_SIZE),
+        'filename_font_size': (MIN_FONT_SIZE, MAX_FONT_SIZE),
+        'result_detail_font_size': (MIN_FONT_SIZE, MAX_FONT_SIZE),
+        'html_font_size': (MIN_FONT_SIZE, MAX_FONT_SIZE),
+        'timeout': (MIN_PDF_TIMEOUT, MAX_PDF_TIMEOUT),
+        'max_temp_files': (MIN_MAX_TEMP_FILES, MAX_MAX_TEMP_FILES),
+    }
+    
+    @classmethod
+    def validate_and_clamp(cls, key: str, value: int) -> int:
+        """値を検証し、範囲内にクランプ"""
+        if key in cls.RANGES:
+            min_val, max_val = cls.RANGES[key]
+            return max(min_val, min(max_val, value))
+        return value
+    
+    @classmethod
+    def validate_range(cls, key: str, value: int) -> None:
+        """値が範囲内にあるかチェック（例外を発生）"""
+        if key in cls.RANGES:
+            min_val, max_val = cls.RANGES[key]
+            if not min_val <= value <= max_val:
+                raise ValueError(f"{key}は{min_val}-{max_val}の範囲で指定してください: {value}")
+
+
 class ConfigManager:
+    """設定管理クラス（改善版）"""
+    
+    # デフォルト値の定義
+    DEFAULTS: Dict[str, Any] = {
+        'window_width': DEFAULT_WINDOW_WIDTH,
+        'window_height': DEFAULT_WINDOW_HEIGHT,
+        'window_x': DEFAULT_WINDOW_X,
+        'window_y': DEFAULT_WINDOW_Y,
+        'font_size': DEFAULT_FONT_SIZE,
+        'filename_font_size': DEFAULT_FONT_SIZE,
+        'result_detail_font_size': DEFAULT_FONT_SIZE,
+        'html_font_size': DEFAULT_HTML_FONT_SIZE,
+        'context_length': DEFAULT_CONTEXT_LENGTH,
+        'timeout': DEFAULT_PDF_TIMEOUT,
+        'max_temp_files': DEFAULT_MAX_TEMP_FILES,
+        'cleanup_temp_files': True,
+        'acrobat_path': DEFAULT_ACROBAT_PATH,
+        'index_file_path': DEFAULT_INDEX_FILE,
+        'use_index_search': DEFAULT_USE_INDEX_SEARCH,
+        'extensions': ','.join(SUPPORTED_FILE_EXTENSIONS),
+    }
+
     def __init__(self, config_file: str = CONFIG_PATH):
         self.config_file = config_file
         self.config = configparser.ConfigParser()
         self.load_config()
 
     def load_config(self) -> None:
-        if os.path.exists(self.config_file):
-            try:
-                with open(self.config_file, encoding='utf-8') as configfile:
-                    self.config.read_file(configfile)
-            except UnicodeDecodeError:
-                content = read_file_with_auto_encoding(self.config_file)
-                self.config.read_string(content)
+        """設定ファイルを読み込み"""
+        if not os.path.exists(self.config_file):
+            return
+        
+        try:
+            with open(self.config_file, encoding='utf-8') as configfile:
+                self.config.read_file(configfile)
+        except UnicodeDecodeError:
+            content = read_file_with_auto_encoding(self.config_file)
+            self.config.read_string(content)
 
     def save_config(self) -> None:
+        """設定ファイルを保存"""
         try:
             with open(self.config_file, 'w', encoding='utf-8') as configfile:
-                self.config.write(configfile)  # type: ignore
+                self.config.write(configfile)
         except IOError as e:
-            print(f"Error saving config: {e}")
+            print(f"設定の保存に失敗: {e}")
 
-    def get_file_extensions(self) -> List[str]:
-        extensions = self.config.get(
-            CONFIG_SECTIONS['FILE_TYPES'],
-            CONFIG_KEYS['EXTENSIONS'],
-            fallback=','.join(SUPPORTED_FILE_EXTENSIONS)
-        )
-        return [ext.strip() for ext in extensions.split(',') if ext.strip()]
+    # ========== 汎用的な取得/設定メソッド ==========
+    
+    def _get_int(self, section: str, key: str, validate: bool = True) -> int:
+        """整数値を取得（範囲チェック付き）"""
+        default = self.DEFAULTS.get(key, 0)
+        value = self.config.getint(section, key, fallback=default)
+        
+        if validate:
+            value = ConfigValueValidator.validate_and_clamp(key, value)
+        
+        return value
+    
+    def _set_int(self, section: str, key: str, value: int, validate: bool = True) -> None:
+        """整数値を設定（範囲チェック付き）"""
+        if validate:
+            ConfigValueValidator.validate_range(key, value)
+        
+        self._ensure_section(section)
+        self.config[section][key] = str(value)
+        self.save_config()
+    
+    def _get_str(self, section: str, key: str) -> str:
+        """文字列値を取得"""
+        default = self.DEFAULTS.get(key, '')
+        return self.config.get(section, key, fallback=default)
+    
+    def _set_str(self, section: str, key: str, value: str) -> None:
+        """文字列値を設定"""
+        self._ensure_section(section)
+        self.config[section][key] = value
+        self.save_config()
+    
+    def _get_bool(self, section: str, key: str) -> bool:
+        """真偽値を取得"""
+        default = self.DEFAULTS.get(key, False)
+        return self.config.getboolean(section, key, fallback=default)
+    
+    def _set_bool(self, section: str, key: str, value: bool) -> None:
+        """真偽値を設定"""
+        self._ensure_section(section)
+        self.config[section][key] = str(value)
+        self.save_config()
+    
+    def _ensure_section(self, section: str) -> None:
+        """セクションが存在しない場合は作成"""
+        if section not in self.config:
+            self.config[section] = {}
 
+    # ========== ウィンドウ設定 ==========
+    
     def get_window_width(self) -> int:
-        """ウィンドウ幅を個別に取得"""
-        width = self.config.getint(
-            CONFIG_SECTIONS['WINDOW_SETTINGS'],
-            CONFIG_KEYS['WINDOW_WIDTH'],
-            fallback=DEFAULT_WINDOW_WIDTH
-        )
-        return max(MIN_WINDOW_WIDTH, min(MAX_WINDOW_WIDTH, width))
-
+        return self._get_int(CONFIG_SECTIONS['WINDOW_SETTINGS'], CONFIG_KEYS['WINDOW_WIDTH'])
+    
+    def set_window_width(self, width: int) -> None:
+        self._set_int(CONFIG_SECTIONS['WINDOW_SETTINGS'], CONFIG_KEYS['WINDOW_WIDTH'], width)
+    
     def get_window_height(self) -> int:
-        """ウィンドウ高さを個別に取得"""
-        height = self.config.getint(
-            CONFIG_SECTIONS['WINDOW_SETTINGS'],
-            CONFIG_KEYS['WINDOW_HEIGHT'],
-            fallback=DEFAULT_WINDOW_HEIGHT
-        )
-        return max(MIN_WINDOW_HEIGHT, min(MAX_WINDOW_HEIGHT, height))
-
+        return self._get_int(CONFIG_SECTIONS['WINDOW_SETTINGS'], CONFIG_KEYS['WINDOW_HEIGHT'])
+    
+    def set_window_height(self, height: int) -> None:
+        self._set_int(CONFIG_SECTIONS['WINDOW_SETTINGS'], CONFIG_KEYS['WINDOW_HEIGHT'], height)
+    
     def get_window_x(self) -> int:
-        """ウィンドウX座標を個別に取得"""
-        return self.config.getint(
-            CONFIG_SECTIONS['WINDOW_SETTINGS'],
-            CONFIG_KEYS['WINDOW_X'],
-            fallback=DEFAULT_WINDOW_X
-        )
-
+        return self._get_int(CONFIG_SECTIONS['WINDOW_SETTINGS'], CONFIG_KEYS['WINDOW_X'], validate=False)
+    
     def get_window_y(self) -> int:
-        """ウィンドウY座標を個別に取得"""
-        return self.config.getint(
-            CONFIG_SECTIONS['WINDOW_SETTINGS'],
-            CONFIG_KEYS['WINDOW_Y'],
-            fallback=DEFAULT_WINDOW_Y
-        )
-
+        return self._get_int(CONFIG_SECTIONS['WINDOW_SETTINGS'], CONFIG_KEYS['WINDOW_Y'], validate=False)
+    
     def get_window_size_and_position(self) -> List[int]:
-        """ウィンドウサイズと位置を取得"""
-        x = self.get_window_x()
-        y = self.get_window_y()
-        width = self.get_window_width()
-        height = self.get_window_height()
-        return [x, y, width, height]
+        """ウィンドウサイズと位置を一括取得"""
+        return [
+            self.get_window_x(),
+            self.get_window_y(),
+            self.get_window_width(),
+            self.get_window_height(),
+        ]
+    
+    def set_window_size_and_position(self, x: int, y: int, width: int, height: int) -> None:
+        """ウィンドウサイズと位置を一括設定"""
+        section = CONFIG_SECTIONS['WINDOW_SETTINGS']
+        self._ensure_section(section)
+        
+        # 範囲チェック付きで設定
+        width = ConfigValueValidator.validate_and_clamp('window_width', width)
+        height = ConfigValueValidator.validate_and_clamp('window_height', height)
+        
+        self.config[section][CONFIG_KEYS['WINDOW_X']] = str(x)
+        self.config[section][CONFIG_KEYS['WINDOW_Y']] = str(y)
+        self.config[section][CONFIG_KEYS['WINDOW_WIDTH']] = str(width)
+        self.config[section][CONFIG_KEYS['WINDOW_HEIGHT']] = str(height)
+        
+        self.save_config()
 
+    # ========== フォント設定 ==========
+    
     def get_font_size(self) -> int:
-        size = self.config.getint(
-            CONFIG_SECTIONS['WINDOW_SETTINGS'],
-            CONFIG_KEYS['FONT_SIZE'],
-            fallback=DEFAULT_FONT_SIZE
-        )
-        return max(MIN_FONT_SIZE, min(MAX_FONT_SIZE, size))  # 範囲でクランプ
+        return self._get_int(CONFIG_SECTIONS['WINDOW_SETTINGS'], CONFIG_KEYS['FONT_SIZE'])
+    
+    def set_font_size(self, size: int) -> None:
+        self._set_int(CONFIG_SECTIONS['WINDOW_SETTINGS'], CONFIG_KEYS['FONT_SIZE'], size)
+    
+    def get_filename_font_size(self) -> int:
+        return self._get_int(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['FILENAME_FONT_SIZE'])
+    
+    def set_filename_font_size(self, size: int) -> None:
+        self._set_int(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['FILENAME_FONT_SIZE'], size)
+    
+    def get_result_detail_font_size(self) -> int:
+        return self._get_int(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['RESULT_DETAIL_FONT_SIZE'])
+    
+    def set_result_detail_font_size(self, size: int) -> None:
+        self._set_int(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['RESULT_DETAIL_FONT_SIZE'], size)
+    
+    def get_html_font_size(self) -> int:
+        return self._get_int(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['HTML_FONT_SIZE'])
+    
+    def set_html_font_size(self, size: int) -> None:
+        self._set_int(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['HTML_FONT_SIZE'], size)
 
+    # ========== Acrobat設定 ==========
+    
     def get_acrobat_path(self) -> str:
-        return self.config.get(
-            CONFIG_SECTIONS['PATHS'],
-            CONFIG_KEYS['ACROBAT_PATH'],
-            fallback=DEFAULT_ACROBAT_PATH
-        )
-
+        return self._get_str(CONFIG_SECTIONS['PATHS'], CONFIG_KEYS['ACROBAT_PATH'])
+    
+    def set_acrobat_path(self, path: str) -> None:
+        self._set_str(CONFIG_SECTIONS['PATHS'], CONFIG_KEYS['ACROBAT_PATH'], path)
+    
     def get_acrobat_reader_path(self) -> str:
-        """Acrobat Reader DCのパスを取得"""
-        return self.config.get(
-            CONFIG_SECTIONS['PATHS'],
-            CONFIG_KEYS['ACROBAT_READER_PATH'],
-            fallback=r'C:\Program Files\Adobe\Acrobat Reader DC\Reader\AcroRd32.exe'
-        )
-
+        return self._get_str(CONFIG_SECTIONS['PATHS'], CONFIG_KEYS['ACROBAT_READER_PATH'])
+    
     def get_acrobat_reader_x86_path(self) -> str:
-        """Acrobat Reader DC (x86)のパスを取得"""
-        return self.config.get(
-            CONFIG_SECTIONS['PATHS'],
-            CONFIG_KEYS['ACROBAT_READER_X86_PATH'],
-            fallback=r'C:\Program Files (x86)\Adobe\Acrobat Reader DC\Reader\AcroRd32.exe'
-        )
-
+        return self._get_str(CONFIG_SECTIONS['PATHS'], CONFIG_KEYS['ACROBAT_READER_X86_PATH'])
+    
     def find_available_acrobat_path(self) -> Optional[str]:
-        """利用可能なAcrobatパスを優先順位で探す
-
-        Returns:
-            最初に見つかった有効なパス、見つからない場合はNone
-        """
+        """利用可能なAcrobatパスを探す"""
         paths_to_check = [
             self.get_acrobat_path(),
             self.get_acrobat_reader_path(),
-            self.get_acrobat_reader_x86_path()
+            self.get_acrobat_reader_x86_path(),
         ]
-
+        
         for path in paths_to_check:
             if os.path.exists(path):
                 return path
+        
         return None
 
-    def set_file_extensions(self, extensions: List[str]) -> None:
-        if CONFIG_SECTIONS['FILE_TYPES'] not in self.config:
-            self.config[CONFIG_SECTIONS['FILE_TYPES']] = {}
-        self.config[CONFIG_SECTIONS['FILE_TYPES']][CONFIG_KEYS['EXTENSIONS']] = ','.join(extensions)
-        self.save_config()
-
-    def set_window_size_and_position(self, x: int, y: int, width: int, height: int) -> None:
-        """ウィンドウサイズと位置を個別に設定"""
-        if CONFIG_SECTIONS['WINDOW_SETTINGS'] not in self.config:
-            self.config[CONFIG_SECTIONS['WINDOW_SETTINGS']] = {}
-
-        # 範囲チェック
-        width = max(MIN_WINDOW_WIDTH, min(MAX_WINDOW_WIDTH, width))
-        height = max(MIN_WINDOW_HEIGHT, min(MAX_WINDOW_HEIGHT, height))
-
-        self.config[CONFIG_SECTIONS['WINDOW_SETTINGS']][CONFIG_KEYS['WINDOW_X']] = str(x)
-        self.config[CONFIG_SECTIONS['WINDOW_SETTINGS']][CONFIG_KEYS['WINDOW_Y']] = str(y)
-        self.config[CONFIG_SECTIONS['WINDOW_SETTINGS']][CONFIG_KEYS['WINDOW_WIDTH']] = str(width)
-        self.config[CONFIG_SECTIONS['WINDOW_SETTINGS']][CONFIG_KEYS['WINDOW_HEIGHT']] = str(height)
-        self.save_config()
-
-    def set_window_width(self, width: int) -> None:
-        """ウィンドウ幅を個別に設定"""
-        if not MIN_WINDOW_WIDTH <= width <= MAX_WINDOW_WIDTH:
-            raise ValueError(f"ウィンドウ幅は{MIN_WINDOW_WIDTH}-{MAX_WINDOW_WIDTH}の範囲で指定してください: {width}")
-
-        if CONFIG_SECTIONS['WINDOW_SETTINGS'] not in self.config:
-            self.config[CONFIG_SECTIONS['WINDOW_SETTINGS']] = {}
-        self.config[CONFIG_SECTIONS['WINDOW_SETTINGS']][CONFIG_KEYS['WINDOW_WIDTH']] = str(width)
-        self.save_config()
-
-    def set_window_height(self, height: int) -> None:
-        """ウィンドウ高さを個別に設定"""
-        if not MIN_WINDOW_HEIGHT <= height <= MAX_WINDOW_HEIGHT:
-            raise ValueError(
-                f"ウィンドウ高さは{MIN_WINDOW_HEIGHT}-{MAX_WINDOW_HEIGHT}の範囲で指定してください: {height}")
-
-        if CONFIG_SECTIONS['WINDOW_SETTINGS'] not in self.config:
-            self.config[CONFIG_SECTIONS['WINDOW_SETTINGS']] = {}
-        self.config[CONFIG_SECTIONS['WINDOW_SETTINGS']][CONFIG_KEYS['WINDOW_HEIGHT']] = str(height)
-        self.save_config()
-
-    def set_font_size(self, size: int) -> None:
-        if not MIN_FONT_SIZE <= size <= MAX_FONT_SIZE:
-            raise ValueError(f"フォントサイズは{MIN_FONT_SIZE}-{MAX_FONT_SIZE}の範囲で指定してください: {size}")
-
-        if CONFIG_SECTIONS['WINDOW_SETTINGS'] not in self.config:
-            self.config[CONFIG_SECTIONS['WINDOW_SETTINGS']] = {}
-        self.config[CONFIG_SECTIONS['WINDOW_SETTINGS']][CONFIG_KEYS['FONT_SIZE']] = str(size)
-        self.save_config()
-
-    def set_acrobat_path(self, path: str) -> None:
-        if CONFIG_SECTIONS['PATHS'] not in self.config:
-            self.config[CONFIG_SECTIONS['PATHS']] = {}
-        self.config[CONFIG_SECTIONS['PATHS']][CONFIG_KEYS['ACROBAT_PATH']] = path
-        self.save_config()
-
+    # ========== ディレクトリ設定 ==========
+    
     def get_directories(self) -> List[str]:
-        directories = self.config.get(CONFIG_SECTIONS['DIRECTORIES'], CONFIG_KEYS['DIRECTORY_LIST'], fallback='')
-        return [dir.strip() for dir in directories.split(',') if dir.strip()]
-
+        """ディレクトリリストを取得"""
+        directories_str = self._get_str(CONFIG_SECTIONS['DIRECTORIES'], CONFIG_KEYS['DIRECTORY_LIST'])
+        return [d.strip() for d in directories_str.split(',') if d.strip()]
+    
     def set_directories(self, directories: List[str]) -> None:
-        if CONFIG_SECTIONS['DIRECTORIES'] not in self.config:
-            self.config[CONFIG_SECTIONS['DIRECTORIES']] = {}
-        self.config[CONFIG_SECTIONS['DIRECTORIES']][CONFIG_KEYS['DIRECTORY_LIST']] = ','.join(directories)
-        self.save_config()
-
+        """ディレクトリリストを設定"""
+        self._set_str(CONFIG_SECTIONS['DIRECTORIES'], CONFIG_KEYS['DIRECTORY_LIST'], ','.join(directories))
+    
     def get_last_directory(self) -> str:
-        return self.config.get(CONFIG_SECTIONS['DIRECTORIES'], CONFIG_KEYS['LAST_DIRECTORY'], fallback='')
-
+        return self._get_str(CONFIG_SECTIONS['DIRECTORIES'], CONFIG_KEYS['LAST_DIRECTORY'])
+    
     def set_last_directory(self, directory: str) -> None:
-        if CONFIG_SECTIONS['DIRECTORIES'] not in self.config:
-            self.config[CONFIG_SECTIONS['DIRECTORIES']] = {}
-        self.config[CONFIG_SECTIONS['DIRECTORIES']][CONFIG_KEYS['LAST_DIRECTORY']] = directory
-        self.save_config()
+        self._set_str(CONFIG_SECTIONS['DIRECTORIES'], CONFIG_KEYS['LAST_DIRECTORY'], directory)
 
+    # ========== ファイルタイプ設定 ==========
+    
+    def get_file_extensions(self) -> List[str]:
+        """ファイル拡張子リストを取得"""
+        extensions_str = self._get_str(CONFIG_SECTIONS['FILE_TYPES'], CONFIG_KEYS['EXTENSIONS'])
+        return [ext.strip() for ext in extensions_str.split(',') if ext.strip()]
+    
+    def set_file_extensions(self, extensions: List[str]) -> None:
+        """ファイル拡張子リストを設定"""
+        self._set_str(CONFIG_SECTIONS['FILE_TYPES'], CONFIG_KEYS['EXTENSIONS'], ','.join(extensions))
+
+    # ========== 検索設定 ==========
+    
     def get_context_length(self) -> int:
-        return self.config.getint(CONFIG_SECTIONS['SEARCH_SETTINGS'], CONFIG_KEYS['CONTEXT_LENGTH'],
-                                  fallback=DEFAULT_CONTEXT_LENGTH)
-
+        return self._get_int(CONFIG_SECTIONS['SEARCH_SETTINGS'], CONFIG_KEYS['CONTEXT_LENGTH'], validate=False)
+    
     def set_context_length(self, length: int) -> None:
-        if CONFIG_SECTIONS['SEARCH_SETTINGS'] not in self.config:
-            self.config[CONFIG_SECTIONS['SEARCH_SETTINGS']] = {}
-        self.config[CONFIG_SECTIONS['SEARCH_SETTINGS']][CONFIG_KEYS['CONTEXT_LENGTH']] = str(length)
-        self.save_config()
+        self._set_int(CONFIG_SECTIONS['SEARCH_SETTINGS'], CONFIG_KEYS['CONTEXT_LENGTH'], length, validate=False)
 
-    def get_filename_font_size(self) -> int:
-        return self.config.getint(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['FILENAME_FONT_SIZE'],
-                                  fallback=DEFAULT_FONT_SIZE)
-
-    def set_filename_font_size(self, size: int) -> None:
-        if CONFIG_SECTIONS['UI_SETTINGS'] not in self.config:
-            self.config[CONFIG_SECTIONS['UI_SETTINGS']] = {}
-        self.config[CONFIG_SECTIONS['UI_SETTINGS']][CONFIG_KEYS['FILENAME_FONT_SIZE']] = str(size)
-        self.save_config()
-
-    def get_result_detail_font_size(self) -> int:
-        return self.config.getint(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['RESULT_DETAIL_FONT_SIZE'],
-                                  fallback=DEFAULT_FONT_SIZE)
-
-    def set_result_detail_font_size(self, size: int) -> None:
-        if CONFIG_SECTIONS['UI_SETTINGS'] not in self.config:
-            self.config[CONFIG_SECTIONS['UI_SETTINGS']] = {}
-        self.config[CONFIG_SECTIONS['UI_SETTINGS']][CONFIG_KEYS['RESULT_DETAIL_FONT_SIZE']] = str(size)
-        self.save_config()
-
-    def get_html_font_size(self) -> int:
-        return self.config.getint(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['HTML_FONT_SIZE'],
-                                  fallback=DEFAULT_HTML_FONT_SIZE)
-
-    def set_html_font_size(self, size: int) -> None:
-        if CONFIG_SECTIONS['UI_SETTINGS'] not in self.config:
-            self.config[CONFIG_SECTIONS['UI_SETTINGS']] = {}
-        self.config[CONFIG_SECTIONS['UI_SETTINGS']][CONFIG_KEYS['HTML_FONT_SIZE']] = str(size)
-        self.save_config()
-
+    # ========== PDF設定 ==========
+    
     def get_pdf_timeout(self) -> int:
-        return self.config.getint(CONFIG_SECTIONS['PDF_SETTINGS'], CONFIG_KEYS['TIMEOUT'], fallback=DEFAULT_PDF_TIMEOUT)
-
+        return self._get_int(CONFIG_SECTIONS['PDF_SETTINGS'], CONFIG_KEYS['TIMEOUT'])
+    
     def set_pdf_timeout(self, timeout: int) -> None:
-        if not MIN_PDF_TIMEOUT <= timeout <= MAX_PDF_TIMEOUT:
-            raise ValueError(f"タイムアウトは{MIN_PDF_TIMEOUT}-{MAX_PDF_TIMEOUT}秒の範囲で指定してください: {timeout}")
-
-        if CONFIG_SECTIONS['PDF_SETTINGS'] not in self.config:
-            self.config[CONFIG_SECTIONS['PDF_SETTINGS']] = {}
-        self.config[CONFIG_SECTIONS['PDF_SETTINGS']][CONFIG_KEYS['TIMEOUT']] = str(timeout)
-        self.save_config()
-
+        self._set_int(CONFIG_SECTIONS['PDF_SETTINGS'], CONFIG_KEYS['TIMEOUT'], timeout)
+    
     def get_cleanup_temp_files(self) -> bool:
-        return self.config.getboolean(CONFIG_SECTIONS['PDF_SETTINGS'], CONFIG_KEYS['CLEANUP_TEMP_FILES'], fallback=True)
-
+        return self._get_bool(CONFIG_SECTIONS['PDF_SETTINGS'], CONFIG_KEYS['CLEANUP_TEMP_FILES'])
+    
     def set_cleanup_temp_files(self, cleanup: bool) -> None:
-        if CONFIG_SECTIONS['PDF_SETTINGS'] not in self.config:
-            self.config[CONFIG_SECTIONS['PDF_SETTINGS']] = {}
-        self.config[CONFIG_SECTIONS['PDF_SETTINGS']][CONFIG_KEYS['CLEANUP_TEMP_FILES']] = str(cleanup)
-        self.save_config()
-
+        self._set_bool(CONFIG_SECTIONS['PDF_SETTINGS'], CONFIG_KEYS['CLEANUP_TEMP_FILES'], cleanup)
+    
     def get_max_temp_files(self) -> int:
-        return self.config.getint(CONFIG_SECTIONS['PDF_SETTINGS'], CONFIG_KEYS['MAX_TEMP_FILES'],
-                                  fallback=DEFAULT_MAX_TEMP_FILES)
-
+        return self._get_int(CONFIG_SECTIONS['PDF_SETTINGS'], CONFIG_KEYS['MAX_TEMP_FILES'])
+    
     def set_max_temp_files(self, max_files: int) -> None:
-        if not MIN_MAX_TEMP_FILES <= max_files <= MAX_MAX_TEMP_FILES:
-            raise ValueError(
-                f"最大ファイル数は{MIN_MAX_TEMP_FILES}-{MAX_MAX_TEMP_FILES}の範囲で指定してください: {max_files}")
+        self._set_int(CONFIG_SECTIONS['PDF_SETTINGS'], CONFIG_KEYS['MAX_TEMP_FILES'], max_files)
 
-        if CONFIG_SECTIONS['PDF_SETTINGS'] not in self.config:
-            self.config[CONFIG_SECTIONS['PDF_SETTINGS']] = {}
-        self.config[CONFIG_SECTIONS['PDF_SETTINGS']][CONFIG_KEYS['MAX_TEMP_FILES']] = str(max_files)
-        self.save_config()
-
-    # ========== インデックス関連の設定メソッド（新規追加） ==========
-
+    # ========== インデックス設定 ==========
+    
     def get_index_file_path(self) -> str:
-        """インデックスファイルのパスを取得"""
-        return self.config.get(
-            CONFIG_SECTIONS['INDEX_SETTINGS'],
-            CONFIG_KEYS['INDEX_FILE_PATH'],
-            fallback=DEFAULT_INDEX_FILE
-        )
-
+        return self._get_str(CONFIG_SECTIONS['INDEX_SETTINGS'], CONFIG_KEYS['INDEX_FILE_PATH'])
+    
     def set_index_file_path(self, path: str) -> None:
-        """インデックスファイルのパスを設定"""
-        if CONFIG_SECTIONS['INDEX_SETTINGS'] not in self.config:
-            self.config[CONFIG_SECTIONS['INDEX_SETTINGS']] = {}
-        self.config[CONFIG_SECTIONS['INDEX_SETTINGS']][CONFIG_KEYS['INDEX_FILE_PATH']] = path
-        self.save_config()
-
+        self._set_str(CONFIG_SECTIONS['INDEX_SETTINGS'], CONFIG_KEYS['INDEX_FILE_PATH'], path)
+    
     def get_use_index_search(self) -> bool:
-        """インデックス検索を使用するかどうかを取得"""
-        return self.config.getboolean(
-            CONFIG_SECTIONS['INDEX_SETTINGS'],
-            CONFIG_KEYS['USE_INDEX_SEARCH'],
-            fallback=DEFAULT_USE_INDEX_SEARCH
-        )
-
+        return self._get_bool(CONFIG_SECTIONS['INDEX_SETTINGS'], CONFIG_KEYS['USE_INDEX_SEARCH'])
+    
     def set_use_index_search(self, use_index: bool) -> None:
-        """インデックス検索を使用するかどうかを設定"""
-        if CONFIG_SECTIONS['INDEX_SETTINGS'] not in self.config:
-            self.config[CONFIG_SECTIONS['INDEX_SETTINGS']] = {}
-        self.config[CONFIG_SECTIONS['INDEX_SETTINGS']][CONFIG_KEYS['USE_INDEX_SEARCH']] = str(use_index)
-        self.save_config()
+        self._set_bool(CONFIG_SECTIONS['INDEX_SETTINGS'], CONFIG_KEYS['USE_INDEX_SEARCH'], use_index)
