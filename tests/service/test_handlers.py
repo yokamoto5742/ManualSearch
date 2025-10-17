@@ -57,29 +57,31 @@ class TestPDFHandlerEnhanced:
             'highlights': [mock_highlight1, mock_highlight2]
         }
     
-    @patch('fitz.open')
+    @patch('service.pdf_handler.fitz.open')
     def test_highlight_pdf_multiple_terms(self, mock_fitz_open, mock_pdf_document):
         """複数検索語のPDFハイライトテスト"""
-        mock_fitz_open.return_value = mock_pdf_document['doc']
-        
+        # コンテキストマネージャとして機能するよう設定
+        mock_fitz_open.return_value.__enter__ = MagicMock(return_value=mock_pdf_document['doc'])
+        mock_fitz_open.return_value.__exit__ = MagicMock(return_value=False)
+
         search_terms = ['Python', 'テスト', '検索']
         result_path = highlight_pdf('/test/input.pdf', search_terms)
-        
+
         # 各ページで全ての検索語が検索されることを確認
         for page in mock_pdf_document['pages']:
             assert page.search_for.call_count == len(search_terms)
             page.search_for.assert_any_call('Python')
             page.search_for.assert_any_call('テスト')
             page.search_for.assert_any_call('検索')
-        
+
         # ハイライト色が適切に設定されることを確認
         for highlight in mock_pdf_document['highlights']:
             highlight.set_colors.assert_called()
             highlight.update.assert_called()
-        
+
         assert result_path.endswith('.pdf')
         assert os.path.exists(result_path)
-        
+
         # クリーンアップ
         if os.path.exists(result_path):
             os.remove(result_path)
@@ -129,53 +131,55 @@ class TestPDFHandlerEnhanced:
         
         assert "無効なPDFファイル" in str(exc_info.value)
     
-    @patch('fitz.open')
+    @patch('service.pdf_handler.fitz.open')
     def test_highlight_pdf_save_failure(self, mock_fitz_open, mock_pdf_document):
         """PDF保存失敗時のテスト"""
-        mock_fitz_open.return_value = mock_pdf_document['doc']
+        # コンテキストマネージャとして機能するよう設定
+        mock_fitz_open.return_value.__enter__ = MagicMock(return_value=mock_pdf_document['doc'])
+        mock_fitz_open.return_value.__exit__ = MagicMock(return_value=False)
         mock_pdf_document['doc'].save.side_effect = Exception("Save error")
-        
+
         with pytest.raises(RuntimeError) as exc_info:
             highlight_pdf('/test/input.pdf', ['Python'])
-        
-        assert "PDFのハイライト処理中にエラーが発生しました" in str(exc_info.value)
+
+        assert "PDFのハイライト処理中にエラー" in str(exc_info.value)
     
     def test_cleanup_temp_files_multiple_files(self):
         """複数一時ファイルのクリーンアップテスト"""
-        import service.pdf_handler
-        
+        from service.pdf_handler import temp_file_manager
+
         # 複数の一時ファイルを作成
         temp_files = []
         for i in range(5):
             fd, path = tempfile.mkstemp(suffix=f'_test_{i}.pdf')
             os.close(fd)
             temp_files.append(path)
-        
-        # グローバル変数に設定
-        service.pdf_handler._temp_files = temp_files.copy()
-        
+
+        # temp_file_managerに設定
+        temp_file_manager._temp_files = temp_files.copy()
+
         # クリーンアップ実行
         cleanup_temp_files()
-        
+
         # 全ファイルが削除されることを確認
         for path in temp_files:
             assert not os.path.exists(path)
-        
-        assert len(service.pdf_handler._temp_files) == 0
+
+        assert len(temp_file_manager._temp_files) == 0
     
     def test_cleanup_temp_files_permission_error(self):
         """一時ファイル削除権限エラーのテスト"""
-        import service.pdf_handler
-        
+        from service.pdf_handler import temp_file_manager
+
         # 存在しないファイルをリストに追加（削除エラーをシミュレート）
         fake_files = ['/nonexistent/file1.pdf', '/nonexistent/file2.pdf']
-        service.pdf_handler._temp_files = fake_files.copy()
-        
+        temp_file_manager._temp_files = fake_files.copy()
+
         # エラーが発生しても処理が続行されることを確認
         cleanup_temp_files()
-        
-        # エラーファイルはリストから削除されない
-        assert len(service.pdf_handler._temp_files) >= 0
+
+        # エラーファイルはリストから削除される（存在しない場合も削除される仕様）
+        assert len(temp_file_manager._temp_files) == 0
     
     @patch('psutil.process_iter')
     @patch('time.sleep')
@@ -233,12 +237,12 @@ class TestPDFHandlerEnhanced:
         mock_process.terminate.assert_called_once()
     
     @patch('subprocess.Popen')
-    @patch('service.pdf_handler.close_existing_acrobat_processes')
-    @patch('service.pdf_handler.highlight_pdf')
-    @patch('service.pdf_handler.wait_for_acrobat')
-    @patch('service.pdf_handler.navigate_to_page')
+    @patch('service.pdf_handler.AcrobatProcessManager.close_all_processes')
+    @patch('service.pdf_handler.PDFHighlighter.highlight_pdf')
+    @patch('service.pdf_handler.AcrobatProcessManager.wait_for_startup')
+    @patch('service.pdf_handler.PDFNavigator.navigate_to_page')
     @patch('time.sleep')
-    def test_open_pdf_integration(self, mock_sleep, mock_navigate, mock_wait, 
+    def test_open_pdf_integration(self, mock_sleep, mock_navigate, mock_wait,
                                  mock_highlight, mock_close, mock_popen):
         """PDF開く処理の統合テスト"""
         # モック設定
@@ -247,10 +251,10 @@ class TestPDFHandlerEnhanced:
         mock_process.pid = 1234
         mock_popen.return_value = mock_process
         mock_wait.return_value = True
-        
+
         # テスト実行
         open_pdf('/test/input.pdf', '/usr/bin/acrobat', 5, ['Python', 'テスト'])
-        
+
         # 処理順序の確認
         mock_close.assert_called_once()
         mock_highlight.assert_called_once_with('/test/input.pdf', ['Python', 'テスト'])
@@ -260,27 +264,28 @@ class TestPDFHandlerEnhanced:
         mock_navigate.assert_called_once_with(5)
     
     @patch('subprocess.Popen')
-    @patch('service.pdf_handler.close_existing_acrobat_processes')
-    @patch('service.pdf_handler.highlight_pdf')
+    @patch('service.pdf_handler.AcrobatProcessManager.close_all_processes')
+    @patch('service.pdf_handler.PDFHighlighter.highlight_pdf')
     def test_open_pdf_file_not_found(self, mock_highlight, mock_close, mock_popen):
         """存在しないPDFファイルでのテスト"""
-        mock_popen.side_effect = FileNotFoundError("File not found")
-        
-        with pytest.raises(FileNotFoundError) as exc_info:
+        mock_highlight.side_effect = fitz.FileDataError("no such file: '/nonexistent.pdf'")
+
+        with pytest.raises(RuntimeError) as exc_info:
             open_pdf('/nonexistent.pdf', '/usr/bin/acrobat', 1, ['test'])
-        
-        assert "指定されたファイルが見つかりません" in str(exc_info.value)
+
+        assert "PDFを開く際に予期せぬエラーが発生しました" in str(exc_info.value)
     
     @patch('subprocess.Popen')
-    @patch('service.pdf_handler.close_existing_acrobat_processes')
-    @patch('service.pdf_handler.highlight_pdf')
+    @patch('service.pdf_handler.AcrobatProcessManager.close_all_processes')
+    @patch('service.pdf_handler.PDFHighlighter.highlight_pdf')
     def test_open_pdf_subprocess_error(self, mock_highlight, mock_close, mock_popen):
         """サブプロセス起動エラーのテスト"""
+        mock_highlight.return_value = '/tmp/highlighted.pdf'
         mock_popen.side_effect = subprocess.SubprocessError("Process error")
-        
+
         with pytest.raises(RuntimeError) as exc_info:
             open_pdf('/test.pdf', '/usr/bin/acrobat', 1, ['test'])
-        
+
         assert "Acrobat Readerの起動に失敗しました" in str(exc_info.value)
     
     @patch('psutil.Process')

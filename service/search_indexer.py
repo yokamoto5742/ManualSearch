@@ -2,9 +2,7 @@ import hashlib
 import json
 import logging
 import os
-import time
 from datetime import datetime
-from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import fitz
@@ -149,10 +147,9 @@ class SearchIndexer:
     def _extract_pdf_content(self, file_path: str) -> str:
         content = ""
         try:
-            doc = fitz.open(file_path)
-            for page in doc:
-                content += page.get_text() + "\n"
-            doc.close()
+            with fitz.open(file_path) as doc:
+                for page in doc:
+                    content += page.get_text() + "\n"
         except Exception as e:
             logger.error(f"PDF読み込みエラー: {file_path} - {e}")
 

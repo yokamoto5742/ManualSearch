@@ -148,7 +148,7 @@ class TestSearchIndexer:
         assert stats['last_updated'] is not None
         assert stats['index_file_size_mb'] >= 0
     
-    @patch('fitz.open')
+    @patch('service.search_indexer.fitz.open')
     def test_extract_pdf_content(self, mock_fitz_open, indexer):
         """PDF内容抽出のテスト（モック使用）"""
         # PDFドキュメントのモック
@@ -156,13 +156,14 @@ class TestSearchIndexer:
         mock_page = MagicMock()
         mock_page.get_text.return_value = "PDFのテスト内容"
         mock_doc.__iter__ = MagicMock(return_value=iter([mock_page]))
-        mock_doc.close = MagicMock()
-        mock_fitz_open.return_value = mock_doc
-        
+
+        # コンテキストマネージャとして機能するよう設定
+        mock_fitz_open.return_value.__enter__ = MagicMock(return_value=mock_doc)
+        mock_fitz_open.return_value.__exit__ = MagicMock(return_value=False)
+
         content = indexer._extract_pdf_content('test.pdf')
-        
+
         assert content == "PDFのテスト内容\n"
-        mock_doc.close.assert_called_once()
     
     def test_match_search_terms(self, indexer):
         """検索語マッチングのテスト"""

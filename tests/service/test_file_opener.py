@@ -18,7 +18,7 @@ class TestFileOpener:
     def config_manager_mock(self):
         """ConfigManagerのモック"""
         mock_config = MagicMock()
-        mock_config.get_acrobat_path.return_value = r'C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe'
+        mock_config.find_available_acrobat_path.return_value = r'C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe'
         mock_config.get_html_font_size.return_value = 16
         return mock_config
     
@@ -403,7 +403,7 @@ class TestFileOpenerEdgeCases:
     def file_opener_edge(self):
         """エッジケーステスト用FileOpener"""
         mock_config = MagicMock()
-        mock_config.get_acrobat_path.return_value = ""  # 空のパス
+        mock_config.find_available_acrobat_path.return_value = None  # Noneを返す（空のパスになる）
         mock_config.get_html_font_size.return_value = 0  # 無効なフォントサイズ
         return FileOpener(mock_config)
 
@@ -431,22 +431,28 @@ class TestFileOpenerEdgeCases:
             # フォントサイズ0でも処理が続行されることを確認
             mock_open_text.assert_called_once_with(txt_path, ['test'], 0)
 
-    def test_large_position_value(self, file_opener_edge, temp_dir):
+    def test_large_position_value(self, temp_dir):
         """大きなposition値でのテスト"""
         pdf_path = os.path.join(temp_dir, 'test.pdf')
         with open(pdf_path, 'wb') as f:
             f.write(b'%PDF-1.4\ntest')
-        
+
+        # 有効なAcrobatパスを持つFileOpenerを作成
+        mock_config = MagicMock()
+        mock_config.find_available_acrobat_path.return_value = r'C:\Program Files\Adobe\Acrobat.exe'
+        mock_config.get_html_font_size.return_value = 16
+        file_opener = FileOpener(mock_config)
+
         large_position = 999999
-        
-        with patch.object(file_opener_edge, '_check_pdf_accessibility', return_value=True), \
+
+        with patch.object(file_opener, '_check_pdf_accessibility', return_value=True), \
              patch('os.path.exists', return_value=True), \
              patch('service.file_opener.open_pdf') as mock_open_pdf:
-            
-            file_opener_edge._open_pdf_file(pdf_path, large_position, ['test'])
-            
+
+            file_opener._open_pdf_file(pdf_path, large_position, ['test'])
+
             # 大きなposition値でも正常に処理されることを確認
-            mock_open_pdf.assert_called_once_with(pdf_path, "", large_position, ['test'])
+            mock_open_pdf.assert_called_once_with(pdf_path, r'C:\Program Files\Adobe\Acrobat.exe', large_position, ['test'])
 
     def test_empty_search_terms(self, file_opener_edge, temp_dir):
         """空の検索語リストでのテスト"""
