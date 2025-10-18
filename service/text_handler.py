@@ -5,8 +5,7 @@ import re
 import sys
 import tempfile
 import webbrowser
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 import markdown
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
@@ -31,7 +30,6 @@ def get_template_directory() -> str:
         # PyInstallerでビルドされた場合
         base_path = sys._MEIPASS
     else:
-        # 通常の実行時
         base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     return os.path.join(base_path, TEMPLATE_DIRECTORY)
@@ -85,7 +83,7 @@ def highlight_search_terms(content: str, search_terms: List[str]) -> str:
         if not term.strip():
             continue
 
-        color = HIGHLIGHT_COLORS[i % len(HIGHLIGHT_COLORS)]  # 色をループさせる
+        color = HIGHLIGHT_COLORS[i % len(HIGHLIGHT_COLORS)]
         try:
             content = re.sub(
                 f'({re.escape(term.strip())})',
