@@ -5,15 +5,12 @@ from utils.constants import SEARCH_TYPE_AND, SEARCH_TYPE_OR
 
 
 class SearchMatcher:
-    """検索語のマッチングとコンテキスト抽出を担当"""
-
     def __init__(self, search_terms: List[str], search_type: str, context_length: int):
         self.search_terms = search_terms
         self.search_type = search_type
         self.context_length = context_length
 
     def match_search_terms(self, text: str) -> bool:
-        """検索語がテキストにマッチするか判定"""
         text_lower = text.lower()
 
         if self.search_type == SEARCH_TYPE_AND:
@@ -40,7 +37,6 @@ class SearchMatcher:
         content: str,
         search_term: str
     ) -> List[Tuple[int, str]]:
-        """行番号付きでコンテキストを抽出"""
         contexts = []
 
         for match in re.finditer(re.escape(search_term), content, re.IGNORECASE):

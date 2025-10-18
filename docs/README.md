@@ -136,8 +136,13 @@ ManualSearch/
 │   ├── file_searcher.py        # ファイル検索エンジン
 │   ├── indexed_file_searcher.py # インデックス検索
 │   ├── search_indexer.py       # インデックス作成・管理
+│   ├── content_extractor.py    # コンテンツ抽出処理
+│   ├── index_storage.py        # インデックス保存管理
 │   ├── pdf_handler.py          # PDF処理
-│   └── text_handler.py         # テキスト処理
+│   ├── pdf_search_strategy.py  # PDF検索戦略
+│   ├── search_matcher.py       # 検索マッチング処理
+│   ├── text_handler.py         # テキスト処理
+│   └── text_search_strategy.py # テキスト検索戦略
 ├── widgets/
 │   ├── search_widget.py        # 検索UI
 │   ├── results_widget.py       # 結果表示UI
@@ -157,6 +162,11 @@ ManualSearch/
 - **file_searcher.py**: ファイル内容の検索処理
 - **indexed_file_searcher.py**: インデックスを使用した高速検索
 - **search_indexer.py**: 検索インデックスの作成と管理
+- **content_extractor.py**: PDF/テキストからのコンテンツ抽出
+- **index_storage.py**: インデックスデータの保存・読み込み管理
+- **pdf_search_strategy.py**: PDF検索の戦略実装
+- **text_search_strategy.py**: テキスト検索の戦略実装
+- **search_matcher.py**: 検索条件マッチング処理
 - **config_manager.py**: 設定ファイルの読み書き
 
 ## 機能説明
@@ -320,6 +330,13 @@ context_length = 100
 
 ## 最新の変更履歴
 
+### 2025年10月18日
+- ✨ **検索戦略の分離**: PDF/テキスト検索戦略を別ファイルに分割
+- 🔧 **インデックス管理改善**: ContentExtractor、IndexStorageクラスで処理を分離
+- 🎯 **検索マッチング最適化**: SearchMatcherクラスで検索条件マッチング処理を統一
+- 🐞 **インデックス再構築修正**: index_file_path参照とリセット処理の改善
+- 📝 **テスト強化**: content_extractorモック参照修正とインデックス統計検証
+
 ### 2025年09月2日
 - 🔧 **警告対策**: テスト環境での警告抑制とSwig警告の対処
 - 📝 **テスト整理**: テストファイルの構造を整理し、importの順序を改善
@@ -341,8 +358,8 @@ context_length = 100
 
 ## バージョン情報
 
-- **現在のバージョン**: 1.2.1
-- **最終更新日**: 2025年10月15日
+- **現在のバージョン**: 1.3.0
+- **最終更新日**: 2025年10月18日
 
 ## ライセンス
 

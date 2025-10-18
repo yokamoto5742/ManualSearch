@@ -172,9 +172,7 @@ class FileSearcher(QThread):
         return None
 
     def search_pdf(self, file_path: str) -> Optional[Tuple[str, List[Tuple[int, str]]]]:
-        """PDF検索を戦略に委譲"""
         return self.pdf_strategy.search(file_path)
 
     def search_text(self, file_path: str) -> Optional[Tuple[str, List[Tuple[int, str]]]]:
-        """テキスト検索を戦略に委譲"""
         return self.text_strategy.search(file_path)

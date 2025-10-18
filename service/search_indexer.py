@@ -12,26 +12,13 @@ logger = logging.getLogger(__name__)
 
 
 class SearchIndexer:
-    """検索インデックスの作成と検索を管理するクラス"""
-
     def __init__(self, index_file_path: str = "search_index.json"):
-        """
-        Args:
-            index_file_path: インデックスファイルのパス
-        """
         self.storage = IndexStorage(index_file_path)
         self.content_extractor = ContentExtractor()
         self.index_data = self.storage.load()
 
     def create_index(self, directories: List[str], include_subdirs: bool = True,
                     progress_callback: Optional[callable] = None) -> None:
-        """インデックスを作成
-
-        Args:
-            directories: インデックス対象のディレクトリリスト
-            include_subdirs: サブディレクトリを含めるか
-            progress_callback: 進捗コールバック関数
-        """
         file_list = self._get_file_list(directories, include_subdirs)
         total_files = len(file_list)
         logger.info(f"対象ファイル数: {total_files}")
@@ -61,15 +48,6 @@ class SearchIndexer:
         logger.info(f"インデックス作成完了: {updated_files} ファイルを更新")
 
     def search_in_index(self, search_terms: List[str], search_type: str = "AND") -> List[Tuple[str, List[Tuple[int, str]]]]:
-        """インデックス内を検索
-
-        Args:
-            search_terms: 検索語のリスト
-            search_type: 検索タイプ ("AND" または "OR")
-
-        Returns:
-            検索結果のリスト [(ファイルパス, [(行番号, コンテキスト)])]
-        """
         results = []
 
         for file_path, file_info in self.index_data["files"].items():
@@ -83,31 +61,12 @@ class SearchIndexer:
         return results
 
     def get_index_stats(self) -> Dict:
-        """インデックスの統計情報を取得
-
-        Returns:
-            統計情報の辞書
-        """
         return self.storage.get_stats(self.index_data)
 
     def remove_missing_files(self) -> int:
-        """存在しないファイルをインデックスから削除
-
-        Returns:
-            削除されたファイル数
-        """
         return self.storage.remove_missing_files(self.index_data)
 
     def _get_file_list(self, directories: List[str], include_subdirs: bool) -> List[str]:
-        """対象ファイルのリストを取得
-
-        Args:
-            directories: ディレクトリリスト
-            include_subdirs: サブディレクトリを含めるか
-
-        Returns:
-            ファイルパスのリスト
-        """
         file_list = []
 
         for directory in directories:
@@ -130,25 +89,9 @@ class SearchIndexer:
         return file_list
 
     def _is_supported_file(self, file_path: str) -> bool:
-        """サポートされているファイルかチェック
-
-        Args:
-            file_path: ファイルパス
-
-        Returns:
-            サポートされている場合True
-        """
         return any(file_path.lower().endswith(ext) for ext in SUPPORTED_FILE_EXTENSIONS)
 
     def _should_update_file(self, file_path: str) -> bool:
-        """ファイルを更新すべきかチェック
-
-        Args:
-            file_path: ファイルパス
-
-        Returns:
-            更新が必要な場合True
-        """
         try:
             current_mtime = os.path.getmtime(file_path)
             current_size = os.path.getsize(file_path)
@@ -165,11 +108,6 @@ class SearchIndexer:
             return False
 
     def _process_file(self, file_path: str) -> None:
-        """ファイルを処理してインデックスに追加
-
-        Args:
-            file_path: ファイルパス
-        """
         try:
             content = self.content_extractor.extract_text_content(file_path)
             if content:
@@ -188,14 +126,6 @@ class SearchIndexer:
             logger.error(f"ファイル処理エラー: {file_path} - {e}")
 
     def _calculate_file_hash(self, file_path: str) -> str:
-        """ファイルのハッシュ値を計算
-
-        Args:
-            file_path: ファイルパス
-
-        Returns:
-            MD5ハッシュ値
-        """
         hash_md5 = hashlib.md5()
         try:
             with open(file_path, "rb") as f:
@@ -207,16 +137,6 @@ class SearchIndexer:
         return hash_md5.hexdigest()
 
     def _match_search_terms(self, content: str, search_terms: List[str], search_type: str) -> bool:
-        """検索語がコンテンツにマッチするかチェック
-
-        Args:
-            content: 検索対象のコンテンツ
-            search_terms: 検索語のリスト
-            search_type: 検索タイプ ("AND" または "OR")
-
-        Returns:
-            マッチする場合True
-        """
         content_lower = content.lower()
 
         if search_type == "AND":
@@ -226,17 +146,6 @@ class SearchIndexer:
 
     def _find_matches_in_content(self, content: str, search_terms: List[str],
                                file_path: str, context_length: int = 100) -> List[Tuple[int, str]]:
-        """コンテンツ内のマッチ箇所を検索
-
-        Args:
-            content: 検索対象のコンテンツ
-            search_terms: 検索語のリスト
-            file_path: ファイルパス
-            context_length: コンテキストの長さ
-
-        Returns:
-            マッチ箇所のリスト [(行番号, コンテキスト)]
-        """
         matches = []
 
         if file_path.lower().endswith('.pdf'):
@@ -259,16 +168,6 @@ class SearchIndexer:
         return matches[:200]
 
     def _extract_context(self, text: str, search_term: str, context_length: int) -> str:
-        """検索語の周辺のコンテキストを抽出
-
-        Args:
-            text: テキスト
-            search_term: 検索語
-            context_length: コンテキストの長さ
-
-        Returns:
-            コンテキスト文字列
-        """
         term_index = text.lower().find(search_term.lower())
         if term_index == -1:
             return text[:context_length * 2]
