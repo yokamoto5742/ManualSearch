@@ -210,27 +210,28 @@ class TestIndexedFileSearcher:
         # 例外が発生してもクラッシュしないことを確認
         mock_cleanup.assert_called_once()
     
-    @patch.object(SearchIndexer, '_initialize_new_index')
-    def test_rebuild_index(self, mock_init, searcher):
+    def test_rebuild_index(self, searcher):
         """インデックス再構築機能テスト"""
         directories = ['/path/to/dir1']
-        
+
+        # 既存のインデックスデータを設定
+        searcher.indexer.index_data['files']['existing_file.txt'] = {'content': 'old data'}
+
         with patch.object(searcher, 'create_or_update_index') as mock_create:
             searcher.rebuild_index(directories)
-            
-            mock_init.assert_called_once()
+
+            # インデックスがリセットされたことを確認
+            assert 'existing_file.txt' not in searcher.indexer.index_data['files']
+            assert searcher.indexer.index_data['version'] == '1.0'
             mock_create.assert_called_once_with(directories)
     
-    @patch.object(SearchIndexer, '_initialize_new_index')
-    def test_rebuild_index_exception(self, mock_init, searcher):
+    def test_rebuild_index_exception(self, searcher):
         """インデックス再構築時の例外処理テスト"""
-        mock_init.side_effect = Exception("IO Error")
-        
         directories = ['/path/to/dir1']
-        searcher.rebuild_index(directories)
-        
-        # 例外が発生してもクラッシュしないことを確認
-        mock_init.assert_called_once()
+
+        with patch.object(searcher, 'create_or_update_index', side_effect=Exception("IO Error")):
+            # 例外が発生してもクラッシュしないことを確認
+            searcher.rebuild_index(directories)
 
 
 class TestSmartFileSearcher:

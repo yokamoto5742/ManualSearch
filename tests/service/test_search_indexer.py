@@ -42,7 +42,7 @@ class TestSearchIndexer:
     
     def test_init(self, indexer):
         """初期化のテスト"""
-        assert indexer.index_file_path.endswith('test_index.json')
+        assert indexer.storage.index_file_path.endswith('test_index.json')
         assert 'version' in indexer.index_data
         assert 'files' in indexer.index_data
         assert indexer.index_data['version'] == '1.0'
@@ -148,7 +148,7 @@ class TestSearchIndexer:
         assert stats['last_updated'] is not None
         assert stats['index_file_size_mb'] >= 0
     
-    @patch('service.search_indexer.fitz.open')
+    @patch('service.content_extractor.fitz.open')
     def test_extract_pdf_content(self, mock_fitz_open, indexer):
         """PDF内容抽出のテスト（モック使用）"""
         # PDFドキュメントのモック
@@ -161,7 +161,7 @@ class TestSearchIndexer:
         mock_fitz_open.return_value.__enter__ = MagicMock(return_value=mock_doc)
         mock_fitz_open.return_value.__exit__ = MagicMock(return_value=False)
 
-        content = indexer._extract_pdf_content('test.pdf')
+        content = indexer.content_extractor._extract_pdf_content('test.pdf')
 
         assert content == "PDFのテスト内容\n"
     

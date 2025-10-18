@@ -56,7 +56,7 @@ class IndexedFileSearcher(QThread):
             self.search_completed.emit()
 
     def _is_index_available(self) -> bool:
-        if not os.path.exists(self.indexer.index_file_path):
+        if not os.path.exists(self.indexer.storage.index_file_path):
             self.index_status_changed.emit("インデックスファイルが見つかりません")
             return False
 
@@ -162,7 +162,7 @@ class IndexedFileSearcher(QThread):
 
     def rebuild_index(self, directories: List[str]) -> None:
         try:
-            self.indexer._initialize_new_index()
+            self.indexer.index_data = self.indexer.storage._create_new_index()
             self.create_or_update_index(directories)
 
         except Exception as e:
