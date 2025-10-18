@@ -17,7 +17,6 @@ def setup_logging(log_directory: str = 'logs', log_retention_days: int = 7, log_
 
     log_file = log_dir_path / f'{log_name}.log'
 
-    # ログレベルを設定
     log_level_enum = getattr(logging, log_level.upper(), logging.INFO)
 
     file_handler = TimedRotatingFileHandler(filename=str(log_file), when='midnight', backupCount=log_retention_days,
@@ -55,5 +54,3 @@ def cleanup_old_logs(log_directory: Path, retention_days: int, log_name: str):
                     logging.info(f"古いログファイルを削除しました: {file_path.name}")
                 except OSError as e:
                     logging.error(f"ログファイルの削除中にエラーが発生しました {file_path.name}: {str(e)}")
-
-
