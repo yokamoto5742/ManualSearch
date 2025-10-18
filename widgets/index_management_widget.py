@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from PyQt5.QtCore import QTimer, pyqtSignal
 from PyQt5.QtWidgets import (
-    QCheckBox, QDialog, QDialogButtonBox, QGroupBox, QHBoxLayout, QLabel,
+    QDialog, QDialogButtonBox, QGroupBox, QHBoxLayout, QLabel,
     QMessageBox, QProgressBar, QPushButton, QTextEdit, QVBoxLayout, QWidget
 )
 
@@ -66,10 +66,6 @@ class IndexManagementWidget(QWidget):
         button_layout.addWidget(self.rebuild_button)
 
         operations_layout.addLayout(button_layout)
-
-        self.auto_update_checkbox = QCheckBox("検索時にインデックスを毎回更新")
-        self.auto_update_checkbox.setChecked(True)
-        operations_layout.addWidget(self.auto_update_checkbox)
 
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
@@ -214,9 +210,6 @@ class IndexManagementWidget(QWidget):
     def _log(self, message: str):
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.log_text.append(f"[{timestamp}] {message}")
-
-    def is_auto_update_enabled(self) -> bool:
-        return self.auto_update_checkbox.isChecked()
 
     def closeEvent(self, event):
         if self.build_thread and self.build_thread.isRunning():
