@@ -37,7 +37,6 @@ class SearchIndexer:
             self._initialize_new_index()
     
     def _initialize_new_index(self) -> None:
-        """新しいインデックスを初期化"""
         self.index_data = {
             "version": "1.0",
             "created_at": datetime.now().isoformat(),
@@ -47,7 +46,6 @@ class SearchIndexer:
     
     def create_index(self, directories: List[str], include_subdirs: bool = True,
                     progress_callback: Optional[callable] = None) -> None:
-
         file_list = self._get_file_list(directories, include_subdirs)
         total_files = len(file_list)
         logger.info(f"対象ファイル数: {total_files}")
@@ -174,7 +172,6 @@ class SearchIndexer:
         return hash_md5.hexdigest()
     
     def _save_index(self) -> None:
-        """インデックスをファイルに保存"""
         self.index_data["last_updated"] = datetime.now().isoformat()
 
         try:
