@@ -3,10 +3,9 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## House Rules:
-- Return patch diffs, not prose.
-- If unsure, propose 2 options with trade-offs (≤80 words).
-- Keep changes surgical: max 3 files unless I expand scope.
-- If more than 3 files tell me why and what
+- 文章ではなくパッチの差分を返す。Return patch diffs, not prose.
+- 変更範囲は最小限に抑える。
+- コードの修正は直接適用する。
 - Pythonコードのimport文は以下の適切な順序に並べ替えてください。
 標準ライブラリ
 サードパーティライブラリ

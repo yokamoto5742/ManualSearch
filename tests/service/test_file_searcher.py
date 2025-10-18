@@ -57,12 +57,12 @@ class TestFileSearcher:
         )
         
         # 両方含む
-        assert searcher.match_search_terms("Pythonのテストコード") == True
+        assert searcher.matcher.match_search_terms("Pythonのテストコード") == True
         # 片方のみ
-        assert searcher.match_search_terms("Pythonのコード") == False
-        assert searcher.match_search_terms("テストコード") == False
+        assert searcher.matcher.match_search_terms("Pythonのコード") == False
+        assert searcher.matcher.match_search_terms("テストコード") == False
         # どちらも含まない
-        assert searcher.match_search_terms("Javaのコード") == False
+        assert searcher.matcher.match_search_terms("Javaのコード") == False
     
     def test_match_search_terms_or(self, sample_directory, qapp):
         """OR検索のマッチングテスト"""
@@ -72,12 +72,12 @@ class TestFileSearcher:
         )
         
         # 両方含む
-        assert searcher.match_search_terms("Pythonのテストコード") == True
+        assert searcher.matcher.match_search_terms("Pythonのテストコード") == True
         # 片方のみ
-        assert searcher.match_search_terms("Pythonのコード") == True
-        assert searcher.match_search_terms("テストコード") == True
+        assert searcher.matcher.match_search_terms("Pythonのコード") == True
+        assert searcher.matcher.match_search_terms("テストコード") == True
         # どちらも含まない
-        assert searcher.match_search_terms("Javaのコード") == False
+        assert searcher.matcher.match_search_terms("Javaのコード") == False
     
     def test_search_text_file(self, sample_directory, qapp):
         """テキストファイル検索のテスト"""

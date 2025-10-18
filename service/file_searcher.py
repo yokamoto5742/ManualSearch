@@ -1,19 +1,15 @@
 import logging
 import os
-import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Optional, Tuple
 
-import fitz
 from PyQt5.QtCore import QThread, pyqtSignal
 
-from utils.constants import (
-    MAX_SEARCH_RESULTS_PER_FILE,
-    SEARCH_METHODS_MAPPING,
-    SEARCH_TYPE_AND,
-    SEARCH_TYPE_OR,
-)
-from utils.helpers import check_file_accessibility, normalize_path, read_file_with_auto_encoding
+from service.pdf_search_strategy import PDFSearchStrategy
+from service.search_matcher import SearchMatcher
+from service.text_search_strategy import TextSearchStrategy
+from utils.constants import SEARCH_METHODS_MAPPING
+from utils.helpers import check_file_accessibility, normalize_path
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +40,11 @@ class FileSearcher(QThread):
         self.global_search = global_search
         self.global_directories = global_directories or []
         self.cancel_flag = False
+
+        # 検索戦略の初期化
+        self.matcher = SearchMatcher(search_terms, search_type, context_length)
+        self.pdf_strategy = PDFSearchStrategy(self.matcher)
+        self.text_strategy = TextSearchStrategy(self.matcher)
 
     def run(self) -> None:
         """検索を実行"""
@@ -164,94 +165,16 @@ class FileSearcher(QThread):
             logger.error(f"検索エラー: {normalized_path} - {e}")
             return None
 
-    def _get_search_method(self, file_extension: str):
+    def _get_search_method(self, file_extension: str) -> Optional[callable]:
         method_name = SEARCH_METHODS_MAPPING.get(file_extension)
         if method_name:
             return getattr(self, method_name, None)
         return None
 
     def search_pdf(self, file_path: str) -> Optional[Tuple[str, List[Tuple[int, str]]]]:
-        results = []
-        
-        try:
-            with fitz.open(file_path) as doc:
-                for page_num, page in enumerate(doc):
-                    text = page.get_text()
-                    
-                    if not self.match_search_terms(text):
-                        continue
-                    
-                    # マッチした検索語のコンテキストを抽出
-                    for search_term in self.search_terms:
-                        contexts = self._extract_contexts(text, search_term)
-                        for context in contexts:
-                            results.append((page_num + 1, context))
-                        
-                        if len(results) >= MAX_SEARCH_RESULTS_PER_FILE:
-                            break
-                    
-                    if len(results) >= MAX_SEARCH_RESULTS_PER_FILE:
-                        break
-        
-        except Exception as e:
-            logger.error(f"PDFの処理中にエラーが発生しました: {file_path} - {e}")
-            return None
-        
-        return (file_path, results) if results else None
+        """PDF検索を戦略に委譲"""
+        return self.pdf_strategy.search(file_path)
 
     def search_text(self, file_path: str) -> Optional[Tuple[str, List[Tuple[int, str]]]]:
-        results = []
-        
-        try:
-            content = read_file_with_auto_encoding(file_path)
-            
-            if not self.match_search_terms(content):
-                return None
-            
-            for search_term in self.search_terms:
-                contexts = self._extract_contexts_with_line_numbers(content, search_term)
-                results.extend(contexts)
-        
-        except UnicodeDecodeError as e:
-            logger.error(f"ファイルのデコードエラー: {file_path} - {e}")
-        except ValueError as e:
-            logger.error(f"ファイルの読み込みに失敗しました: {file_path} - {e}")
-        
-        return (file_path, results) if results else None
-
-    def _extract_contexts(self, text: str, search_term: str) -> List[str]:
-        contexts = []
-        
-        for match in re.finditer(re.escape(search_term), text, re.IGNORECASE):
-            start = max(0, match.start() - self.context_length)
-            end = min(len(text), match.end() + self.context_length)
-            context = text[start:end]
-            contexts.append(context)
-        
-        return contexts
-
-    def _extract_contexts_with_line_numbers(
-        self, 
-        content: str, 
-        search_term: str
-    ) -> List[Tuple[int, str]]:
-        contexts = []
-        
-        for match in re.finditer(re.escape(search_term), content, re.IGNORECASE):
-            line_number = content.count('\n', 0, match.start()) + 1
-            start = max(0, match.start() - self.context_length)
-            end = min(len(content), match.end() + self.context_length)
-            context = content[start:end]
-            contexts.append((line_number, context))
-        
-        return contexts
-
-    def match_search_terms(self, text: str) -> bool:
-        text_lower = text.lower()
-        
-        if self.search_type == SEARCH_TYPE_AND:
-            return all(term.lower() in text_lower for term in self.search_terms)
-        elif self.search_type == SEARCH_TYPE_OR:
-            return any(term.lower() in text_lower for term in self.search_terms)
-        
-        return False
+        """テキスト検索を戦略に委譲"""
+        return self.text_strategy.search(file_path)
