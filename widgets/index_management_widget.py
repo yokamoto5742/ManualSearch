@@ -13,7 +13,6 @@ from widgets.index_build_thread import IndexBuildThread
 
 
 class IndexManagementWidget(QWidget):
-    """インデックス管理UIウィジェット"""
 
     index_updated = pyqtSignal()
 
@@ -30,7 +29,7 @@ class IndexManagementWidget(QWidget):
 
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self._update_display)
-        self.update_timer.start(5000)  # 5秒間隔
+        self.update_timer.start(5000)
 
     def _setup_ui(self):
         layout = QVBoxLayout()
@@ -122,7 +121,6 @@ class IndexManagementWidget(QWidget):
             return datetime_str
 
     def _create_index(self):
-        """インデックスを作成"""
         directories = self.config_manager.get_directories()
         if not directories:
             QMessageBox.warning(self, "警告", "検索対象ディレクトリが設定されていません。")
@@ -161,7 +159,6 @@ class IndexManagementWidget(QWidget):
 
         self._log(f"インデックス{operation_name}を開始します...")
 
-        # UIの状態を更新
         self._set_buttons_enabled(False)
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
@@ -176,7 +173,7 @@ class IndexManagementWidget(QWidget):
     def _cleanup_index(self):
         try:
             removed_count = self.indexer.remove_missing_files()
-            message = f"クリーンアップ完了: {removed_count} 個の存在しないファイルをインデックスから削除しました。"
+            message = f"クリーンアップ完了: {removed_count} 個の現在存在しないファイルをインデックスから削除しました。"
             self._log(message)
             QMessageBox.information(self, "クリーンアップ完了", message)
             self._update_display()
@@ -219,13 +216,12 @@ class IndexManagementWidget(QWidget):
         self.log_text.append(f"[{timestamp}] {message}")
 
     def is_auto_update_enabled(self) -> bool:
-        """自動更新が有効かどうか"""
         return self.auto_update_checkbox.isChecked()
 
     def closeEvent(self, event):
         if self.build_thread and self.build_thread.isRunning():
             self.build_thread.cancel()
-            self.build_thread.wait(3000)  # 3秒待機
+            self.build_thread.wait(3000)
 
         if self.update_timer:
             self.update_timer.stop()
@@ -234,7 +230,6 @@ class IndexManagementWidget(QWidget):
 
 
 class IndexManagementDialog(QDialog):
-    """インデックス管理ダイアログ"""
 
     def __init__(self, config_manager: ConfigManager, parent: Optional[QWidget] = None):
         super().__init__(parent)

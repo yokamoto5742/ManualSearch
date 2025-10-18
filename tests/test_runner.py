@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-"""
-テスト実行スクリプト
-すべてのユニットテストを実行し、カバレッジレポートを生成します。
-"""
-
 import sys
 import os
 import warnings
