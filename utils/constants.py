@@ -1,23 +1,13 @@
-# -*- coding: utf-8 -*-
-"""
-定数管理ファイル
-アプリケーション全体で使用される定数を一元管理します。
-"""
-
-# アプリケーション情報
 APP_NAME = "マニュアル検索"
 
-# ファイル拡張子
 SUPPORTED_FILE_EXTENSIONS = ['.pdf', '.txt', '.md']
 
-# ファイル形式とハンドラーの対応
 FILE_HANDLER_MAPPING = {
     '.pdf': '_open_pdf_file',
     '.txt': '_open_text_file',
     '.md': '_open_text_file'
 }
 
-# 検索関連の定数
 SEARCH_METHODS_MAPPING = {
     '.pdf': 'search_pdf',
     '.txt': 'search_text',
@@ -26,11 +16,9 @@ SEARCH_METHODS_MAPPING = {
 
 MAX_SEARCH_RESULTS_PER_FILE = 100
 
-# 検索タイプ
 SEARCH_TYPE_AND = 'AND'
 SEARCH_TYPE_OR = 'OR'
 
-# デフォルト設定値
 DEFAULT_WINDOW_WIDTH = 1150
 DEFAULT_WINDOW_HEIGHT = 900
 DEFAULT_WINDOW_X = 50
@@ -41,33 +29,26 @@ DEFAULT_CONTEXT_LENGTH = 100
 DEFAULT_PDF_TIMEOUT = 30
 DEFAULT_MAX_TEMP_FILES = 10
 
-# ウィンドウサイズの範囲
 MIN_WINDOW_WIDTH = 800
 MAX_WINDOW_WIDTH = 3840
 MIN_WINDOW_HEIGHT = 600
 MAX_WINDOW_HEIGHT = 2160
 
-# フォントサイズの範囲
 MIN_FONT_SIZE = 8
 MAX_FONT_SIZE = 32
 
-# タイムアウト値の範囲
 MIN_PDF_TIMEOUT = 10
 MAX_PDF_TIMEOUT = 120
 
-# 最大一時ファイル数の範囲
 MIN_MAX_TEMP_FILES = 1
 MAX_MAX_TEMP_FILES = 50
 
-# ネットワーク関連
 NETWORK_TIMEOUT = 5
 DNS_TEST_HOST = "8.8.8.8"
 DNS_TEST_PORT = 53
 
-# ハイライト色設定
 HIGHLIGHT_COLORS = ['yellow', 'lightgreen', 'lightblue', 'lightsalmon', 'lightpink']
 
-# PDF処理用の色設定（RGB）
 PDF_HIGHLIGHT_COLORS = [
     (1, 1, 0),      # 黄色
     (0.5, 1, 0.5),  # 薄緑
@@ -76,28 +57,22 @@ PDF_HIGHLIGHT_COLORS = [
     (1, 0.7, 0.7)   # ピンク
 ]
 
-# PDF処理関連の定数
 ACROBAT_WAIT_TIMEOUT = 30
 ACROBAT_WAIT_INTERVAL = 0.5
 PAGE_NAVIGATION_RETRY_COUNT = 3
 PAGE_NAVIGATION_DELAY = 0.5
 
-# プロセス終了関連
 PROCESS_TERMINATE_TIMEOUT = 3
 PROCESS_CLEANUP_DELAY = 1.0
 
-# UI関連の定数
 AUTO_CLOSE_MESSAGE_DURATION = 2000
 CONFIRMATION_MESSAGE_DURATION = 5000
 CURSOR_MOVE_DELAY = 100
 
-# 設定ファイル関連
 CONFIG_FILENAME = 'config.ini'
 
-# デフォルトパス
 DEFAULT_ACROBAT_PATH = r'C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe'
 
-# 設定セクション名
 CONFIG_SECTIONS = {
     'FILE_TYPES': 'FileTypes',
     'WINDOW_SETTINGS': 'WindowSettings',
@@ -106,10 +81,9 @@ CONFIG_SECTIONS = {
     'PATHS': 'Paths',
     'DIRECTORIES': 'Directories',
     'PDF_SETTINGS': 'PDFSettings',
-    'INDEX_SETTINGS': 'IndexSettings'  # 新規追加
+    'INDEX_SETTINGS': 'IndexSettings'
 }
 
-# 設定キー名
 CONFIG_KEYS = {
     'EXTENSIONS': 'extensions',
     'WINDOW_WIDTH': 'window_width',
@@ -129,18 +103,17 @@ CONFIG_KEYS = {
     'TIMEOUT': 'timeout',
     'CLEANUP_TEMP_FILES': 'cleanup_temp_files',
     'MAX_TEMP_FILES': 'max_temp_files',
-    'INDEX_FILE_PATH': 'index_file_path',  # 新規追加
-    'USE_INDEX_SEARCH': 'use_index_search'  # 新規追加
+    'INDEX_FILE_PATH': 'index_file_path',
+    'USE_INDEX_SEARCH': 'use_index_search'
 }
 
-# エラーメッセージ
 ERROR_MESSAGES = {
     'FILE_NOT_FOUND': 'ファイルが見つかりません',
     'FILE_NOT_ACCESSIBLE': 'ファイルにアクセスできません',
     'UNSUPPORTED_FORMAT': 'サポートされていないファイル形式です',
     'PDF_ACCESS_FAILED': 'PDFファイルにアクセスできません',
     'ACROBAT_NOT_FOUND': 'Adobe Acrobat Readerが見つかりません',
-    'ALL_ACROBAT_PATHS_NOT_FOUND': 'Adobe Acrobat/Readerが見つかりません。設定されたパスをすべて確認しましたが、有効な実行ファイルが見つかりませんでした。',
+    'ALL_ACROBAT_PATHS_NOT_FOUND': '設定されたパスをすべて確認しましたが、Adobe Acrobat/Readerの実行ファイルが見つかりませんでした。',
     'ACROBAT_START_FAILED': 'Acrobatの起動に失敗しました',
     'FOLDER_NOT_FOUND': '指定されたフォルダが見つかりません',
     'FOLDER_OPEN_FAILED': 'フォルダを開けませんでした',
@@ -148,7 +121,6 @@ ERROR_MESSAGES = {
     'FILE_DECODE_FAILED': 'ファイルのデコードに失敗しました'
 }
 
-# UI文字列
 UI_LABELS = {
     'SEARCH_PLACEHOLDER': '検索語を入力 ( , または 、区切りで複数語検索)',
     'SEARCH_BUTTON': '検索',
@@ -169,11 +141,9 @@ UI_LABELS = {
     'SEARCH_PROGRESS_TITLE': '検索の進行状況'
 }
 
-# テンプレート関連
 TEMPLATE_DIRECTORY = 'templates'
 TEXT_VIEWER_TEMPLATE = 'text_viewer.html'
 
-# ファイルタイプ表示名
 FILE_TYPE_DISPLAY_NAMES = {
     '.txt': 'テキストファイル',
     '.md': 'Markdownファイル',
@@ -182,10 +152,9 @@ FILE_TYPE_DISPLAY_NAMES = {
     '.css': 'CSSファイル'
 }
 
-# Markdown拡張
 MARKDOWN_EXTENSIONS = ['nl2br']
 
-# 正規表現パターン
+# 検索の正規表現
 SEARCH_TERM_SEPARATOR_PATTERN = r'[,、]'
 
 # CSS関連
@@ -202,7 +171,6 @@ ACROBAT_PROCESS_NAMES = [
     'reader_sl',    # Reader起動用の一部プロセス
 ]
 
-# インデックス関連
 DEFAULT_INDEX_FILE = "search_index.json"
 INDEX_UPDATE_THRESHOLD_DAYS = 7
 DEFAULT_USE_INDEX_SEARCH = False
