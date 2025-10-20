@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## House Rules:
-- 文章ではなくパッチの差分を返す。Return patch diffs, not prose.
+- 文章ではなくパッチの差分を返す。
 - 変更範囲は最小限に抑える。
 - コードの修正は直接適用する。
 - Pythonコードのimport文は以下の適切な順序に並べ替えてください。
