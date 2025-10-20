@@ -142,8 +142,8 @@ class IndexManagementWidget(QWidget):
         )
 
         if reply == QMessageBox.Yes:
-            self.indexer._initialize_new_index()
-            self.indexer._save_index()
+            self.indexer.index_data = self.indexer.storage._create_new_index()
+            self.indexer.storage.save(self.indexer.index_data)
 
             directories = self.config_manager.get_directories()
             self._start_index_operation("再構築", directories)
