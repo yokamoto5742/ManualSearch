@@ -96,7 +96,7 @@ class IndexManagementWidget(QWidget):
 ファイル数: {stats['files_count']:,} 個
 総サイズ: {stats['total_size_mb']:.1f} MB
 インデックスファイルサイズ: {stats['index_file_size_mb']:.1f} MB
-インデックスファイルパス: {self.indexer.index_file_path}
+インデックスファイルパス: {self.indexer.storage.index_file_path}
 作成日時: {self._format_datetime(stats['created_at'])}
 最終更新: {self._format_datetime(stats['last_updated'])}
             """.strip()
