@@ -63,6 +63,14 @@ class DirectoryWidget(QWidget):
         self.global_search_checkbox = QCheckBox(UI_LABELS['GLOBAL_SEARCH'])
         self.global_search_checkbox.setChecked(True)
 
+        self.pdf_highlight_checkbox = QCheckBox("ハイライト付きPDF")
+        self.pdf_highlight_checkbox.setChecked(
+            self.config_manager.get_use_pdf_highlight()
+        )
+        self.pdf_highlight_checkbox.toggled.connect(
+            self._on_pdf_highlight_toggled
+        )
+
         self.open_folder_button = QPushButton(UI_LABELS['OPEN_FOLDER'])
         self.open_folder_button.clicked.connect(self.open_folder_requested.emit)
         self.open_folder_button.setEnabled(False)
@@ -72,6 +80,7 @@ class DirectoryWidget(QWidget):
         button_layout.addWidget(dir_delete_button)
         button_layout.addWidget(self.include_subdirs_checkbox)
         button_layout.addWidget(self.global_search_checkbox)
+        button_layout.addWidget(self.pdf_highlight_checkbox)
         button_layout.addStretch(1)
         button_layout.addWidget(self.open_folder_button)
 
@@ -91,6 +100,19 @@ class DirectoryWidget(QWidget):
 
     def is_global_search(self) -> bool:
         return self.global_search_checkbox.isChecked()
+
+    def get_use_pdf_highlight(self) -> bool:
+        try:
+            return self.pdf_highlight_checkbox.isChecked()
+        except AttributeError:
+            print("PDFハイライトチェックボックスが正しく初期化されていません")
+            return True
+
+    def _on_pdf_highlight_toggled(self, checked: bool) -> None:
+        try:
+            self.config_manager.set_use_pdf_highlight(checked)
+        except Exception as e:
+            print(f"PDFハイライト設定の保存に失敗しました: {e}")
 
     def update_last_directory(self, directory: str) -> None:
         if os.path.isdir(directory):

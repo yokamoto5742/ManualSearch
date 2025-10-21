@@ -179,7 +179,7 @@ class MainWindow(QMainWindow):
             if not file_path:
                 return
             search_terms = self.search_widget.get_search_terms()
-            use_highlight = self.search_widget.get_use_pdf_highlight()
+            use_highlight = self.directory_widget.get_use_pdf_highlight()
             self.file_opener.open_file(file_path, position, search_terms, use_highlight)
         except FileNotFoundError:
             self._show_error_message("ファイルが見つかりません")
