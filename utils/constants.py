@@ -130,6 +130,7 @@ UI_LABELS = {
     'DELETE_BUTTON': '削除',
     'INCLUDE_SUBDIRS': 'サブフォルダ含む',
     'GLOBAL_SEARCH': 'フォルダ横断検索',
+    'PDF_HIGHLIGHT': 'ハイライト付きPDF',
     'OPEN_FOLDER': 'フォルダを開く',
     'AND_SEARCH_LABEL': 'AND検索(複数の検索語をすべて含む)',
     'OR_SEARCH_LABEL': 'OR検索(複数の検索語のいずれかを含む)',

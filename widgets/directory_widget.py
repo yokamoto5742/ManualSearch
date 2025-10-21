@@ -63,7 +63,7 @@ class DirectoryWidget(QWidget):
         self.global_search_checkbox = QCheckBox(UI_LABELS['GLOBAL_SEARCH'])
         self.global_search_checkbox.setChecked(True)
 
-        self.pdf_highlight_checkbox = QCheckBox("ハイライト付きPDF")
+        self.pdf_highlight_checkbox = QCheckBox(UI_LABELS['PDF_HIGHLIGHT'])
         self.pdf_highlight_checkbox.setChecked(
             self.config_manager.get_use_pdf_highlight()
         )
