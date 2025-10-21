@@ -78,7 +78,7 @@ last_directory = {temp_dir}
         
         return setup
     
-    def test_end_to_end_traditional_search_workflow(self, integration_setup, qapp):
+    def test_end_to_end_traditional_search_workflow(self, integration_setup, qapp):  # pyright: ignore
         """エンドツーエンド従来検索ワークフローテスト"""
         setup = integration_setup
 
