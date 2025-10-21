@@ -30,7 +30,7 @@ class FileOpener:
 
     SUPPORTED_EXTENSIONS = FILE_HANDLER_MAPPING
 
-    def open_file(self, file_path: str, position: int, search_terms: List[str]) -> None:
+    def open_file(self, file_path: str, position: int, search_terms: List[str], use_highlight: bool = True) -> None:
         if not os.path.exists(file_path):
             self._show_error(ERROR_MESSAGES['FILE_NOT_FOUND'])
             return
@@ -50,7 +50,7 @@ class FileOpener:
         try:
             method = getattr(self, handler_method)
             if file_extension == '.pdf':
-                method(file_path, position, search_terms)
+                method(file_path, position, search_terms, use_highlight)
             else:
                 method(file_path, search_terms)
 
@@ -61,7 +61,7 @@ class FileOpener:
             if file_extension == '.pdf':
                 cleanup_temp_files()
 
-    def _open_pdf_file(self, file_path: str, position: int, search_terms: List[str]) -> None:
+    def _open_pdf_file(self, file_path: str, position: int, search_terms: List[str], use_highlight: bool = True) -> None:
         try:
             if not self._check_pdf_accessibility(file_path):
                 raise IOError(ERROR_MESSAGES['PDF_ACCESS_FAILED'])
@@ -69,7 +69,7 @@ class FileOpener:
             if not self.acrobat_path or not os.path.exists(self.acrobat_path):
                 raise FileNotFoundError(ERROR_MESSAGES['ALL_ACROBAT_PATHS_NOT_FOUND'])
 
-            open_pdf(file_path, self.acrobat_path, position, search_terms)
+            open_pdf(file_path, self.acrobat_path, position, search_terms, use_highlight)
 
         except IOError as e:
             self._show_error(f"PDFの処理に失敗しました: {e}")

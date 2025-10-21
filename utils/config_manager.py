@@ -89,6 +89,7 @@ class ConfigManager:
         'acrobat_path': DEFAULT_ACROBAT_PATH,
         'index_file_path': DEFAULT_INDEX_FILE,
         'use_index_search': DEFAULT_USE_INDEX_SEARCH,
+        'use_pdf_highlight': True,
         'extensions': ','.join(SUPPORTED_FILE_EXTENSIONS),
     }
 
@@ -298,3 +299,9 @@ class ConfigManager:
     
     def set_use_index_search(self, use_index: bool) -> None:
         self._set_bool(CONFIG_SECTIONS['INDEX_SETTINGS'], CONFIG_KEYS['USE_INDEX_SEARCH'], use_index)
+
+    def get_use_pdf_highlight(self) -> bool:
+        return self._get_bool('search', 'use_pdf_highlight')
+
+    def set_use_pdf_highlight(self, value: bool) -> None:
+        self._set_bool('search', 'use_pdf_highlight', value)

@@ -247,17 +247,21 @@ def open_pdf(
     file_path: str, 
     acrobat_path: str, 
     current_position: int, 
-    search_terms: List[str]
+    search_terms: List[str],
+    use_highlight: bool = True
 ) -> None:
     try:
         # 既存のAcrobatプロセスを終了
         AcrobatProcessManager.close_all_processes()
         
-        # ハイライト付きPDFを作成
-        highlighted_pdf_path = PDFHighlighter.highlight_pdf(file_path, search_terms)
+        # ハイライトの有無に応じてPDFパスを決定
+        if use_highlight:
+            pdf_path = PDFHighlighter.highlight_pdf(file_path, search_terms)
+        else:
+            pdf_path = file_path
         
         # Acrobatで開く
-        process = subprocess.Popen([acrobat_path, highlighted_pdf_path])
+        process = subprocess.Popen([acrobat_path, pdf_path])
         
         # 起動を待機
         if AcrobatProcessManager.wait_for_startup(process.pid):

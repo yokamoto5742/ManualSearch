@@ -107,11 +107,11 @@ class TestFileOpener:
     def test_open_file_pdf_success(self, file_opener, sample_files):
         """PDFファイル正常オープンのテスト"""
         pdf_path = sample_files['pdf']
-        
+
         with patch.object(file_opener, '_open_pdf_file') as mock_open_pdf:
             file_opener.open_file(pdf_path, 1, ['test'])
-            
-            mock_open_pdf.assert_called_once_with(pdf_path, 1, ['test'])
+
+            mock_open_pdf.assert_called_once_with(pdf_path, 1, ['test'], True)
             assert file_opener._last_opened_file == pdf_path
 
     def test_open_file_text_success(self, file_opener, sample_files):
@@ -178,11 +178,11 @@ class TestFileOpener:
         """PDF正常オープンのテスト"""
         pdf_path = sample_files['pdf']
         mock_exists.return_value = True
-        
+
         with patch.object(file_opener, '_check_pdf_accessibility', return_value=True):
             file_opener._open_pdf_file(pdf_path, 1, ['test'])
-            
-            mock_open_pdf.assert_called_once_with(pdf_path, file_opener.acrobat_path, 1, ['test'])
+
+            mock_open_pdf.assert_called_once_with(pdf_path, file_opener.acrobat_path, 1, ['test'], True)
 
     @patch('service.file_opener.open_pdf')  
     @patch('os.path.exists')
@@ -451,7 +451,7 @@ class TestFileOpenerEdgeCases:
             file_opener._open_pdf_file(pdf_path, large_position, ['test'])
 
             # 大きなposition値でも正常に処理されることを確認
-            mock_open_pdf.assert_called_once_with(pdf_path, r'C:\Program Files\Adobe\Acrobat.exe', large_position, ['test'])
+            mock_open_pdf.assert_called_once_with(pdf_path, r'C:\Program Files\Adobe\Acrobat.exe', large_position, ['test'], True)
 
     def test_empty_search_terms(self, file_opener_edge, temp_dir):
         """空の検索語リストでのテスト"""

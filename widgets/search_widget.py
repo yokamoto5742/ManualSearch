@@ -3,7 +3,7 @@ from typing import List
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import (
-    QComboBox, QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
+    QCheckBox, QComboBox, QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
 )
 
 from utils.constants import (
@@ -26,8 +26,8 @@ class SearchWidget(QWidget):
         search_layout = self._create_search_layout()
         layout.addLayout(search_layout)
 
-        self.search_type_combo = self._create_search_type_combo()
-        layout.addWidget(self.search_type_combo)
+        options_layout = self._create_options_layout()
+        layout.addLayout(options_layout)
 
     def _create_search_layout(self) -> QHBoxLayout:
         search_layout = QHBoxLayout()
@@ -41,6 +41,24 @@ class SearchWidget(QWidget):
         search_layout.addWidget(self.search_input)
         search_layout.addWidget(search_button)
         return search_layout
+
+    def _create_options_layout(self) -> QHBoxLayout:
+        options_layout = QHBoxLayout()
+        
+        self.search_type_combo = self._create_search_type_combo()
+        options_layout.addWidget(self.search_type_combo)
+        
+        self.pdf_highlight_checkbox = QCheckBox("ハイライト付きPDF")
+        self.pdf_highlight_checkbox.setChecked(
+            self.config_manager.get_use_pdf_highlight()
+        )
+        self.pdf_highlight_checkbox.toggled.connect(
+            self._on_pdf_highlight_toggled
+        )
+        options_layout.addWidget(self.pdf_highlight_checkbox)
+        
+        options_layout.addStretch()
+        return options_layout
 
     @staticmethod
     def _create_search_type_combo() -> QComboBox:
@@ -72,4 +90,17 @@ class SearchWidget(QWidget):
         except AttributeError:
             print("検索タイプコンボボックスが正しく初期化されていません")
             return SEARCH_TYPE_AND
+
+    def get_use_pdf_highlight(self) -> bool:
+        try:
+            return self.pdf_highlight_checkbox.isChecked()
+        except AttributeError:
+            print("PDFハイライトチェックボックスが正しく初期化されていません")
+            return True
+
+    def _on_pdf_highlight_toggled(self, checked: bool) -> None:
+        try:
+            self.config_manager.set_use_pdf_highlight(checked)
+        except Exception as e:
+            print(f"PDFハイライト設定の保存に失敗しました: {e}")
 
