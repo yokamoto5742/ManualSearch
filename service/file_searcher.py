@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class FileSearcher(QThread):
-    """マルチスレッドで複数ファイルを検索。"""
+    """マルチスレッドで複数ファイルを検索"""
 
     result_found = pyqtSignal(str, list)
     progress_update = pyqtSignal(int)
@@ -76,7 +76,7 @@ class FileSearcher(QThread):
                     self.progress_update.emit(progress)
 
     def _count_total_files(self, directories: List[str]) -> int:
-        """ディレクトリ内のファイル総数をカウント。
+        """ディレクトリ内のファイル総数をカウント
 
         Args:
             directories: ディレクトリパスリスト
@@ -122,7 +122,7 @@ class FileSearcher(QThread):
         return processed
 
     def _search_without_subdirs(self, executor: ThreadPoolExecutor, directory: str) -> int:
-        """サブフォルダを含まずに検索。
+        """サブフォルダを含まずに検索
 
         Args:
             executor: ThreadPoolExecutor
@@ -190,7 +190,7 @@ class FileSearcher(QThread):
         if method_name:
             method = getattr(self, method_name, None)
             if callable(method):
-                return method  # type: ignore
+                return method
         return None
 
     def search_pdf(self, file_path: str) -> Optional[Tuple[str, List[Tuple[int, str]]]]:
