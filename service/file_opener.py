@@ -19,12 +19,12 @@ logger = logging.getLogger(__name__)
 
 
 class FileOpener:
-    """ファイルを適切なアプリケーションで開く処理を管理。"""
+    """ファイルを適切なアプリケーションで開く処理を管理"""
 
     SUPPORTED_EXTENSIONS = FILE_HANDLER_MAPPING
 
     def __init__(self, config_manager) -> None:
-        """初期化。
+        """初期化
 
         Args:
             config_manager: 設定マネージャーインスタンス
@@ -34,7 +34,7 @@ class FileOpener:
         self._last_opened_file: str = ""
 
     def open_file(self, file_path: str, position: int, search_terms: List[str], use_highlight: bool = True) -> None:
-        """ファイルを開く。
+        """ファイルを開く
 
         Args:
             file_path: ファイルパス
@@ -54,7 +54,6 @@ class FileOpener:
             return
 
         if file_path == self._last_opened_file and file_extension == '.pdf':
-            logger.info(f"同じPDFファイルを再度開きます: {os.path.basename(file_path)}")
             cleanup_temp_files()
             time.sleep(PROCESS_CLEANUP_DELAY)
 
@@ -73,13 +72,13 @@ class FileOpener:
                 cleanup_temp_files()
 
     def _open_pdf_file(self, file_path: str, position: int, search_terms: List[str], use_highlight: bool = True) -> None:
-        """PDFファイルを開く。
+        """PDFファイルを開く
 
         Args:
             file_path: PDFファイルパス
             position: ページ番号
             search_terms: 検索語リスト
-            use_highlight: ハイライトを使用するか
+            use_highlight: ハイライトを使用するかどうか
 
         Raises:
             IOError: ファイルアクセス失敗
@@ -105,7 +104,7 @@ class FileOpener:
             raise
 
     def _check_pdf_accessibility(self, file_path: str) -> bool:
-        """PDFファイルのアクセス可能性を確認。
+        """PDFファイルのアクセス可能性を確認
 
         Args:
             file_path: PDFファイルパス
@@ -123,7 +122,7 @@ class FileOpener:
             return False
 
     def _open_text_file(self, file_path: str, search_terms: List[str]) -> None:
-        """テキストファイルを開く。
+        """テキストファイルを開く
 
         Args:
             file_path: ファイルパス
@@ -144,7 +143,7 @@ class FileOpener:
             raise
 
     def open_folder(self, folder_path: str) -> None:
-        """フォルダをエクスプローラーで開く。
+        """フォルダをエクスプローラーで開く
 
         Args:
             folder_path: フォルダパス
@@ -164,7 +163,7 @@ class FileOpener:
             self._show_error(f"フォルダを開く際にエラーが発生しました: {e}")
 
     def cleanup_resources(self) -> None:
-        """リソースをクリーンアップ。"""
+        """リソースをクリーンアップ"""
         try:
             cleanup_temp_files()
             self._last_opened_file = ""
@@ -173,7 +172,7 @@ class FileOpener:
 
     @staticmethod
     def _show_error(message: str) -> None:
-        """エラーダイアログを表示。
+        """エラーダイアログを表示
 
         Args:
             message: エラーメッセージ

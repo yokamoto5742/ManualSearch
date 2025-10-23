@@ -9,11 +9,11 @@ logger = logging.getLogger(__name__)
 
 
 class ContentExtractor:
-    """ファイルからテキストコンテンツを抽出。"""
+    """ファイルからテキストコンテンツを抽出"""
 
     @staticmethod
     def extract_text_content(file_path: str) -> str:
-        """ファイルのテキストコンテンツを抽出。
+        """ファイルのテキストコンテンツを抽出
 
         Args:
             file_path: ファイルパス
@@ -35,11 +35,10 @@ class ContentExtractor:
             with fitz.open(file_path) as doc:
                 for page in doc:
                     try:
-                        text = page.get_text()  # type: ignore
+                        text = page.get_text()
                     except AttributeError:
-                        # Fallback for different PyMuPDF versions
                         try:
-                            text = page.get_text("text")  # type: ignore
+                            text = page.get_text("text")
                         except Exception:
                             text = ""
                     if text:
