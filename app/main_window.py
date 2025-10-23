@@ -22,7 +22,17 @@ logger = logging.getLogger(__name__)
 
 
 class MainWindow(QMainWindow):
+    """メインアプリケーションウィンドウ.
+
+    検索機能、ファイル操作、インデックス管理を統括する.
+    """
+
     def __init__(self, config_manager: ConfigManager) -> None:
+        """ウィンドウを初期化する.
+
+        Args:
+            config_manager: 設定管理オブジェクト.
+        """
         super().__init__()
         self.config_manager = config_manager
 
@@ -39,7 +49,7 @@ class MainWindow(QMainWindow):
         self._load_index_search_setting()
 
     def _setup_window_geometry(self) -> None:
-        geometry = self.config_manager.get_window_size_and_position()  # 新しいメソッドに変更
+        geometry = self.config_manager.get_window_size_and_position()
         self.setGeometry(*geometry)
 
     def _setup_font(self) -> None:
@@ -111,6 +121,10 @@ class MainWindow(QMainWindow):
             self.index_search_checkbox.setChecked(False)
 
     def start_search(self) -> None:
+        """検索を実行する.
+
+        インデックス検索が有効な場合は利用し、無効時は全ファイル検索を実施.
+        """
         search_terms = self.search_widget.get_search_terms()
         directory = self.directory_widget.get_selected_directory()
         include_subdirs = self.directory_widget.include_subdirs()
@@ -151,6 +165,7 @@ class MainWindow(QMainWindow):
             self.auto_close_message.show_message(f"検索中にエラーが発生しました: {str(e)}", 5000)
 
     def open_index_management(self) -> None:
+        """インデックス管理ダイアログを表示する."""
         if self.index_dialog is None:
             self.index_dialog = IndexManagementDialog(self.config_manager, self)
 
@@ -159,6 +174,11 @@ class MainWindow(QMainWindow):
         self.index_dialog.activateWindow()
 
     def toggle_index_search(self, enabled: bool) -> None:
+        """インデックス検索モードを切り替える.
+
+        Args:
+            enabled: 有効にする場合True、無効にする場合False.
+        """
         self.use_index_search = enabled
         logger.info(f"インデックス検索を{'有効' if enabled else '無効'}にしました")
 
@@ -174,6 +194,7 @@ class MainWindow(QMainWindow):
         self.directory_widget.enable_open_folder_button()
 
     def open_file(self) -> None:
+        """選択されたファイルを開く."""
         try:
             file_path, position = self.results_widget.get_selected_file_info()
             if not file_path:
@@ -190,6 +211,7 @@ class MainWindow(QMainWindow):
         self.auto_close_message.show_message(message, 2000)
 
     def open_folder(self) -> None:
+        """選択ファイルの親フォルダを開く."""
         try:
             file_path, _ = self.results_widget.get_selected_file_info()
             if not file_path:
@@ -202,6 +224,7 @@ class MainWindow(QMainWindow):
             self.auto_close_message.show_message(f"フォルダを開く際にエラーが発生しました: {str(e)}", 2000)
 
     def close_application(self) -> None:
+        """アプリケーションを終了する."""
         msg_box = create_confirmation_dialog(
             self,
             '確認',
@@ -223,6 +246,7 @@ class MainWindow(QMainWindow):
                 app.quit()
 
     def closeEvent(self, a0: QCloseEvent) -> None:
+        """ウィンドウクローズイベントを処理する."""
         try:
             self.file_opener.cleanup_resources()
             cleanup_temp_files()
