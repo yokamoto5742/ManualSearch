@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class TempFileManager:
-    """一時ファイル管理クラス"""
+    """PDFの一時ファイル管理クラス"""
     
     def __init__(self):
         self._temp_files: List[str] = []
