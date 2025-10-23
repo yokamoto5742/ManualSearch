@@ -139,8 +139,6 @@ class AcrobatProcessManager:
                 time.sleep(ACROBAT_WAIT_INTERVAL)
                 
                 try:
-                    # Note: pyautogui doesn't provide getActiveWindowTitle in current versions
-                    # We'll use a fallback approach by checking process status
                     return True
                 except Exception:
                     pass
@@ -233,12 +231,10 @@ class PDFHighlighter:
     def _highlight_term_in_page(page: fitz.Page, term: str, color_index: int) -> None:
         text_instances = []
         try:
-            # Use search method to find text instances
-            text_instances = page.search_for(term.strip())  # type: ignore
+            text_instances = page.search_for(term.strip())
         except AttributeError:
-            # Fallback for different PyMuPDF API versions
             try:
-                text_instances = page.get_text("blocks")  # type: ignore
+                text_instances = page.get_text("blocks")
             except Exception:
                 pass
 

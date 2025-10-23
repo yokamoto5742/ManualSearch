@@ -8,10 +8,10 @@ logger = logging.getLogger(__name__)
 
 
 class TextSearchStrategy:
-    """テキストファイルの検索戦略。"""
+    """テキストファイルの検索戦略"""
 
     def __init__(self, matcher: SearchMatcher) -> None:
-        """初期化。
+        """初期化
 
         Args:
             matcher: SearchMatcherインスタンス

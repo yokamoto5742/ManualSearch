@@ -5,10 +5,10 @@ from utils.constants import SEARCH_TYPE_AND, SEARCH_TYPE_OR
 
 
 class SearchMatcher:
-    """検索語マッチング処理を実行。"""
+    """検索語マッチング処理を実行"""
 
     def __init__(self, search_terms: List[str], search_type: str, context_length: int) -> None:
-        """初期化。
+        """初期化
 
         Args:
             search_terms: 検索語リスト
@@ -20,7 +20,7 @@ class SearchMatcher:
         self.context_length = context_length
 
     def match_search_terms(self, text: str) -> bool:
-        """検索語がテキストにマッチするか判定。
+        """検索語がテキストにマッチするか判定
 
         Args:
             text: 対象テキスト
@@ -54,7 +54,7 @@ class SearchMatcher:
         content: str,
         search_term: str
     ) -> List[Tuple[int, str]]:
-        """検索語の周辺コンテキストと行番号を抽出。
+        """検索語の周辺コンテキストと行番号を抽出
 
         Args:
             content: 対象コンテンツ

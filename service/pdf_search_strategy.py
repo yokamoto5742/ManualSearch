@@ -10,10 +10,10 @@ logger = logging.getLogger(__name__)
 
 
 class PDFSearchStrategy:
-    """PDFファイルの検索戦略。"""
+    """PDFファイルの検索戦略"""
 
     def __init__(self, matcher: SearchMatcher) -> None:
-        """初期化。
+        """初期化
 
         Args:
             matcher: SearchMatcherインスタンス
@@ -29,11 +29,10 @@ class PDFSearchStrategy:
                 for page_num in range(page_count):
                     page = doc[page_num]
                     try:
-                        text = page.get_text()  # type: ignore
+                        text = page.get_text()
                     except AttributeError:
-                        # Fallback for different PyMuPDF versions
                         try:
-                            text = page.get_text("text")  # type: ignore
+                            text = page.get_text("text")
                         except Exception:
                             text = ""
 
