@@ -19,18 +19,29 @@ logger = logging.getLogger(__name__)
 
 
 class FileOpener:
-    def __init__(self, config_manager):
-        self.config_manager = config_manager
-        acrobat_path = self.config_manager.find_available_acrobat_path()
-        if acrobat_path is None:
-            self.acrobat_path = ""
-        else:
-            self.acrobat_path = acrobat_path
-        self._last_opened_file: str = ""
+    """ファイルを適切なアプリケーションで開く処理を管理。"""
 
     SUPPORTED_EXTENSIONS = FILE_HANDLER_MAPPING
 
+    def __init__(self, config_manager) -> None:
+        """初期化。
+
+        Args:
+            config_manager: 設定マネージャーインスタンス
+        """
+        self.config_manager = config_manager
+        self.acrobat_path = self.config_manager.find_available_acrobat_path() or ""
+        self._last_opened_file: str = ""
+
     def open_file(self, file_path: str, position: int, search_terms: List[str], use_highlight: bool = True) -> None:
+        """ファイルを開く。
+
+        Args:
+            file_path: ファイルパス
+            position: ページ/行位置
+            search_terms: 検索語リスト
+            use_highlight: ハイライトを使用するか
+        """
         if not os.path.exists(file_path):
             self._show_error(ERROR_MESSAGES['FILE_NOT_FOUND'])
             return
@@ -62,6 +73,18 @@ class FileOpener:
                 cleanup_temp_files()
 
     def _open_pdf_file(self, file_path: str, position: int, search_terms: List[str], use_highlight: bool = True) -> None:
+        """PDFファイルを開く。
+
+        Args:
+            file_path: PDFファイルパス
+            position: ページ番号
+            search_terms: 検索語リスト
+            use_highlight: ハイライトを使用するか
+
+        Raises:
+            IOError: ファイルアクセス失敗
+            FileNotFoundError: Acrobatが見つからない
+        """
         try:
             if not self._check_pdf_accessibility(file_path):
                 raise IOError(ERROR_MESSAGES['PDF_ACCESS_FAILED'])
@@ -82,6 +105,14 @@ class FileOpener:
             raise
 
     def _check_pdf_accessibility(self, file_path: str) -> bool:
+        """PDFファイルのアクセス可能性を確認。
+
+        Args:
+            file_path: PDFファイルパス
+
+        Returns:
+            アクセス可能な場合True
+        """
         try:
             with open(file_path, 'rb') as f:
                 header = f.read(4)
@@ -92,6 +123,16 @@ class FileOpener:
             return False
 
     def _open_text_file(self, file_path: str, search_terms: List[str]) -> None:
+        """テキストファイルを開く。
+
+        Args:
+            file_path: ファイルパス
+            search_terms: 検索語リスト
+
+        Raises:
+            IOError: ファイル読み込み失敗
+            ValueError: ファイル処理エラー
+        """
         try:
             font_size = self.config_manager.get_html_font_size()
             open_text_file(file_path, search_terms, font_size)
@@ -103,6 +144,11 @@ class FileOpener:
             raise
 
     def open_folder(self, folder_path: str) -> None:
+        """フォルダをエクスプローラーで開く。
+
+        Args:
+            folder_path: フォルダパス
+        """
         try:
             if is_network_file(folder_path):
                 if folder_path.startswith('//'):
@@ -118,6 +164,7 @@ class FileOpener:
             self._show_error(f"フォルダを開く際にエラーが発生しました: {e}")
 
     def cleanup_resources(self) -> None:
+        """リソースをクリーンアップ。"""
         try:
             cleanup_temp_files()
             self._last_opened_file = ""
@@ -126,4 +173,9 @@ class FileOpener:
 
     @staticmethod
     def _show_error(message: str) -> None:
+        """エラーダイアログを表示。
+
+        Args:
+            message: エラーメッセージ
+        """
         QMessageBox.warning(None, "エラー", message)

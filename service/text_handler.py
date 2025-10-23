@@ -26,13 +26,14 @@ logger = logging.getLogger(__name__)
 
 
 def get_template_directory() -> str:
+    """テンプレートディレクトリパスを取得。
+
+    Returns:
+        テンプレートディレクトリのパス
+    """
     if getattr(sys, 'frozen', False):
-        # PyInstallerでビルドされた場合
         meipass = getattr(sys, '_MEIPASS', None)
-        if meipass:
-            base_path = meipass
-        else:
-            base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        base_path = meipass or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     else:
         base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -40,6 +41,11 @@ def get_template_directory() -> str:
 
 
 def create_jinja_environment() -> Environment:
+    """Jinja2テンプレート環境を作成。
+
+    Returns:
+        Jinja2環境インスタンス
+    """
     template_dir = get_template_directory()
 
     if not os.path.exists(template_dir):
@@ -54,6 +60,16 @@ def create_jinja_environment() -> Environment:
 
 
 def open_text_file(file_path: str, search_terms: List[str], html_font_size: int) -> None:
+    """テキストファイルをハイライト付きで開く。
+
+    Args:
+        file_path: ファイルパス
+        search_terms: 検索語リスト
+        html_font_size: HTML表示フォントサイズ
+
+    Raises:
+        Exception: ファイル処理エラー
+    """
     try:
         highlighted_html_path = highlight_text_file(file_path, search_terms, html_font_size)
         webbrowser.open(f'file://{highlighted_html_path}')

@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class IndexedFileSearcher(QThread):
+    """インデックスを利用した高速ファイル検索。"""
 
     result_found = pyqtSignal(str, list)
     progress_update = pyqtSignal(int)
@@ -107,6 +108,14 @@ class IndexedFileSearcher(QThread):
         self.fallback_searcher.run()
 
     def _should_include_file(self, file_path: str) -> bool:
+        """ファイルを含めるべきか判定。
+
+        Args:
+            file_path: ファイルパス
+
+        Returns:
+            含めるべき場合True
+        """
         if self.cross_folder_search:
             return True
             
@@ -170,12 +179,15 @@ class IndexedFileSearcher(QThread):
 
 
 class SearchMode:
+    """検索モード定数。"""
+
     INDEX_ONLY = "index_only"
     FALLBACK = "fallback"
     TRADITIONAL = "traditional"
 
 
 class SmartFileSearcher(IndexedFileSearcher):
+    """検索モードに応じた柔軟な検索。"""
     def __init__(self, *args, search_mode: str = SearchMode.FALLBACK, **kwargs):
         super().__init__(*args, **kwargs)
         self.search_mode = search_mode

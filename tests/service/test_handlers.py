@@ -313,18 +313,21 @@ class TestPDFHandlerEnhanced:
         
         assert result == False
     
+    @patch('service.pdf_handler.time.sleep')
+    @patch('service.pdf_handler.time.time')
     @patch('psutil.Process')
-    @patch('pyautogui.getActiveWindowTitle')
-    @patch('time.sleep')
-    def test_wait_for_acrobat_timeout(self, mock_sleep, mock_get_window, mock_process):
+    def test_wait_for_acrobat_timeout(self, mock_process, mock_time, mock_sleep):
         """Acrobat起動タイムアウトテスト"""
+        # time.time()をモック化してタイムアウトをシミュレート
+        # start_timeが0、whileループチェック時に2.0でタイムアウト、loggerでも使われるので十分な値を用意
+        mock_time.side_effect = [0, 2.0, 2.0, 2.0, 2.0]
+
         mock_proc_instance = MagicMock()
-        mock_proc_instance.status.return_value = psutil.STATUS_RUNNING
+        mock_proc_instance.status.return_value = psutil.STATUS_ZOMBIE  # RUNNINGではない状態
         mock_process.return_value = mock_proc_instance
-        mock_get_window.return_value = "Other Application"  # Acrobatではない
-        
+
         result = wait_for_acrobat(1234, timeout=1)
-        
+
         assert result == False
     
     @patch('pyautogui.hotkey')

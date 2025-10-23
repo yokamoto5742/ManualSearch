@@ -12,7 +12,14 @@ logger = logging.getLogger(__name__)
 
 
 class SearchIndexer:
-    def __init__(self, index_file_path: str = "search_index.json"):
+    """検索インデックスの作成と管理。"""
+
+    def __init__(self, index_file_path: str = "search_index.json") -> None:
+        """初期化。
+
+        Args:
+            index_file_path: インデックスファイルパス
+        """
         self.storage = IndexStorage(index_file_path)
         self.content_extractor = ContentExtractor()
         self.index_data = self.storage.load()

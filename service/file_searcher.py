@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class FileSearcher(QThread):
+    """マルチスレッドで複数ファイルを検索。"""
+
     result_found = pyqtSignal(str, list)
     progress_update = pyqtSignal(int)
     search_completed = pyqtSignal()
@@ -74,21 +76,30 @@ class FileSearcher(QThread):
                     self.progress_update.emit(progress)
 
     def _count_total_files(self, directories: List[str]) -> int:
+        """ディレクトリ内のファイル総数をカウント。
+
+        Args:
+            directories: ディレクトリパスリスト
+
+        Returns:
+            ファイル総数
+        """
         total = 0
         for directory in directories:
             if not os.path.isdir(directory):
                 continue
-            
+
             try:
                 if self.include_subdirs:
                     total += sum(len(files) for _, _, files in os.walk(directory))
                 else:
                     files = os.listdir(directory)
-                    total += len([f for f in files if os.path.isfile(os.path.join(directory, f))])
+                    file_count = sum(1 for f in files if os.path.isfile(os.path.join(directory, f)))
+                    total += file_count
             except OSError as e:
                 logger.warning(f"ディレクトリアクセスエラー: {directory} - {e}")
                 continue
-        
+
         return total
 
     def _search_in_directory(self, executor: ThreadPoolExecutor, directory: str) -> int:
@@ -111,8 +122,16 @@ class FileSearcher(QThread):
         return processed
 
     def _search_without_subdirs(self, executor: ThreadPoolExecutor, directory: str) -> int:
-        files = [f for f in os.listdir(directory) 
-                if os.path.isfile(os.path.join(directory, f))]
+        """サブフォルダを含まずに検索。
+
+        Args:
+            executor: ThreadPoolExecutor
+            directory: ディレクトリパス
+
+        Returns:
+            処理したファイル数
+        """
+        files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
         self.process_files(executor, directory, files)
         return len(files)
 

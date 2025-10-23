@@ -412,17 +412,20 @@ class TestAcrobatProcessManager:
 
         assert result is True
 
-    @patch('time.sleep')
+    @patch('service.pdf_handler.time.sleep')
+    @patch('service.pdf_handler.time.time')
     @patch('psutil.Process')
-    def test_wait_for_startup_timeout(self, mock_process_class, mock_sleep):
+    def test_wait_for_startup_timeout(self, mock_process_class, mock_time, mock_sleep):
         """起動待機がタイムアウトする場合"""
+        # time.time()をモック化してタイムアウトをシミュレート
+        # start_timeが0、whileループチェック時に2.0でタイムアウト、loggerでも使われるので十分な値を用意
+        mock_time.side_effect = [0, 2.0, 2.0, 2.0, 2.0]
+
         mock_process = Mock()
-        mock_process.status.return_value = psutil.STATUS_RUNNING
+        mock_process.status.return_value = psutil.STATUS_ZOMBIE  # RUNNINGではない状態
         mock_process_class.return_value = mock_process
 
-        # ウィンドウタイトルが取得できない状態でタイムアウト
-        with patch('pyautogui.getActiveWindowTitle', return_value=None):
-            result = AcrobatProcessManager.wait_for_startup(1234, timeout=1)
+        result = AcrobatProcessManager.wait_for_startup(1234, timeout=1)
 
         assert result is False
 

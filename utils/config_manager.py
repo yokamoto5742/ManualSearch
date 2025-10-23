@@ -35,12 +35,14 @@ from utils.helpers import read_file_with_auto_encoding
 
 
 def get_config_path() -> str:
+    """設定ファイルパスを取得。
+
+    Returns:
+        設定ファイルの絶対パス
+    """
     if getattr(sys, 'frozen', False):
         meipass = getattr(sys, '_MEIPASS', None)
-        if meipass:
-            base_path = meipass
-        else:
-            base_path = os.path.dirname(__file__)
+        base_path = meipass or os.path.dirname(__file__)
     else:
         base_path = os.path.dirname(__file__)
     return os.path.join(base_path, CONFIG_FILENAME)
@@ -50,6 +52,8 @@ CONFIG_PATH = get_config_path()
 
 
 class ConfigValueValidator:
+    """設定値の検証とクランプを実行。"""
+
     RANGES: Dict[str, Tuple[int, int]] = {
         'window_width': (MIN_WINDOW_WIDTH, MAX_WINDOW_WIDTH),
         'window_height': (MIN_WINDOW_HEIGHT, MAX_WINDOW_HEIGHT),
@@ -77,6 +81,8 @@ class ConfigValueValidator:
 
 
 class ConfigManager:
+    """INIファイルベースの設定管理。"""
+
     DEFAULTS: Dict[str, Any] = {
         'window_width': DEFAULT_WINDOW_WIDTH,
         'window_height': DEFAULT_WINDOW_HEIGHT,

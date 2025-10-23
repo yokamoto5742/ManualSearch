@@ -104,17 +104,19 @@ class TestFileSearcher:
         mock_doc.__iter__ = MagicMock(return_value=iter([mock_page]))
         mock_doc.__enter__ = MagicMock(return_value=mock_doc)
         mock_doc.__exit__ = MagicMock(return_value=None)
+        mock_doc.__len__ = MagicMock(return_value=1)
+        mock_doc.__getitem__ = MagicMock(return_value=mock_page)
         mock_doc.close = MagicMock()
         mock_fitz_open.return_value = mock_doc
-        
+
         searcher = FileSearcher(
             sample_directory, ['Python'], True,
             SEARCH_TYPE_OR, ['.pdf'], 30
         )
-        
+
         pdf_path = os.path.join(sample_directory, 'test.pdf')
         result = searcher.search_pdf(pdf_path)
-        
+
         assert result is not None
         assert result[0] == pdf_path
         assert len(result[1]) > 0

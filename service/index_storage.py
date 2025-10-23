@@ -8,7 +8,14 @@ logger = logging.getLogger(__name__)
 
 
 class IndexStorage:
-    def __init__(self, index_file_path: str = "search_index.json"):
+    """検索インデックスの永続化を管理。"""
+
+    def __init__(self, index_file_path: str = "search_index.json") -> None:
+        """初期化。
+
+        Args:
+            index_file_path: インデックスファイルパス
+        """
         self.index_file_path = index_file_path
 
     def load(self) -> Dict:

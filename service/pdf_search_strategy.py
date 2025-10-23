@@ -10,7 +10,14 @@ logger = logging.getLogger(__name__)
 
 
 class PDFSearchStrategy:
-    def __init__(self, matcher: SearchMatcher):
+    """PDFファイルの検索戦略。"""
+
+    def __init__(self, matcher: SearchMatcher) -> None:
+        """初期化。
+
+        Args:
+            matcher: SearchMatcherインスタンス
+        """
         self.matcher = matcher
 
     def search(self, file_path: str) -> Optional[Tuple[str, List[Tuple[int, str]]]]:

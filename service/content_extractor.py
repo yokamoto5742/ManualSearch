@@ -9,8 +9,18 @@ logger = logging.getLogger(__name__)
 
 
 class ContentExtractor:
+    """ファイルからテキストコンテンツを抽出。"""
+
     @staticmethod
     def extract_text_content(file_path: str) -> str:
+        """ファイルのテキストコンテンツを抽出。
+
+        Args:
+            file_path: ファイルパス
+
+        Returns:
+            抽出されたテキスト
+        """
         file_extension = os.path.splitext(file_path)[1].lower()
 
         if file_extension == '.pdf':

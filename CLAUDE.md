@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - コーディング規約はPEP8に従う。
 - コメントは日本語で必要最小限にする。
 - 日本語で必要最小限のdocstringを書く。
-- 可読性を優先する。一度読んだだけで理解できるコードが最高です。
+- 可読性を優先する。一度読んだだけで理解できるコードが最高のコードです。
 - Pythonコードのimport文は以下の適切な順序に並べ替えてください。
 標準ライブラリ
 サードパーティライブラリ

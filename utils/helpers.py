@@ -19,6 +19,14 @@ from utils.constants import (
 
 
 def normalize_path(file_path: str) -> str:
+    """ファイルパスを正規化。
+
+    Args:
+        file_path: ファイルパス
+
+    Returns:
+        正規化されたパス
+    """
     if not file_path:
         return ''
 
@@ -33,23 +41,37 @@ def normalize_path(file_path: str) -> str:
 
 
 def is_network_file(file_path: str) -> bool:
+    """ネットワークファイルか判定。
+
+    Args:
+        file_path: ファイルパス
+
+    Returns:
+        ネットワークファイルの場合True
+    """
     if not file_path:
         return False
 
-    # UNCパス判定（\\server\share または //server/share）
     if file_path.startswith('\\\\') or file_path.startswith('//'):
         return True
 
-    # ドライブレター判定（C:, D: など）
     if len(file_path) >= 2 and file_path[1] == ':':
         return True
 
-    # その他のネットワークパス判定
     normalized_path = normalize_path(file_path)
     return normalized_path.startswith('//') or ':' in normalized_path[:2]
 
 
 def check_file_accessibility(file_path: str, timeout: int = NETWORK_TIMEOUT) -> bool:
+    """ファイルがアクセス可能か確認。
+
+    Args:
+        file_path: ファイルパス
+        timeout: ネットワーク接続タイムアウト秒数
+
+    Returns:
+        アクセス可能な場合True
+    """
     normalized_path = normalize_path(file_path)
     if is_network_file(normalized_path):
         try:
@@ -61,13 +83,24 @@ def check_file_accessibility(file_path: str, timeout: int = NETWORK_TIMEOUT) -> 
 
 
 def read_file_with_auto_encoding(file_path: str) -> str:
+    """自動エンコーディング検出でファイルを読み込む。
+
+    Args:
+        file_path: ファイルパス
+
+    Returns:
+        ファイルコンテンツ
+
+    Raises:
+        IOError: ファイル読み込み失敗
+        ValueError: エンコーディング検出失敗
+    """
     try:
         with open(file_path, 'rb') as file:
             raw_data = file.read()
     except IOError as e:
         raise IOError(f"ファイルの読み込みに失敗しました: {file_path}") from e
 
-    # 空ファイルの場合
     if len(raw_data) == 0:
         return ""
 
@@ -83,8 +116,8 @@ def read_file_with_auto_encoding(file_path: str) -> str:
         except UnicodeDecodeError:
             try:
                 return raw_data.decode('latin-1')
-            except:
-                raise ValueError(f"{ERROR_MESSAGES['ENCODING_DETECTION_FAILED']}: {file_path}")
+            except UnicodeDecodeError as e:
+                raise ValueError(f"{ERROR_MESSAGES['ENCODING_DETECTION_FAILED']}: {file_path}") from e
 
     try:
         return raw_data.decode(encoding)
@@ -100,8 +133,23 @@ def read_file_with_auto_encoding(file_path: str) -> str:
         raise ValueError(f"{ERROR_MESSAGES['FILE_DECODE_FAILED']}: {file_path}") from e
 
 
-def create_confirmation_dialog(parent, title: str, message: str,
-                               default_button: QMessageBox.StandardButton) -> QMessageBox:
+def create_confirmation_dialog(
+    parent,
+    title: str,
+    message: str,
+    default_button: QMessageBox.StandardButton
+) -> QMessageBox:
+    """確認ダイアログを作成。
+
+    Args:
+        parent: 親ウィジェット
+        title: ダイアログタイトル
+        message: メッセージテキスト
+        default_button: デフォルトボタン
+
+    Returns:
+        QMessageBoxインスタンス
+    """
     msg_box = QMessageBox(parent)
     msg_box.setWindowTitle(title)
     msg_box.setText(message)
@@ -136,7 +184,12 @@ def create_confirmation_dialog(parent, title: str, message: str,
     return msg_box
 
 
-def move_cursor_to_yes_button(yes_button):
+def move_cursor_to_yes_button(yes_button) -> None:
+    """Yesボタンへカーソルを移動。
+
+    Args:
+        yes_button: Yesボタンウィジェット
+    """
     try:
         if yes_button.isVisible():
             button_rect = yes_button.geometry()

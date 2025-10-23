@@ -15,10 +15,17 @@ from utils.constants import HIGHLIGHT_COLORS, UI_LABELS
 
 
 class ResultsWidget(QWidget):
+    """検索結果を表示・管理するUI。"""
+
     result_selected = pyqtSignal()
     file_open_requested = pyqtSignal()
 
-    def __init__(self, config_manager):
+    def __init__(self, config_manager) -> None:
+        """初期化。
+
+        Args:
+            config_manager: 設定マネージャーインスタンス
+        """
         super().__init__()
         self.config_manager = config_manager
 
