@@ -1,7 +1,6 @@
 import os
 import re
 import socket
-from typing import Optional
 
 import chardet
 from PyQt5.QtCore import QTimer
@@ -19,7 +18,7 @@ from utils.constants import (
 
 
 def normalize_path(file_path: str) -> str:
-    """ファイルパスを正規化。
+    """ファイルパスを正規化
 
     Args:
         file_path: ファイルパス
@@ -41,7 +40,7 @@ def normalize_path(file_path: str) -> str:
 
 
 def is_network_file(file_path: str) -> bool:
-    """ネットワークファイルか判定。
+    """ネットワークファイルか判定
 
     Args:
         file_path: ファイルパス
@@ -63,7 +62,7 @@ def is_network_file(file_path: str) -> bool:
 
 
 def check_file_accessibility(file_path: str, timeout: int = NETWORK_TIMEOUT) -> bool:
-    """ファイルがアクセス可能か確認。
+    """ファイルがアクセス可能か確認
 
     Args:
         file_path: ファイルパス
@@ -83,7 +82,7 @@ def check_file_accessibility(file_path: str, timeout: int = NETWORK_TIMEOUT) -> 
 
 
 def read_file_with_auto_encoding(file_path: str) -> str:
-    """自動エンコーディング検出でファイルを読み込む。
+    """自動エンコーディング検出でファイルを読み込む
 
     Args:
         file_path: ファイルパス
@@ -139,7 +138,7 @@ def create_confirmation_dialog(
     message: str,
     default_button: QMessageBox.StandardButton
 ) -> QMessageBox:
-    """確認ダイアログを作成。
+    """確認ダイアログを作成
 
     Args:
         parent: 親ウィジェット
@@ -178,14 +177,13 @@ def create_confirmation_dialog(
     if yes_button:
         timer.timeout.connect(lambda: move_cursor_to_yes_button(yes_button))
     timer.start(CURSOR_MOVE_DELAY)
-    # Store timer reference to prevent garbage collection
     setattr(msg_box, '_cursor_timer', timer)
 
     return msg_box
 
 
 def move_cursor_to_yes_button(yes_button) -> None:
-    """Yesボタンへカーソルを移動。
+    """Yesボタンへカーソルを移動
 
     Args:
         yes_button: Yesボタンウィジェット

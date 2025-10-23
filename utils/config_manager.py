@@ -35,7 +35,7 @@ from utils.helpers import read_file_with_auto_encoding
 
 
 def get_config_path() -> str:
-    """設定ファイルパスを取得。
+    """設定ファイルパスを取得
 
     Returns:
         設定ファイルの絶対パス
@@ -52,7 +52,7 @@ CONFIG_PATH = get_config_path()
 
 
 class ConfigValueValidator:
-    """設定値の検証とクランプを実行。"""
+    """設定値の検証とクランプを実行"""
 
     RANGES: Dict[str, Tuple[int, int]] = {
         'window_width': (MIN_WINDOW_WIDTH, MAX_WINDOW_WIDTH),
@@ -81,7 +81,7 @@ class ConfigValueValidator:
 
 
 class ConfigManager:
-    """INIファイルベースの設定管理。"""
+    """config.iniの設定管理"""
 
     DEFAULTS: Dict[str, Any] = {
         'window_width': DEFAULT_WINDOW_WIDTH,
