@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 文章ではなくパッチの差分を返す。
 - 変更範囲は最小限に抑える。
 - コードの修正は直接適用する。
+- コーディング規約はPEP8に従います。
 - Pythonコードのimport文は以下の適切な順序に並べ替えてください。
 標準ライブラリ
 サードパーティライブラリ
