@@ -1,7 +1,7 @@
 import logging
 import os
 
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QCloseEvent
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
     QStyleFactory, QApplication, QMessageBox, QCheckBox
@@ -180,7 +180,7 @@ class MainWindow(QMainWindow):
                 return
             search_terms = self.search_widget.get_search_terms()
             use_highlight = self.directory_widget.get_use_pdf_highlight()
-            self.file_opener.open_file(file_path, position, search_terms, use_highlight)
+            self.file_opener.open_file(file_path, position or 0, search_terms, use_highlight)
         except FileNotFoundError:
             self._show_error_message("ファイルが見つかりません")
         except Exception as e:
@@ -218,9 +218,11 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 logger.error(f"終了時のクリーンアップでエラー: {e}")
 
-            QApplication.instance().quit()
+            app = QApplication.instance()
+            if app is not None:
+                app.quit()
 
-    def closeEvent(self, event) -> None:
+    def closeEvent(self, a0: QCloseEvent) -> None:
         try:
             self.file_opener.cleanup_resources()
             cleanup_temp_files()
@@ -228,4 +230,4 @@ class MainWindow(QMainWindow):
         except Exception as e:
             logger.error(f"ウィンドウ終了処理中にエラーが発生しました: {str(e)}")
         finally:
-            super().closeEvent(event)
+            super().closeEvent(a0)
