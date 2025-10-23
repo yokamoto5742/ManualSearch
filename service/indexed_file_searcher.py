@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
@@ -134,7 +134,7 @@ class IndexedFileSearcher(QThread):
         if self.fallback_searcher:
             self.fallback_searcher.cancel_search()
 
-    def create_or_update_index(self, directories: List[str], progress_callback: Optional[callable] = None) -> None:
+    def create_or_update_index(self, directories: List[str], progress_callback: Optional[Callable[[int, int], None]] = None) -> None:
         self.index_status_changed.emit("インデックスを作成中...")
 
         try:

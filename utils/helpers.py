@@ -60,7 +60,7 @@ def check_file_accessibility(file_path: str, timeout: int = NETWORK_TIMEOUT) -> 
     return os.path.exists(normalized_path)
 
 
-def read_file_with_auto_encoding(file_path: str) -> Optional[str]:
+def read_file_with_auto_encoding(file_path: str) -> str:
     try:
         with open(file_path, 'rb') as file:
             raw_data = file.read()
@@ -115,19 +115,23 @@ def create_confirmation_dialog(parent, title: str, message: str,
     """
 
     yes_button = msg_box.button(QMessageBox.Yes)
-    yes_button.setText(UI_LABELS['YES_BUTTON'])
-    yes_button.setStyleSheet(button_style)
+    if yes_button:
+        yes_button.setText(UI_LABELS['YES_BUTTON'])
+        yes_button.setStyleSheet(button_style)
     no_button = msg_box.button(QMessageBox.No)
-    no_button.setText(UI_LABELS['NO_BUTTON'])
-    no_button.setStyleSheet(button_style)
+    if no_button:
+        no_button.setText(UI_LABELS['NO_BUTTON'])
+        no_button.setStyleSheet(button_style)
 
     msg_box.setDefaultButton(default_button)
 
     timer = QTimer()
     timer.setSingleShot(True)
-    timer.timeout.connect(lambda: move_cursor_to_yes_button(yes_button))
+    if yes_button:
+        timer.timeout.connect(lambda: move_cursor_to_yes_button(yes_button))
     timer.start(CURSOR_MOVE_DELAY)
-    msg_box._cursor_timer = timer
+    # Store timer reference to prevent garbage collection
+    setattr(msg_box, '_cursor_timer', timer)
 
     return msg_box
 

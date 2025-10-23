@@ -28,7 +28,11 @@ logger = logging.getLogger(__name__)
 def get_template_directory() -> str:
     if getattr(sys, 'frozen', False):
         # PyInstallerでビルドされた場合
-        base_path = sys._MEIPASS
+        meipass = getattr(sys, '_MEIPASS', None)
+        if meipass:
+            base_path = meipass
+        else:
+            base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     else:
         base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -62,6 +66,9 @@ def highlight_text_file(file_path: str, search_terms: List[str], html_font_size:
         content = read_file_with_auto_encoding(file_path)
     except ValueError as e:
         raise ValueError(f"ファイルの読み込みに失敗しました: {file_path} - {str(e)}")
+
+    if content is None:
+        content = ""
 
     file_extension = os.path.splitext(file_path)[1].lower()
     is_markdown = file_extension == '.md'

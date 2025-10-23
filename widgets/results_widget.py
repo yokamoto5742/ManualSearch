@@ -67,28 +67,32 @@ class ResultsWidget(QWidget):
         self._setup_search_colors(search_terms)
         self._setup_searcher(directory, search_terms, include_subdirs, search_type)
         self._setup_progress_dialog()
-        self.searcher.start()
+        if self.searcher:
+            self.searcher.start()
 
     def perform_index_search(self, directory: str, search_terms: List[str],
                              include_subdirs: bool, search_type: str) -> None:
         self._setup_search_colors(search_terms)
         self._setup_index_searcher(directory, search_terms, include_subdirs, search_type)
         self._setup_progress_dialog()
-        self.index_searcher.start()
+        if self.index_searcher:
+            self.index_searcher.start()
 
     def perform_global_search(self, directories: List[str], search_terms: List[str],
                               include_subdirs: bool, search_type: str) -> None:
         self._setup_search_colors(search_terms)
         self._setup_global_searcher(directories, search_terms, include_subdirs, search_type)
         self._setup_progress_dialog()
-        self.searcher.start()
+        if self.searcher:
+            self.searcher.start()
 
     def perform_global_index_search(self, directories: List[str], search_terms: List[str],
                                     include_subdirs: bool, search_type: str) -> None:
         self._setup_search_colors(search_terms)
         self._setup_global_index_searcher(directories, search_terms, include_subdirs, search_type)
         self._setup_progress_dialog()
-        self.index_searcher.start()
+        if self.index_searcher:
+            self.index_searcher.start()
 
     def _setup_search_colors(self, search_terms: List[str]) -> None:
         self.search_term_colors = {

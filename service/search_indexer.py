@@ -2,7 +2,7 @@ import hashlib
 import logging
 import os
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 from service.content_extractor import ContentExtractor
 from service.index_storage import IndexStorage
@@ -18,7 +18,7 @@ class SearchIndexer:
         self.index_data = self.storage.load()
 
     def create_index(self, directories: List[str], include_subdirs: bool = True,
-                    progress_callback: Optional[callable] = None) -> None:
+                    progress_callback: Optional[Callable[[int, int], None]] = None) -> None:
         file_list = self._get_file_list(directories, include_subdirs)
         total_files = len(file_list)
         logger.info(f"対象ファイル数: {total_files}")
@@ -34,7 +34,7 @@ class SearchIndexer:
 
                 processed += 1
 
-                if progress_callback:
+                if progress_callback and callable(progress_callback):
                     progress_callback(processed, total_files)
 
                 if processed % max(1, total_files // 10) == 0:

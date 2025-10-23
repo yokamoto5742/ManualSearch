@@ -18,8 +18,17 @@ class PDFSearchStrategy:
 
         try:
             with fitz.open(file_path) as doc:
-                for page_num, page in enumerate(doc):
-                    text = page.get_text()
+                page_count = len(doc)
+                for page_num in range(page_count):
+                    page = doc[page_num]
+                    try:
+                        text = page.get_text()  # type: ignore
+                    except AttributeError:
+                        # Fallback for different PyMuPDF versions
+                        try:
+                            text = page.get_text("text")  # type: ignore
+                        except Exception:
+                            text = ""
 
                     if not self.matcher.match_search_terms(text):
                         continue

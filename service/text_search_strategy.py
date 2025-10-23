@@ -17,6 +17,9 @@ class TextSearchStrategy:
         try:
             content = read_file_with_auto_encoding(file_path)
 
+            if content is None:
+                return None
+
             if not self.matcher.match_search_terms(content):
                 return None
 

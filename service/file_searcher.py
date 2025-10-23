@@ -1,7 +1,7 @@
 import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
@@ -148,27 +148,30 @@ class FileSearcher(QThread):
 
     def search_file(self, file_path: str) -> Optional[Tuple[str, List[Tuple[int, str]]]]:
         normalized_path = normalize_path(file_path)
-        
+
         if not check_file_accessibility(normalized_path):
             return None
 
         file_extension = os.path.splitext(normalized_path)[1].lower()
         search_method = self._get_search_method(file_extension)
-        
+
         if not search_method:
             logger.warning(f"サポートされていないファイル形式: {file_extension}")
             return None
 
         try:
-            return search_method(normalized_path)
+            result = search_method(normalized_path)
+            return result
         except Exception as e:
             logger.error(f"検索エラー: {normalized_path} - {e}")
             return None
 
-    def _get_search_method(self, file_extension: str) -> Optional[callable]:
+    def _get_search_method(self, file_extension: str) -> Optional[Callable[[str], Optional[Tuple[str, List[Tuple[int, str]]]]]]:
         method_name = SEARCH_METHODS_MAPPING.get(file_extension)
         if method_name:
-            return getattr(self, method_name, None)
+            method = getattr(self, method_name, None)
+            if callable(method):
+                return method  # type: ignore
         return None
 
     def search_pdf(self, file_path: str) -> Optional[Tuple[str, List[Tuple[int, str]]]]:

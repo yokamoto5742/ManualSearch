@@ -36,7 +36,11 @@ from utils.helpers import read_file_with_auto_encoding
 
 def get_config_path() -> str:
     if getattr(sys, 'frozen', False):
-        base_path = sys._MEIPASS
+        meipass = getattr(sys, '_MEIPASS', None)
+        if meipass:
+            base_path = meipass
+        else:
+            base_path = os.path.dirname(__file__)
     else:
         base_path = os.path.dirname(__file__)
     return os.path.join(base_path, CONFIG_FILENAME)
@@ -101,13 +105,14 @@ class ConfigManager:
     def load_config(self) -> None:
         if not os.path.exists(self.config_file):
             return
-        
+
         try:
             with open(self.config_file, encoding='utf-8') as configfile:
                 self.config.read_file(configfile)
         except UnicodeDecodeError:
             content = read_file_with_auto_encoding(self.config_file)
-            self.config.read_string(content)
+            if content:
+                self.config.read_string(content)
 
     def save_config(self) -> None:
         try:

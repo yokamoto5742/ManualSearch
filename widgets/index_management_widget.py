@@ -211,7 +211,7 @@ class IndexManagementWidget(QWidget):
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.log_text.append(f"[{timestamp}] {message}")
 
-    def closeEvent(self, event):
+    def closeEvent(self, a0) -> None:
         if self.build_thread and self.build_thread.isRunning():
             self.build_thread.cancel()
             self.build_thread.wait(3000)
@@ -219,7 +219,7 @@ class IndexManagementWidget(QWidget):
         if self.update_timer:
             self.update_timer.stop()
 
-        super().closeEvent(event)
+        super().closeEvent(a0)
 
 
 class IndexManagementDialog(QDialog):
@@ -240,6 +240,6 @@ class IndexManagementDialog(QDialog):
         button_box.rejected.connect(self.close)
         layout.addWidget(button_box)
 
-    def closeEvent(self, event):
-        self.index_widget.closeEvent(event)
-        super().closeEvent(event)
+    def closeEvent(self, a0) -> None:
+        self.index_widget.closeEvent(a0)
+        super().closeEvent(a0)

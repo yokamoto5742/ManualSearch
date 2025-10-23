@@ -32,6 +32,6 @@ class AutoCloseMessage(QWidget):
 
     def _center_on_parent(self) -> None:
         parent = self.parent()
-        if parent:
+        if parent and isinstance(parent, QWidget):
             geometry = parent.geometry()
             self.move(geometry.center() - self.rect().center())

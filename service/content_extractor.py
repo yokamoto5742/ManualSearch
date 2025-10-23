@@ -24,7 +24,16 @@ class ContentExtractor:
         try:
             with fitz.open(file_path) as doc:
                 for page in doc:
-                    content += page.get_text() + "\n"
+                    try:
+                        text = page.get_text()  # type: ignore
+                    except AttributeError:
+                        # Fallback for different PyMuPDF versions
+                        try:
+                            text = page.get_text("text")  # type: ignore
+                        except Exception:
+                            text = ""
+                    if text:
+                        content += text + "\n"
         except Exception as e:
             logger.error(f"PDF読み込みエラー: {file_path} - {e}")
 
@@ -33,7 +42,8 @@ class ContentExtractor:
     @staticmethod
     def _extract_text_file_content(file_path: str) -> str:
         try:
-            return read_file_with_auto_encoding(file_path)
+            result = read_file_with_auto_encoding(file_path)
+            return result if result is not None else ""
         except Exception as e:
             logger.error(f"テキストファイル読み込みエラー: {file_path} - {e}")
             return ""
