@@ -6,7 +6,6 @@ from service.search_indexer import SearchIndexer
 
 
 class IndexBuildThread(QThread):
-
     progress_updated = pyqtSignal(int, int)
     status_updated = pyqtSignal(str)
     completed = pyqtSignal(bool)

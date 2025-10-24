@@ -13,7 +13,6 @@ from widgets.index_build_thread import IndexBuildThread
 
 
 class IndexManagementWidget(QWidget):
-
     index_updated = pyqtSignal()
 
     def __init__(self, config_manager: ConfigManager, parent: Optional[QWidget] = None):

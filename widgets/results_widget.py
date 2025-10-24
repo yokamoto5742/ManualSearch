@@ -15,14 +15,12 @@ from utils.constants import HIGHLIGHT_COLORS, UI_LABELS
 
 
 class ResultsWidget(QWidget):
-    """検索結果を表示・管理するUI。"""
-
+    """検索結果を表示・管理するUI"""
     result_selected = pyqtSignal()
     file_open_requested = pyqtSignal()
 
     def __init__(self, config_manager) -> None:
-        """初期化。
-
+        """初期化
         Args:
             config_manager: 設定マネージャーインスタンス
         """
@@ -121,8 +119,7 @@ class ResultsWidget(QWidget):
                                include_subdirs: bool, search_type: str) -> None:
         file_extensions = self.config_manager.get_file_extensions()
         context_length = self.config_manager.get_context_length()
-        # Use the first directory as base directory (required parameter)
-        # but enable global search mode with all directories
+
         base_directory = directories[0] if directories else ""
         self.searcher = FileSearcher(base_directory, search_terms, include_subdirs,
                                      search_type, file_extensions, context_length,
@@ -198,7 +195,6 @@ class ResultsWidget(QWidget):
             self.index_status_label.setVisible(bool(status.strip()))
 
     def cancel_search(self) -> None:
-        """検索をキャンセル"""
         if self.searcher:
             self.searcher.cancel_search()
 
