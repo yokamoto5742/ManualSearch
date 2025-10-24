@@ -89,7 +89,7 @@ class TestFileOpener:
             
             mock_show_error.assert_called_once_with(ERROR_MESSAGES['UNSUPPORTED_FORMAT'])
 
-    @patch('service.file_opener.cleanup_temp_files')
+    @patch('service.file_opener.temp_file_manager.cleanup_all')
     @patch('time.sleep')
     def test_open_file_same_pdf_twice(self, mock_sleep, mock_cleanup, file_opener, sample_files):
         """同じPDFファイルを2回開く場合のテスト"""
@@ -134,7 +134,7 @@ class TestFileOpener:
             mock_open_text.assert_called_once_with(md_path, ['test'])
             assert file_opener._last_opened_file == md_path
 
-    @patch('service.file_opener.cleanup_temp_files')
+    @patch('service.file_opener.temp_file_manager.cleanup_all')
     def test_open_file_exception_handling(self, mock_cleanup, file_opener, sample_files):
         """ファイルオープン中の例外処理テスト"""
         pdf_path = sample_files['pdf']
@@ -311,7 +311,7 @@ class TestFileOpener:
     # cleanup_resources() メソッドのテスト
     # =============================================================================
     
-    @patch('service.file_opener.cleanup_temp_files')
+    @patch('service.file_opener.temp_file_manager.cleanup_all')
     def test_cleanup_resources_success(self, mock_cleanup, file_opener):
         """リソースクリーンアップ成功のテスト"""
         file_opener._last_opened_file = "/some/file.pdf"
@@ -321,7 +321,7 @@ class TestFileOpener:
         mock_cleanup.assert_called_once()
         assert file_opener._last_opened_file == ""
 
-    @patch('service.file_opener.cleanup_temp_files')
+    @patch('service.file_opener.temp_file_manager.cleanup_all')
     def test_cleanup_resources_exception(self, mock_cleanup, file_opener):
         """リソースクリーンアップ例外のテスト"""
         mock_cleanup.side_effect = Exception("Cleanup failed")
@@ -359,7 +359,7 @@ class TestFileOpener:
                 file_opener.open_file(file_path, 1, ['test'])
                 mock_method.assert_called_once()
 
-    @patch('service.file_opener.cleanup_temp_files')
+    @patch('service.file_opener.temp_file_manager.cleanup_all')
     def test_same_file_reopening_integration(self, mock_cleanup, file_opener, sample_files):
         """同一ファイル再オープンの統合テスト"""
         pdf_path = sample_files['pdf']

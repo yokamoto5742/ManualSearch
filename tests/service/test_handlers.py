@@ -14,8 +14,8 @@ from utils.constants import (
     MIN_FONT_SIZE, MAX_FONT_SIZE
 )
 from service.pdf_handler import (
-    highlight_pdf, cleanup_temp_files, close_existing_acrobat_processes,
-    wait_for_acrobat, navigate_to_page, open_pdf
+    PDFHighlighter, temp_file_manager, AcrobatProcessManager,
+    PDFNavigator, open_pdf
 )
 from service.text_handler import (
     highlight_text_file, highlight_search_terms, get_file_type_display_name,
@@ -65,7 +65,7 @@ class TestPDFHandlerEnhanced:
         mock_fitz_open.return_value.__exit__ = MagicMock(return_value=False)
 
         search_terms = ['Python', 'テスト', '検索']
-        result_path = highlight_pdf('/test/input.pdf', search_terms)
+        result_path = PDFHighlighter.highlight_pdf('/test/input.pdf', search_terms)
 
         # 各ページで全ての検索語が検索されることを確認
         for page in mock_pdf_document['pages']:
@@ -90,9 +90,9 @@ class TestPDFHandlerEnhanced:
     def test_highlight_pdf_empty_search_terms(self, mock_fitz_open, mock_pdf_document):
         """空の検索語リストでのPDFハイライトテスト"""
         mock_fitz_open.return_value = mock_pdf_document['doc']
-        
-        result_path = highlight_pdf('/test/input.pdf', ['', '   ', None])
-        
+
+        result_path = PDFHighlighter.highlight_pdf('/test/input.pdf', ['', '   ', None])
+
         # 空の検索語は処理されないことを確認
         for page in mock_pdf_document['pages']:
             page.search_for.assert_not_called()
@@ -111,10 +111,10 @@ class TestPDFHandlerEnhanced:
         
         # ハイライト追加で例外が発生するケース
         mock_pdf_document['pages'][0].add_highlight_annot.side_effect = Exception("Highlight error")
-        
+
         # エラーが発生しても処理が続行されることを確認
-        result_path = highlight_pdf('/test/input.pdf', ['Python'])
-        
+        result_path = PDFHighlighter.highlight_pdf('/test/input.pdf', ['Python'])
+
         assert result_path.endswith('.pdf')
         
         # クリーンアップ
@@ -125,10 +125,10 @@ class TestPDFHandlerEnhanced:
     def test_highlight_pdf_corrupted_file(self, mock_fitz_open):
         """破損PDFファイルでのテスト"""
         mock_fitz_open.side_effect = fitz.FileDataError("Invalid PDF")
-        
+
         with pytest.raises(ValueError) as exc_info:
-            highlight_pdf('/test/corrupted.pdf', ['Python'])
-        
+            PDFHighlighter.highlight_pdf('/test/corrupted.pdf', ['Python'])
+
         assert "無効なPDFファイル" in str(exc_info.value)
     
     @patch('service.pdf_handler.fitz.open')
@@ -140,7 +140,7 @@ class TestPDFHandlerEnhanced:
         mock_pdf_document['doc'].save.side_effect = Exception("Save error")
 
         with pytest.raises(RuntimeError) as exc_info:
-            highlight_pdf('/test/input.pdf', ['Python'])
+            PDFHighlighter.highlight_pdf('/test/input.pdf', ['Python'])
 
         assert "PDFのハイライト処理中にエラー" in str(exc_info.value)
     
@@ -159,7 +159,7 @@ class TestPDFHandlerEnhanced:
         temp_file_manager._temp_files = temp_files.copy()
 
         # クリーンアップ実行
-        cleanup_temp_files()
+        temp_file_manager.cleanup_all()
 
         # 全ファイルが削除されることを確認
         for path in temp_files:
@@ -176,7 +176,7 @@ class TestPDFHandlerEnhanced:
         temp_file_manager._temp_files = fake_files.copy()
 
         # エラーが発生しても処理が続行されることを確認
-        cleanup_temp_files()
+        temp_file_manager.cleanup_all()
 
         # エラーファイルはリストから削除される（存在しない場合も削除される仕様）
         assert len(temp_file_manager._temp_files) == 0
@@ -195,9 +195,9 @@ class TestPDFHandlerEnhanced:
             processes.append(mock_process)
         
         mock_process_iter.return_value = processes
-        
-        close_existing_acrobat_processes()
-        
+
+        AcrobatProcessManager.close_all_processes()
+
         # 全プロセスが終了処理されることを確認
         for process in processes:
             process.terminate.assert_called_once()
@@ -214,9 +214,9 @@ class TestPDFHandlerEnhanced:
         mock_process.kill = MagicMock()
         
         mock_process_iter.return_value = [mock_process]
-        
-        close_existing_acrobat_processes()
-        
+
+        AcrobatProcessManager.close_all_processes()
+
         # 通常終了でタイムアウト後、強制終了が呼ばれることを確認
         mock_process.terminate.assert_called_once()
         mock_process.wait.assert_called_once()
@@ -230,10 +230,10 @@ class TestPDFHandlerEnhanced:
         mock_process.terminate.side_effect = psutil.AccessDenied(1234, "access denied")
         
         mock_process_iter.return_value = [mock_process]
-        
+
         # 権限エラーが発生しても処理が続行されることを確認
-        close_existing_acrobat_processes()
-        
+        AcrobatProcessManager.close_all_processes()
+
         mock_process.terminate.assert_called_once()
     
     @patch('subprocess.Popen')
@@ -297,9 +297,9 @@ class TestPDFHandlerEnhanced:
         mock_proc_instance.status.return_value = psutil.STATUS_RUNNING
         mock_process.return_value = mock_proc_instance
         mock_get_window.return_value = "Adobe Acrobat Reader DC"
-        
-        result = wait_for_acrobat(1234, timeout=5)
-        
+
+        result = AcrobatProcessManager.wait_for_startup(1234, timeout=5)
+
         assert result == True
         mock_process.assert_called_with(1234)
     
@@ -308,9 +308,9 @@ class TestPDFHandlerEnhanced:
     def test_wait_for_acrobat_process_not_found(self, mock_sleep, mock_process):
         """Acrobatプロセス見つからないテスト"""
         mock_process.side_effect = psutil.NoSuchProcess(1234, "process")
-        
-        result = wait_for_acrobat(1234, timeout=1)
-        
+
+        result = AcrobatProcessManager.wait_for_startup(1234, timeout=1)
+
         assert result == False
     
     @patch('service.pdf_handler.time.sleep')
@@ -326,7 +326,7 @@ class TestPDFHandlerEnhanced:
         mock_proc_instance.status.return_value = psutil.STATUS_ZOMBIE  # RUNNINGではない状態
         mock_process.return_value = mock_proc_instance
 
-        result = wait_for_acrobat(1234, timeout=1)
+        result = AcrobatProcessManager.wait_for_startup(1234, timeout=1)
 
         assert result == False
     
@@ -338,9 +338,9 @@ class TestPDFHandlerEnhanced:
         """ページナビゲーション複数回リトライテスト"""
         # 初回と2回目で例外、3回目で成功
         mock_hotkey.side_effect = [Exception("Error 1"), Exception("Error 2"), None, None]
-        
-        navigate_to_page(10)
-        
+
+        PDFNavigator.navigate_to_page(10)
+
         # リトライ回数分呼ばれることを確認
         assert mock_hotkey.call_count >= PAGE_NAVIGATION_RETRY_COUNT
     
@@ -351,17 +351,17 @@ class TestPDFHandlerEnhanced:
     def test_navigate_to_page_all_retries_fail(self, mock_sleep, mock_press, mock_write, mock_hotkey):
         """ページナビゲーション全リトライ失敗テスト"""
         mock_hotkey.side_effect = Exception("Persistent error")
-        
+
         # 例外が発生しても処理が完了することを確認
-        navigate_to_page(5)
-        
+        PDFNavigator.navigate_to_page(5)
+
         assert mock_hotkey.call_count == PAGE_NAVIGATION_RETRY_COUNT
     
     def test_navigate_to_page_one(self):
         """ページ1への移動（何もしない）テスト"""
         with patch('pyautogui.hotkey') as mock_hotkey:
-            navigate_to_page(1)
-            
+            PDFNavigator.navigate_to_page(1)
+
             # ページ1の場合は何も実行されないことを確認
             mock_hotkey.assert_not_called()
 

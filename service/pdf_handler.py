@@ -58,16 +58,6 @@ class TempFileManager:
 temp_file_manager = TempFileManager()
 
 
-def cleanup_temp_files() -> None:
-    """すべての一時ファイルを削除（後方互換性のため残す）"""
-    temp_file_manager.cleanup_all()
-
-
-def cleanup_single_temp_file(file_path: str) -> None:
-    """特定の一時ファイルを削除（後方互換性のため残す）"""
-    temp_file_manager.cleanup_single(file_path)
-
-
 class AcrobatProcessManager:
     @staticmethod
     def close_all_processes() -> None:
@@ -281,10 +271,3 @@ def open_pdf(
         raise RuntimeError(f"Acrobat Readerの起動に失敗しました: {e}") from e
     except Exception as e:
         raise RuntimeError(f"PDFを開く際に予期せぬエラーが発生しました: {e}") from e
-
-
-# 後方互換性のための関数エイリアス
-close_existing_acrobat_processes = AcrobatProcessManager.close_all_processes
-wait_for_acrobat = AcrobatProcessManager.wait_for_startup
-navigate_to_page = PDFNavigator.navigate_to_page
-highlight_pdf = PDFHighlighter.highlight_pdf

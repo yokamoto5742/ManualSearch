@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (
 
 from app import __version__
 from service.file_opener import FileOpener
-from service.pdf_handler import cleanup_temp_files
+from service.pdf_handler import temp_file_manager
 from utils.config_manager import ConfigManager
 from utils.helpers import create_confirmation_dialog
 from widgets.auto_close_message_widget import AutoCloseMessage
@@ -237,7 +237,7 @@ class MainWindow(QMainWindow):
             logger.info("アプリケーションを終了します")
             try:
                 self.file_opener.cleanup_resources()
-                cleanup_temp_files()
+                temp_file_manager.cleanup_all()
             except Exception as e:
                 logger.error(f"終了時のクリーンアップでエラー: {e}")
 
@@ -249,7 +249,7 @@ class MainWindow(QMainWindow):
         """ウィンドウクローズイベントを処理する"""
         try:
             self.file_opener.cleanup_resources()
-            cleanup_temp_files()
+            temp_file_manager.cleanup_all()
 
         except Exception as e:
             logger.error(f"ウィンドウ終了処理中にエラーが発生しました: {str(e)}")

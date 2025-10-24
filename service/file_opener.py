@@ -6,7 +6,7 @@ from typing import List
 
 from PyQt5.QtWidgets import QMessageBox
 
-from service.pdf_handler import open_pdf, cleanup_temp_files
+from service.pdf_handler import open_pdf, temp_file_manager
 from service.text_handler import open_text_file
 from utils.constants import (
     FILE_HANDLER_MAPPING,
@@ -54,7 +54,7 @@ class FileOpener:
             return
 
         if file_path == self._last_opened_file and file_extension == '.pdf':
-            cleanup_temp_files()
+            temp_file_manager.cleanup_all()
             time.sleep(PROCESS_CLEANUP_DELAY)
 
         try:
@@ -69,7 +69,7 @@ class FileOpener:
         except Exception as e:
             self._show_error(f"ファイルを開く際にエラーが発生しました: {e}")
             if file_extension == '.pdf':
-                cleanup_temp_files()
+                temp_file_manager.cleanup_all()
 
     def _open_pdf_file(self, file_path: str, position: int, search_terms: List[str], use_highlight: bool = True) -> None:
         """PDFファイルを開く
@@ -165,7 +165,7 @@ class FileOpener:
     def cleanup_resources(self) -> None:
         """リソースをクリーンアップ"""
         try:
-            cleanup_temp_files()
+            temp_file_manager.cleanup_all()
             self._last_opened_file = ""
         except Exception as e:
             logger.error(f"リソースクリーンアップ中にエラー: {e}")

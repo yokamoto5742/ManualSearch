@@ -14,8 +14,6 @@ from service.pdf_handler import (
     PDFHighlighter,
     PDFNavigator,
     TempFileManager,
-    cleanup_single_temp_file,
-    cleanup_temp_files,
     open_pdf,
     temp_file_manager,
 )
@@ -153,24 +151,6 @@ class TestTempFileManager:
 
             # os.removeは呼ばれる
             mock_remove.assert_called_once_with(file_path)
-
-
-@pytest.mark.unit
-class TestBackwardCompatibilityFunctions:
-    """後方互換性関数のテスト"""
-
-    @patch.object(temp_file_manager, 'cleanup_all')
-    def test_cleanup_temp_files(self, mock_cleanup_all):
-        """cleanup_temp_files関数が適切にデリゲートすることを確認"""
-        cleanup_temp_files()
-        mock_cleanup_all.assert_called_once()
-
-    @patch.object(temp_file_manager, 'cleanup_single')
-    def test_cleanup_single_temp_file(self, mock_cleanup_single):
-        """cleanup_single_temp_file関数が適切にデリゲートすることを確認"""
-        file_path = '/test/file.pdf'
-        cleanup_single_temp_file(file_path)
-        mock_cleanup_single.assert_called_once_with(file_path)
 
 
 @pytest.mark.unit
@@ -820,35 +800,6 @@ class TestOpenPdfFunction:
         open_pdf('/test/file.pdf', 'acrobat.exe', 1, [])
 
         mock_highlight.assert_called_once_with('/test/file.pdf', [])
-
-
-@pytest.mark.unit
-class TestBackwardCompatibilityAliases:
-    """後方互換性エイリアスのテスト"""
-
-    def test_close_existing_acrobat_processes_alias(self):
-        """close_existing_acrobat_processes関数エイリアスの確認"""
-        from service.pdf_handler import close_existing_acrobat_processes
-
-        assert close_existing_acrobat_processes == AcrobatProcessManager.close_all_processes
-
-    def test_wait_for_acrobat_alias(self):
-        """wait_for_acrobat関数エイリアスの確認"""
-        from service.pdf_handler import wait_for_acrobat
-
-        assert wait_for_acrobat == AcrobatProcessManager.wait_for_startup
-
-    def test_navigate_to_page_alias(self):
-        """navigate_to_page関数エイリアスの確認"""
-        from service.pdf_handler import navigate_to_page
-
-        assert navigate_to_page == PDFNavigator.navigate_to_page
-
-    def test_highlight_pdf_alias(self):
-        """highlight_pdf関数エイリアスの確認"""
-        from service.pdf_handler import highlight_pdf
-
-        assert highlight_pdf == PDFHighlighter.highlight_pdf
 
 
 @pytest.mark.unit
