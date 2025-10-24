@@ -12,12 +12,12 @@ from utils.constants import (
 
 
 class SearchWidget(QWidget):
-    """検索入力と検索オプションのUI。"""
+    """検索入力と検索オプションのUI"""
 
     search_requested = pyqtSignal()
 
     def __init__(self, config_manager: object) -> None:
-        """初期化。
+        """初期化
 
         Args:
             config_manager: 設定マネージャーインスタンス
@@ -69,7 +69,7 @@ class SearchWidget(QWidget):
 
 
     def get_search_terms(self) -> List[str]:
-        """検索語を取得。
+        """検索語を取得
 
         Returns:
             検索語リスト
@@ -88,7 +88,7 @@ class SearchWidget(QWidget):
             return []
 
     def get_search_type(self) -> str:
-        """検索タイプを取得。
+        """検索タイプを取得
 
         Returns:
             検索タイプ（AND/OR）
