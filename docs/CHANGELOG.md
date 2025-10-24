@@ -7,6 +7,21 @@
 
 ## [Unreleased]
 
+## [1.3.1] - 2025-10-25
+
+### 変更
+- 一時ファイル管理（pdf_handler.py, file_opener.py, main_window.py）：temp_file_manager を統一的に使用してメモリリークを防止
+- PDFハンドラー（pdf_handler.py）：廃止された一時ファイル管理関数を削除し、temp_file_manager への移行を完了
+
+### 修正
+- 一時ファイルのクリーンアップ：app/main_window.py、service/file_opener.py、service/pdf_handler.py で temp_file_manager への統一呼び出しを実装
+- テスト修正（test_pdf_handler.py, test_handlers.py, test_file_opener.py）：temp_file_manager のメソッド使用に合わせて修正
+
+### セキュリティ
+- PDFハンドラーの後方互換性エイリアス削除：セキュリティリスクを軽減し、統一的な一時ファイル管理を強制
+
+## [1.2.3] - 2025-10-20
+
 ### 追加
 - PDFハイライト機能：日本語ラベル「ハイライト付きPDF」をUI選択肢に追加
 - ディレクトリウィジェットにPDFハイライト設定用チェックボックスを追加
@@ -14,23 +29,16 @@
 
 ### 変更
 - PDFハンドラー（pdf_handler.py）：ハイライトの有無に応じたPDFパス設定ロジックを改善
-- ディレクトリウィジェット（directory_widget.py）：PDFハイライト設定をUIに反映するよう修正
 - テスト設定（pytest.ini）：パフォーマンス設定のdurations値を10から5に変更
-
-### 修正
-- エンドツーエンド検索テスト（test_integration.py）：コメントと関数定義の整合性を修正
-
-### セキュリティ
-- 開発環境設定（.gitignore）：__pycache__と.ideaディレクトリをGit追跡対象外に設定
-
-## [1.2.3] - 2025-10-20
-
-### 変更
 - 依存関係を更新：nodeenv と pyright を requirements.txt に追加
 - pyright を Python 3.12 対応で設定（pyrightconfig.json 作成）
 
 ### 修正
+- エンドツーエンド検索テスト（test_integration.py）：コメントと関数定義の整合性を修正
 - バージョン番号を 1.2.3 に統一し、ドキュメント内の日付を 2025-10-20 に修正
+
+### セキュリティ
+- 開発環境設定（.gitignore）：__pycache__と.ideaディレクトリをGit追跡対象外に設定
 
 ## [1.2.2] - 2025-10-19
 
@@ -99,7 +107,8 @@
 ### 変更
 - UI デザイン：PyQt5 を使用した直感的なインターフェース設計
 
-[Unreleased]: https://github.com/yokam-oss/ManualSearch/compare/v1.2.3...HEAD
+[Unreleased]: https://github.com/yokam-oss/ManualSearch/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/yokam-oss/ManualSearch/compare/v1.2.3...v1.3.0
 [1.2.3]: https://github.com/yokam-oss/ManualSearch/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/yokam-oss/ManualSearch/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/yokam-oss/ManualSearch/compare/v1.2.0...v1.2.1
