@@ -11,9 +11,13 @@ import psutil
 import pyautogui
 
 from utils.constants import (
+    ACROBAT_KEYBINDS,
+    ACROBAT_KEYSTROKE_DELAY,
     ACROBAT_PROCESS_NAMES,
     ACROBAT_WAIT_INTERVAL,
     ACROBAT_WAIT_TIMEOUT,
+    DIALOG_MESSAGES,
+    LOG_MESSAGE_TEMPLATES,
     PAGE_NAVIGATION_DELAY,
     PAGE_NAVIGATION_RETRY_COUNT,
     PDF_HIGHLIGHT_COLORS,
@@ -65,10 +69,10 @@ class AcrobatProcessManager:
             acrobat_processes = AcrobatProcessManager._find_processes()
             
             if not acrobat_processes:
-                logger.debug("既存のAcrobatプロセスは見つかりませんでした")
+                logger.debug(LOG_MESSAGE_TEMPLATES['NO_ACROBAT_PROCESSES'])
                 return
-            
-            logger.info(f"既存のAcrobatプロセスが{len(acrobat_processes)}個見つかりました")
+
+            logger.info(LOG_MESSAGE_TEMPLATES['FOUND_ACROBAT_PROCESSES'].format(count=len(acrobat_processes)))
             
             for proc in acrobat_processes:
                 AcrobatProcessManager._terminate_process(proc)
@@ -100,15 +104,17 @@ class AcrobatProcessManager:
     @staticmethod
     def _terminate_process(proc: psutil.Process) -> None:
         try:
-            logger.info(f"プロセス終了中: {proc.info['name']} (PID: {proc.pid})")
+            logger.info(LOG_MESSAGE_TEMPLATES['PROCESS_TERMINATING'].format(
+                process_name=proc.info['name'], pid=proc.pid
+            ))
             proc.terminate()
-            
+
             try:
                 proc.wait(timeout=PROCESS_TERMINATE_TIMEOUT)
-                logger.info(f"Acrobatプロセス (PID: {proc.pid}) を正常に終了しました")
+                logger.info(LOG_MESSAGE_TEMPLATES['PROCESS_TERMINATED'].format(pid=proc.pid))
             except psutil.TimeoutExpired:
                 proc.kill()
-                logger.warning(f"Acrobatプロセス (PID: {proc.pid}) を強制終了しました")
+                logger.warning(LOG_MESSAGE_TEMPLATES['PROCESS_FORCE_KILLED'].format(pid=proc.pid))
                 
         except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
             logger.error(f"プロセス終了中にエラー: {e}")
@@ -136,11 +142,11 @@ class AcrobatProcessManager:
             except psutil.NoSuchProcess:
                 return False
             except Exception as e:
-                logger.error(f"Acrobat待機中にエラー: {e}")
-            
+                logger.error(LOG_MESSAGE_TEMPLATES['ACROBAT_WAIT_ERROR'].format(error=e))
+
             time.sleep(ACROBAT_WAIT_INTERVAL)
-        
-        logger.warning(f"Acrobat起動のタイムアウト（{timeout}秒）")
+
+        logger.warning(LOG_MESSAGE_TEMPLATES['ACROBAT_TIMEOUT'].format(timeout=timeout))
         return False
     
     @staticmethod
@@ -166,20 +172,16 @@ class PDFNavigator:
     
     @staticmethod
     def _execute_navigation(page_number: int) -> None:
-        # ページ番号入力ダイアログを開く
-        pyautogui.hotkey('ctrl', 'shift', 'n')
+        pyautogui.hotkey(*ACROBAT_KEYBINDS['FIND_AND_REPLACE'])
         time.sleep(PAGE_NAVIGATION_DELAY)
-        
-        # 既存の入力をクリア
-        pyautogui.hotkey('ctrl', 'a')
-        time.sleep(0.2)
-        
-        # ページ番号を入力
+
+        pyautogui.hotkey(*ACROBAT_KEYBINDS['SELECT_ALL'])
+        time.sleep(ACROBAT_KEYSTROKE_DELAY)
+
         pyautogui.write(str(page_number))
         time.sleep(PAGE_NAVIGATION_DELAY)
-        
-        # Enterで確定
-        pyautogui.press('enter')
+
+        pyautogui.press(ACROBAT_KEYBINDS['CONFIRM'][0])
 
 
 class PDFHighlighter:
@@ -195,7 +197,7 @@ class PDFHighlighter:
             return temp_path
         
         except fitz.FileDataError as e:
-            raise ValueError(f"無効なPDFファイル: {pdf_path}") from e
+            raise ValueError(DIALOG_MESSAGES['INVALID_PDF'].format(pdf_path=pdf_path)) from e
         except Exception as e:
             raise RuntimeError(f"PDFのハイライト処理中にエラー: {e}") from e
     

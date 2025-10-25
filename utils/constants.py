@@ -208,7 +208,9 @@ UI_LABELS = {
     'CONFIRM_EXIT': '検索を終了しますか?',
     'SEARCHING': '検索中...',
     'CANCEL': 'キャンセル',
-    'SEARCH_PROGRESS_TITLE': '検索の進行状況'
+    'SEARCH_PROGRESS_TITLE': '検索の進行状況',
+    'INDEX_MANAGEMENT': 'インデックス設定',
+    'INDEX_SEARCH': 'インデックス検索'
 }
 
 
@@ -252,8 +254,194 @@ CONFIG_KEYS = {
 
 
 # ============================================================================
-# 10. その他の設定
+# 10. UI定数（ウィンドウレイアウト、スタイルシート）
+# ============================================================================
+
+# --- ウィンドウレイアウト定数 ---
+MAIN_WINDOW_LAYOUT_SPACING = 0
+MAIN_WINDOW_LAYOUT_MARGIN = (10, 10, 10, 10)
+MAIN_LAYOUT_STRETCH_FACTOR = 1
+
+# --- ダイアログテキスト ---
+DIALOG_TITLES = {
+    'CONFIRM': '確認',
+    'SELECT_FOLDER': 'フォルダを選択',
+    'EDIT_FOLDER_PATH': 'フォルダパスの編集',
+    'INDEX_MANAGEMENT': 'インデックス管理',
+    'ERROR': 'エラー',
+    'WARNING': '警告'
+}
+
+DIALOG_MESSAGES = {
+    'CONFIRM_EXIT': '検索を終了しますか?',
+    'EDIT_FOLDER_PATH_LABEL': 'フォルダパスを編集してOKをクリックしてください。',
+    'INVALID_PDF': '無効なPDFファイル: {pdf_path}'
+}
+
+# --- スタイルシート定義 ---
+STYLESHEETS = {
+    'INVALID_DIRECTORY_BACKGROUND': 'background-color: #FFCCCC;',
+    'INDEX_STATUS_LABEL': 'color: blue; font-size: 12px; padding: 2px;',
+    'AUTO_CLOSE_MESSAGE': 'background-color: #f0f0f0; border: 1px solid #cccccc; border-radius: 5px;'
+}
+
+# --- フォーム・テキストフィールド定数 ---
+FOLDER_PATH_INPUT_MIN_WIDTH = 1100
+INDEX_MANAGEMENT_DIALOG_WIDTH = 600
+INDEX_MANAGEMENT_DIALOG_HEIGHT = 500
+INDEX_LOG_MAX_HEIGHT = 150
+
+# --- UIアイコンと表示 ---
+INDEX_STATUS_ICON = '🔍'
+PDF_PAGE_LABEL = 'ページ'
+TEXT_LINE_LABEL = '行'
+INDEX_LOADING_TEXT = '統計情報を読み込み中...'
+INDEX_NOT_SET_TEXT = '未設定'
+
+# --- ダイアログ外観設定 ---
+AUTO_CLOSE_MESSAGE_DEFAULT_DURATION = 1000
+
+
+# ============================================================================
+# 11. ウィンドウタイトルテンプレート
+# ============================================================================
+
+WINDOW_TITLE_TEMPLATE = 'マニュアル検索 v{version}'
+
+
+# ============================================================================
+# 12. PDF処理：pyautogui キーバインド
+# ============================================================================
+
+# --- PDF検索・ハイライト用キーシーケンス ---
+ACROBAT_KEYBINDS = {
+    'FIND_AND_REPLACE': ['ctrl', 'h'],
+    'SELECT_ALL': ['ctrl', 'a'],
+    'CONFIRM': ['enter']
+}
+
+# --- pyautogui操作の遅延（秒） ---
+ACROBAT_KEYSTROKE_DELAY = 0.2
+ACROBAT_ACTION_DELAY = 0.5
+
+
+# ============================================================================
+# 13. ログメッセージテンプレート
+# ============================================================================
+
+LOG_MESSAGE_TEMPLATES = {
+    'SEARCH_START': '検索開始: 検索語={search_terms}, タイプ={search_type}, グローバル検索={is_global_search}',
+    'INDEX_CONFIG_LOAD_ERROR': 'インデックス設定の読み込みに失敗: {error}',
+    'INDEX_TOGGLE': 'インデックス検索を{status}にしました',
+    'SEARCH_ERROR': '検索中にエラーが発生しました: {error}',
+    'FILE_NOT_FOUND': 'ファイルが見つかりません',
+    'FOLDER_NOT_FOUND': 'フォルダが見つかりません',
+    'FOLDER_OPEN_ERROR': 'フォルダを開く際にエラーが発生しました: {error}',
+    'APP_EXIT': 'アプリケーションを終了します',
+    'NO_ACROBAT_PROCESSES': '既存のAcrobatプロセスは見つかりませんでした',
+    'FOUND_ACROBAT_PROCESSES': '既存のAcrobatプロセスが{count}個見つかりました',
+    'PROCESS_TERMINATING': 'プロセス終了中: {process_name} (PID: {pid})',
+    'PROCESS_TERMINATED': 'Acrobatプロセス (PID: {pid}) を正常に終了しました',
+    'PROCESS_FORCE_KILLED': 'Acrobatプロセス (PID: {pid}) を強制終了しました',
+    'ACROBAT_WAIT_ERROR': 'Acrobat待機中にエラー: {error}',
+    'ACROBAT_TIMEOUT': 'Acrobat起動のタイムアウト（{timeout}秒）',
+    'UNSUPPORTED_FILE_TYPE': 'サポートされていないファイル形式: {extension}',
+    'SEARCH_ERROR_DETAIL': '検索エラー: {path} - {error}',
+    'INDEX_OPERATION_START': 'インデックス{operation_name}を開始します...',
+    'INDEX_OPERATION_ERROR': 'インデックス{operation_name}中にエラーが発生しました: {error}',
+    'LOG_FORMAT': '[{timestamp}] {message}'
+}
+
+# --- ログ日時フォーマット ---
+LOG_DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+
+# --- インデックス操作ラベル ---
+INDEX_OPERATION_LABELS = {
+    'CREATE': '初回作成',
+    'ADD': 'ファイル追加更新',
+    'DELETE': 'ファイル削除更新',
+    'REBUILD': '完全再構築'
+}
+
+# --- インデックス統計UI定数 ---
+INDEX_STATS_GROUP_TITLE = 'インデックス統計情報'
+INDEX_OPERATIONS_GROUP_TITLE = 'インデックス操作'
+INDEX_LOG_GROUP_TITLE = 'ログ'
+
+# --- インデックス管理タイマー（ミリ秒） ---
+INDEX_STATS_UPDATE_INTERVAL = 5000
+INDEX_THREAD_WAIT_TIMEOUT = 3000
+INDEX_STATUS_DISPLAY_TIMEOUT = 3000
+
+
+# ============================================================================
+# 14. 設定ファイルセクション・キー名
+# ============================================================================
+
+# --- 設定セクション（追加） ---
+CONFIG_SECTIONS_EXTRA = {
+    'SEARCH': 'search'
+}
+
+# --- 設定キー（追加） ---
+CONFIG_KEYS_EXTRA = {
+    'USE_PDF_HIGHLIGHT': 'use_pdf_highlight'
+}
+
+# 統合設定セクション
+CONFIG_SECTIONS.update(CONFIG_SECTIONS_EXTRA)
+CONFIG_KEYS.update(CONFIG_KEYS_EXTRA)
+
+
+# ============================================================================
+# 15. ファイル処理：マジックナンバー・拡張子パターン
+# ============================================================================
+
+# --- PDFファイルヘッダ ---
+PDF_MAGIC_NUMBER = b'%PDF'
+
+# --- ファイル拡張子定数 ---
+FILE_EXTENSION_PDF = '.pdf'
+FILE_EXTENSION_TXT = '.txt'
+FILE_EXTENSION_MD = '.md'
+FILE_EXTENSION_HTML = '.html'
+
+# --- ファイルタイプ判定 ---
+FILE_TYPES = {
+    'PDF': FILE_EXTENSION_PDF,
+    'TEXT': FILE_EXTENSION_TXT,
+    'MARKDOWN': FILE_EXTENSION_MD,
+    'HTML': FILE_EXTENSION_HTML
+}
+
+
+# ============================================================================
+# 16. テキストファイル処理：エンコーディング設定
+# ============================================================================
+
+# --- エンコーディングフォールバック順序 ---
+ENCODING_CANDIDATES = ['utf-8', 'cp1252', 'latin-1']
+ENCODING_FALLBACK = 'latin-1'
+
+# --- テキスト分割パターン ---
+PDF_TEXT_PAGE_SEPARATOR = '\n\n'
+TEXT_LINE_SEPARATOR = '\n'
+
+
+# ============================================================================
+# 17. その他の設定
 # ============================================================================
 
 # --- Markdown拡張 ---
 MARKDOWN_EXTENSIONS = ['nl2br']
+
+# --- インデックス処理定数 ---
+INDEX_DEFAULT_CONTEXT_LENGTH = 100
+INDEX_MAX_RESULTS = 200
+INDEX_HASH_READ_CHUNK_SIZE = 8192
+INDEX_PROGRESS_LOG_INTERVAL = 10
+
+# --- ディレクトリアクセスエラー ---
+ERROR_DIRECTORY_ACCESS = 'ディレクトリアクセスエラー: {directory} - {error}'
+ERROR_DIRECTORY_SEARCH = 'ディレクトリ検索エラー: {directory} - {error}'
+ERROR_TEMPLATE_NOT_FOUND = 'テンプレートファイルが見つかりません: {error}'

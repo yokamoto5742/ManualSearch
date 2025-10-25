@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
 )
 
 from utils.config_manager import ConfigManager
-from utils.constants import UI_LABELS
+from utils.constants import DIALOG_TITLES, DIALOG_MESSAGES, FOLDER_PATH_INPUT_MIN_WIDTH, STYLESHEETS, UI_LABELS
 from utils.helpers import create_confirmation_dialog
 
 
@@ -176,13 +176,13 @@ class DirectoryWidget(QWidget):
             directory: 検証するディレクトリパス
         """
         self.dir_combo.setStyleSheet(
-            "" if os.path.isdir(directory) else "background-color: #FFCCCC;"
+            "" if os.path.isdir(directory) else STYLESHEETS['INVALID_DIRECTORY_BACKGROUND']
         )
 
     def add_directory(self) -> None:
         """検索対象のディレクトリを追加"""
         try:
-            directory = QFileDialog.getExistingDirectory(self, "フォルダを選択")
+            directory = QFileDialog.getExistingDirectory(self, DIALOG_TITLES['SELECT_FOLDER'])
             if directory:
                 current_dirs = self.config_manager.get_directories()
                 if directory not in current_dirs:
@@ -192,7 +192,7 @@ class DirectoryWidget(QWidget):
                 self.dir_combo.setCurrentText(directory)
                 self.config_manager.set_last_directory(directory)
         except Exception as e:
-            QMessageBox.critical(self, "エラー", f"ディレクトリの追加中にエラーが発生しました: {str(e)}")
+            QMessageBox.critical(self, DIALOG_TITLES['ERROR'], f"ディレクトリの追加中にエラーが発生しました: {str(e)}")
 
     def edit_directory(self) -> None:
         """現在選択されているディレクトリを編集"""
@@ -202,15 +202,14 @@ class DirectoryWidget(QWidget):
 
         try:
             dialog = QInputDialog(self)
-            dialog.setWindowTitle("フォルダパスの編集")
-            dialog.setLabelText("フォルダパスを編集してOKをクリックしてください。")
+            dialog.setWindowTitle(DIALOG_TITLES['EDIT_FOLDER_PATH'])
+            dialog.setLabelText(DIALOG_MESSAGES['EDIT_FOLDER_PATH_LABEL'])
             dialog.setTextValue(current_dir)
             dialog.setInputMode(QInputDialog.TextInput)
 
-            # テキストフィールドの幅を調整
             text_field = dialog.findChild(QLineEdit)
             if text_field:
-                text_field.setMinimumWidth(1100)
+                text_field.setMinimumWidth(FOLDER_PATH_INPUT_MIN_WIDTH)
 
             dialog.setSizeGripEnabled(True)
             dialog.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -224,9 +223,9 @@ class DirectoryWidget(QWidget):
                     self.config_manager.set_directories(current_dirs)
                     self.dir_combo.setItemText(self.dir_combo.currentIndex(), new_dir)
         except ValueError:
-            QMessageBox.warning(self, "警告", "指定されたディレクトリが見つかりません。")
+            QMessageBox.warning(self, DIALOG_TITLES['WARNING'], "指定されたディレクトリが見つかりません。")
         except Exception as e:
-            QMessageBox.critical(self, "エラー", f"ディレクトリの編集中にエラーが発生しました: {str(e)}")
+            QMessageBox.critical(self, DIALOG_TITLES['ERROR'], f"ディレクトリの編集中にエラーが発生しました: {str(e)}")
 
     def delete_directory(self) -> None:
         """現在選択されているディレクトリを削除"""
@@ -235,10 +234,9 @@ class DirectoryWidget(QWidget):
             return
 
         try:
-            # 削除確認ダイアログを表示
             msg_box = create_confirmation_dialog(
                 self,
-                '確認',
+                DIALOG_TITLES['CONFIRM'],
                 f"「{current_dir}」を削除しますか？",
                 QMessageBox.No
             )
@@ -251,6 +249,6 @@ class DirectoryWidget(QWidget):
                 self.config_manager.set_directories(current_dirs)
                 self.dir_combo.removeItem(self.dir_combo.currentIndex())
         except ValueError:
-            QMessageBox.warning(self, "警告", "指定されたディレクトリが見つかりません。")
+            QMessageBox.warning(self, DIALOG_TITLES['WARNING'], "指定されたディレクトリが見つかりません。")
         except Exception as e:
-            QMessageBox.critical(self, "エラー", f"ディレクトリの削除中にエラーが発生しました: {str(e)}")
+            QMessageBox.critical(self, DIALOG_TITLES['ERROR'], f"ディレクトリの削除中にエラーが発生しました: {str(e)}")

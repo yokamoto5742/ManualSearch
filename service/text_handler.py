@@ -11,14 +11,17 @@ import markdown
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
 from utils.constants import (
+    ERROR_TEMPLATE_NOT_FOUND,
+    FILE_EXTENSION_HTML,
+    FILE_EXTENSION_MD,
+    FILE_TYPE_DISPLAY_NAMES,
     HIGHLIGHT_COLORS,
+    HIGHLIGHT_STYLE_TEMPLATE,
+    MARKDOWN_EXTENSIONS,
+    MAX_FONT_SIZE,
+    MIN_FONT_SIZE,
     TEMPLATE_DIRECTORY,
     TEXT_VIEWER_TEMPLATE,
-    FILE_TYPE_DISPLAY_NAMES,
-    MARKDOWN_EXTENSIONS,
-    HIGHLIGHT_STYLE_TEMPLATE,
-    MIN_FONT_SIZE,
-    MAX_FONT_SIZE
 )
 from utils.helpers import read_file_with_auto_encoding
 
@@ -87,7 +90,7 @@ def highlight_text_file(file_path: str, search_terms: List[str], html_font_size:
         content = ""
 
     file_extension = os.path.splitext(file_path)[1].lower()
-    is_markdown = file_extension == '.md'
+    is_markdown = file_extension == FILE_EXTENSION_MD
 
     if is_markdown:
         content = markdown.markdown(content, extensions=MARKDOWN_EXTENSIONS)
@@ -148,7 +151,7 @@ def generate_html_content(
         return template.render(**template_vars)
 
     except TemplateNotFound as e:
-        raise FileNotFoundError(f"テンプレートファイルが見つかりません: {e}")
+        raise FileNotFoundError(ERROR_TEMPLATE_NOT_FOUND.format(error=e))
     except Exception as e:
         raise RuntimeError(f"HTMLテンプレートの処理中にエラーが発生しました: {e}")
 

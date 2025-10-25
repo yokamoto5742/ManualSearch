@@ -11,7 +11,10 @@ from PyQt5.QtWidgets import (
 
 from service.file_searcher import FileSearcher
 from service.indexed_file_searcher import SmartFileSearcher
-from utils.constants import HIGHLIGHT_COLORS, UI_LABELS
+from utils.constants import (
+    FILE_EXTENSION_PDF, HIGHLIGHT_COLORS, INDEX_STATUS_DISPLAY_TIMEOUT, INDEX_STATUS_ICON,
+    PDF_PAGE_LABEL, STYLESHEETS, TEXT_LINE_LABEL, UI_LABELS
+)
 
 
 class ResultsWidget(QWidget):
@@ -43,7 +46,7 @@ class ResultsWidget(QWidget):
         self.setLayout(layout)
 
         self.index_status_label = QLabel("")
-        self.index_status_label.setStyleSheet("color: blue; font-size: 12px; padding: 2px;")
+        self.index_status_label.setStyleSheet(STYLESHEETS['INDEX_STATUS_LABEL'])
         self.index_status_label.setVisible(False)
         layout.addWidget(self.index_status_label)
 
@@ -191,7 +194,7 @@ class ResultsWidget(QWidget):
 
     def update_index_status(self, status: str) -> None:
         if self.index_status_label:
-            self.index_status_label.setText(f"🔍 {status}")
+            self.index_status_label.setText(f"{INDEX_STATUS_ICON} {status}")
             self.index_status_label.setVisible(bool(status.strip()))
 
     def cancel_search(self) -> None:
@@ -206,7 +209,7 @@ class ResultsWidget(QWidget):
             self.progress_dialog.close()
 
         if self.index_status_label:
-            QTimer.singleShot(3000, lambda: self.index_status_label.setVisible(False))
+            QTimer.singleShot(INDEX_STATUS_DISPLAY_TIMEOUT, lambda: self.index_status_label.setVisible(False))
 
     def add_result(self, file_path: str, results: List[Tuple[int, str]]) -> None:
         for i, (position, context) in enumerate(results):
@@ -219,9 +222,9 @@ class ResultsWidget(QWidget):
 
     @staticmethod
     def _create_item_text(file_name: str, file_path: str, position: int, index: int) -> str:
-        if file_path.lower().endswith('.pdf'):
-            return f"{file_name} (ページ: {position}, 一致: {index + 1})"
-        return f"{file_name} (行: {position}, 一致: {index + 1})"
+        if file_path.lower().endswith(FILE_EXTENSION_PDF):
+            return f"{file_name} ({PDF_PAGE_LABEL}: {position}, 一致: {index + 1})"
+        return f"{file_name} ({TEXT_LINE_LABEL}: {position}, 一致: {index + 1})"
 
     def on_item_double_clicked(self, item: QListWidgetItem) -> None:
         try:
@@ -252,7 +255,8 @@ class ResultsWidget(QWidget):
     def _create_result_html(self, file_path: str, position: int, highlighted_content: str) -> str:
         result_html = f'<span style="font-size:{self.result_detail_font.pointSize()}pt;">'
         result_html += f"<h3>{os.path.basename(file_path)}</h3>"
-        result_html += f"<p>{'ページ' if file_path.lower().endswith('.pdf') else '行'}: {position}</p>"
+        position_label = PDF_PAGE_LABEL if file_path.lower().endswith(FILE_EXTENSION_PDF) else TEXT_LINE_LABEL
+        result_html += f"<p>{position_label}: {position}</p>"
         result_html += f"<p>{highlighted_content}</p>"
         result_html += '</span>'
         return result_html

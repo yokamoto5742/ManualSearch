@@ -8,7 +8,12 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from service.pdf_search_strategy import PDFSearchStrategy
 from service.search_matcher import SearchMatcher
 from service.text_search_strategy import TextSearchStrategy
-from utils.constants import SEARCH_METHODS_MAPPING
+from utils.constants import (
+    ERROR_DIRECTORY_ACCESS,
+    ERROR_DIRECTORY_SEARCH,
+    LOG_MESSAGE_TEMPLATES,
+    SEARCH_METHODS_MAPPING,
+)
 from utils.helpers import check_file_accessibility, normalize_path
 
 logger = logging.getLogger(__name__)
@@ -97,7 +102,7 @@ class FileSearcher(QThread):
                     file_count = sum(1 for f in files if os.path.isfile(os.path.join(directory, f)))
                     total += file_count
             except OSError as e:
-                logger.warning(f"ディレクトリアクセスエラー: {directory} - {e}")
+                logger.warning(ERROR_DIRECTORY_ACCESS.format(directory=directory, error=e))
                 continue
 
         return total
@@ -109,7 +114,7 @@ class FileSearcher(QThread):
             else:
                 return self._search_without_subdirs(executor, directory)
         except OSError as e:
-            logger.error(f"ディレクトリ検索エラー: {directory} - {e}")
+            logger.error(ERROR_DIRECTORY_SEARCH.format(directory=directory, error=e))
             return 0
 
     def _search_with_subdirs(self, executor: ThreadPoolExecutor, directory: str) -> int:
@@ -175,14 +180,14 @@ class FileSearcher(QThread):
         search_method = self._get_search_method(file_extension)
 
         if not search_method:
-            logger.warning(f"サポートされていないファイル形式: {file_extension}")
+            logger.warning(LOG_MESSAGE_TEMPLATES['UNSUPPORTED_FILE_TYPE'].format(extension=file_extension))
             return None
 
         try:
             result = search_method(normalized_path)
             return result
         except Exception as e:
-            logger.error(f"検索エラー: {normalized_path} - {e}")
+            logger.error(LOG_MESSAGE_TEMPLATES['SEARCH_ERROR_DETAIL'].format(path=normalized_path, error=e))
             return None
 
     def _get_search_method(self, file_extension: str) -> Optional[Callable[[str], Optional[Tuple[str, List[Tuple[int, str]]]]]]:

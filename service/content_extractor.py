@@ -3,6 +3,7 @@ import os
 
 import fitz
 
+from utils.constants import FILE_EXTENSION_PDF
 from utils.helpers import read_file_with_auto_encoding
 
 logger = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ class ContentExtractor:
         """
         file_extension = os.path.splitext(file_path)[1].lower()
 
-        if file_extension == '.pdf':
+        if file_extension == FILE_EXTENSION_PDF:
             return ContentExtractor._extract_pdf_content(file_path)
         else:
             return ContentExtractor._extract_text_file_content(file_path)

@@ -9,6 +9,22 @@ from PyQt5.QtWidgets import (
 
 from service.search_indexer import SearchIndexer
 from utils.config_manager import ConfigManager
+from utils.constants import (
+    DIALOG_TITLES,
+    INDEX_LOADING_TEXT,
+    INDEX_LOG_GROUP_TITLE,
+    INDEX_LOG_MAX_HEIGHT,
+    INDEX_MANAGEMENT_DIALOG_HEIGHT,
+    INDEX_MANAGEMENT_DIALOG_WIDTH,
+    INDEX_NOT_SET_TEXT,
+    INDEX_OPERATION_LABELS,
+    INDEX_OPERATIONS_GROUP_TITLE,
+    INDEX_STATS_GROUP_TITLE,
+    INDEX_STATS_UPDATE_INTERVAL,
+    INDEX_THREAD_WAIT_TIMEOUT,
+    LOG_DATETIME_FORMAT,
+    LOG_MESSAGE_TEMPLATES
+)
 from widgets.index_build_thread import IndexBuildThread
 
 
@@ -37,7 +53,7 @@ class IndexManagementWidget(QWidget):
         # 定期的に統計情報を更新
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self._update_display)
-        self.update_timer.start(5000)
+        self.update_timer.start(INDEX_STATS_UPDATE_INTERVAL)
 
     def _setup_ui(self) -> None:
         """UIレイアウトを構築"""
@@ -45,35 +61,35 @@ class IndexManagementWidget(QWidget):
         self.setLayout(layout)
 
         # インデックス統計情報セクション
-        stats_group = QGroupBox("インデックス統計情報")
+        stats_group = QGroupBox(INDEX_STATS_GROUP_TITLE)
         stats_layout = QVBoxLayout()
 
-        self.stats_label = QLabel("統計情報を読み込み中...")
+        self.stats_label = QLabel(INDEX_LOADING_TEXT)
         stats_layout.addWidget(self.stats_label)
 
         stats_group.setLayout(stats_layout)
         layout.addWidget(stats_group)
 
         # インデックス操作セクション
-        operations_group = QGroupBox("インデックス操作")
+        operations_group = QGroupBox(INDEX_OPERATIONS_GROUP_TITLE)
         operations_layout = QVBoxLayout()
 
         button_layout = QHBoxLayout()
 
         # 各種操作ボタン
-        self.create_button = QPushButton("初回作成")
+        self.create_button = QPushButton(INDEX_OPERATION_LABELS['CREATE'])
         self.create_button.clicked.connect(self._create_index)
         button_layout.addWidget(self.create_button)
 
-        self.update_button = QPushButton("ファイル追加更新")
+        self.update_button = QPushButton(INDEX_OPERATION_LABELS['ADD'])
         self.update_button.clicked.connect(self._update_index)
         button_layout.addWidget(self.update_button)
 
-        self.cleanup_button = QPushButton("ファイル削除更新")
+        self.cleanup_button = QPushButton(INDEX_OPERATION_LABELS['DELETE'])
         self.cleanup_button.clicked.connect(self._cleanup_index)
         button_layout.addWidget(self.cleanup_button)
 
-        self.rebuild_button = QPushButton("完全再構築")
+        self.rebuild_button = QPushButton(INDEX_OPERATION_LABELS['REBUILD'])
         self.rebuild_button.clicked.connect(self._rebuild_index)
         button_layout.addWidget(self.rebuild_button)
 
@@ -91,11 +107,11 @@ class IndexManagementWidget(QWidget):
         layout.addWidget(operations_group)
 
         # ログセクション
-        log_group = QGroupBox("ログ")
+        log_group = QGroupBox(INDEX_LOG_GROUP_TITLE)
         log_layout = QVBoxLayout()
 
         self.log_text = QTextEdit()
-        self.log_text.setMaximumHeight(150)
+        self.log_text.setMaximumHeight(INDEX_LOG_MAX_HEIGHT)
         self.log_text.setReadOnly(True)
         log_layout.addWidget(self.log_text)
 
@@ -131,11 +147,11 @@ class IndexManagementWidget(QWidget):
             フォーマット済みの日時文字列
         """
         if not datetime_str:
-            return "未設定"
+            return INDEX_NOT_SET_TEXT
 
         try:
             dt = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
-            return dt.strftime("%Y-%m-%d %H:%M:%S")
+            return dt.strftime(LOG_DATETIME_FORMAT)
         except:
             return datetime_str
 
@@ -186,7 +202,7 @@ class IndexManagementWidget(QWidget):
             QMessageBox.information(self, "情報", "インデックス操作を実行中です。")
             return
 
-        self._log(f"インデックス{operation_name}を開始します...")
+        self._log(LOG_MESSAGE_TEMPLATES['INDEX_OPERATION_START'].format(operation_name=operation_name))
 
         self._set_buttons_enabled(False)
         self.progress_bar.setVisible(True)
@@ -277,7 +293,7 @@ class IndexManagementWidget(QWidget):
         # 実行中のスレッドをキャンセルして終了を待機
         if self.build_thread and self.build_thread.isRunning():
             self.build_thread.cancel()
-            self.build_thread.wait(3000)
+            self.build_thread.wait(INDEX_THREAD_WAIT_TIMEOUT)
 
         # タイマーを停止
         if self.update_timer:
@@ -297,9 +313,9 @@ class IndexManagementDialog(QDialog):
             parent: 親ウィジェット
         """
         super().__init__(parent)
-        self.setWindowTitle("インデックス管理")
+        self.setWindowTitle(DIALOG_TITLES['INDEX_MANAGEMENT'])
         self.setModal(True)
-        self.resize(600, 500)
+        self.resize(INDEX_MANAGEMENT_DIALOG_WIDTH, INDEX_MANAGEMENT_DIALOG_HEIGHT)
 
         layout = QVBoxLayout()
         self.setLayout(layout)

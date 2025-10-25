@@ -11,6 +11,11 @@ from app import __version__
 from service.file_opener import FileOpener
 from service.pdf_handler import temp_file_manager
 from utils.config_manager import ConfigManager
+from utils.constants import (
+    WINDOW_TITLE_TEMPLATE, MAIN_WINDOW_LAYOUT_SPACING, MAIN_WINDOW_LAYOUT_MARGIN,
+    MAIN_LAYOUT_STRETCH_FACTOR, UI_LABELS, ERROR_MESSAGES, DIALOG_TITLES,
+    DIALOG_MESSAGES, LOG_MESSAGE_TEMPLATES
+)
 from utils.helpers import create_confirmation_dialog
 from widgets.auto_close_message_widget import AutoCloseMessage
 from widgets.directory_widget import DirectoryWidget
@@ -36,7 +41,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.config_manager = config_manager
 
-        self.setWindowTitle(f"マニュアル検索 v{__version__}")
+        self.setWindowTitle(WINDOW_TITLE_TEMPLATE.format(version=__version__))
         QApplication.setStyle(QStyleFactory.create('Fusion'))
 
         self._setup_window_geometry()
@@ -62,8 +67,8 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(main_widget)
 
         layout = QVBoxLayout()
-        layout.setSpacing(0)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(MAIN_WINDOW_LAYOUT_SPACING)
+        layout.setContentsMargins(*MAIN_WINDOW_LAYOUT_MARGIN)
         main_widget.setLayout(layout)
 
         self.main_layout = layout
@@ -83,9 +88,9 @@ class MainWindow(QMainWindow):
 
     def _setup_close_button(self) -> None:
         close_button_layout = QHBoxLayout()
-        close_button_layout.addStretch(1)
+        close_button_layout.addStretch(MAIN_LAYOUT_STRETCH_FACTOR)
 
-        self.close_button = QPushButton("閉じる")
+        self.close_button = QPushButton(UI_LABELS['CLOSE_BUTTON'])
         self.close_button.clicked.connect(self.close_application)
         close_button_layout.addWidget(self.close_button)
 
@@ -100,11 +105,11 @@ class MainWindow(QMainWindow):
     def _setup_index_management_ui(self) -> None:
         index_button_layout = QHBoxLayout()
 
-        manage_index_button = QPushButton("インデックス設定")
+        manage_index_button = QPushButton(UI_LABELS['INDEX_MANAGEMENT'])
         manage_index_button.clicked.connect(self.open_index_management)
         index_button_layout.addWidget(manage_index_button)
 
-        self.index_search_checkbox = QCheckBox("インデックス検索")
+        self.index_search_checkbox = QCheckBox(UI_LABELS['INDEX_SEARCH'])
         self.index_search_checkbox.toggled.connect(self.toggle_index_search)
         index_button_layout.addWidget(self.index_search_checkbox)
 
@@ -116,7 +121,7 @@ class MainWindow(QMainWindow):
             self.use_index_search = use_index
             self.index_search_checkbox.setChecked(use_index)
         except Exception as e:
-            logger.error(f"インデックス設定の読み込みに失敗: {e}")
+            logger.error(LOG_MESSAGE_TEMPLATES['INDEX_CONFIG_LOAD_ERROR'].format(error=e))
             self.use_index_search = False
             self.index_search_checkbox.setChecked(False)
 
@@ -137,7 +142,9 @@ class MainWindow(QMainWindow):
         if not is_global_search and not directory:
             return
 
-        logger.info(f"検索開始: 検索語={search_terms}, タイプ={search_type}, グローバル検索={is_global_search}")
+        logger.info(LOG_MESSAGE_TEMPLATES['SEARCH_START'].format(
+            search_terms=search_terms, search_type=search_type, is_global_search=is_global_search
+        ))
         self.results_widget.clear_results()
         self.directory_widget.disable_open_folder_button()
 
@@ -162,7 +169,9 @@ class MainWindow(QMainWindow):
                         directory, search_terms, include_subdirs, search_type
                     )
         except Exception as e:
-            self.auto_close_message.show_message(f"検索中にエラーが発生しました: {str(e)}", 5000)
+            self.auto_close_message.show_message(
+                LOG_MESSAGE_TEMPLATES['SEARCH_ERROR'].format(error=str(e)), 5000
+            )
 
     def open_index_management(self) -> None:
         """インデックス管理ダイアログを表示する"""
@@ -180,7 +189,8 @@ class MainWindow(QMainWindow):
             enabled: 有効にする場合True、無効にする場合False.
         """
         self.use_index_search = enabled
-        logger.info(f"インデックス検索を{'有効' if enabled else '無効'}にしました")
+        status = '有効' if enabled else '無効'
+        logger.info(LOG_MESSAGE_TEMPLATES['INDEX_TOGGLE'].format(status=status))
 
         try:
             self.config_manager.set_use_index_search(enabled)
@@ -203,7 +213,7 @@ class MainWindow(QMainWindow):
             use_highlight = self.directory_widget.get_use_pdf_highlight()
             self.file_opener.open_file(file_path, position or 0, search_terms, use_highlight)
         except FileNotFoundError:
-            self._show_error_message("ファイルが見つかりません")
+            self._show_error_message(ERROR_MESSAGES['FILE_NOT_FOUND'])
         except Exception as e:
             self._show_error_message(f"ファイルを開く際にエラーが発生しました: {e}")
 
@@ -219,22 +229,24 @@ class MainWindow(QMainWindow):
             folder_path = os.path.dirname(file_path)
             self.file_opener.open_folder(folder_path)
         except FileNotFoundError:
-            self.auto_close_message.show_message("フォルダが見つかりません", 2000)
+            self.auto_close_message.show_message(ERROR_MESSAGES['FOLDER_NOT_FOUND'], 2000)
         except Exception as e:
-            self.auto_close_message.show_message(f"フォルダを開く際にエラーが発生しました: {str(e)}", 2000)
+            self.auto_close_message.show_message(
+                LOG_MESSAGE_TEMPLATES['FOLDER_OPEN_ERROR'].format(error=str(e)), 2000
+            )
 
     def close_application(self) -> None:
         """アプリケーションを終了する"""
         msg_box = create_confirmation_dialog(
             self,
-            '確認',
-            "検索を終了しますか?",
+            DIALOG_TITLES['CONFIRM'],
+            DIALOG_MESSAGES['CONFIRM_EXIT'],
             QMessageBox.Yes
         )
 
         reply = msg_box.exec_()
         if reply == QMessageBox.Yes:
-            logger.info("アプリケーションを終了します")
+            logger.info(LOG_MESSAGE_TEMPLATES['APP_EXIT'])
             try:
                 self.file_opener.cleanup_resources()
                 temp_file_manager.cleanup_all()

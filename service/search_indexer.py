@@ -6,7 +6,16 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 from service.content_extractor import ContentExtractor
 from service.index_storage import IndexStorage
-from utils.constants import SUPPORTED_FILE_EXTENSIONS
+from utils.constants import (
+    FILE_EXTENSION_PDF,
+    INDEX_DEFAULT_CONTEXT_LENGTH,
+    INDEX_HASH_READ_CHUNK_SIZE,
+    INDEX_MAX_RESULTS,
+    PDF_TEXT_PAGE_SEPARATOR,
+    SEARCH_TYPE_AND,
+    SUPPORTED_FILE_EXTENSIONS,
+    TEXT_LINE_SEPARATOR,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +63,7 @@ class SearchIndexer:
 
         logger.info(f"インデックス作成完了: {updated_files} ファイルを更新")
 
-    def search_in_index(self, search_terms: List[str], search_type: str = "AND") -> List[Tuple[str, List[Tuple[int, str]]]]:
+    def search_in_index(self, search_terms: List[str], search_type: str = SEARCH_TYPE_AND) -> List[Tuple[str, List[Tuple[int, str]]]]:
         results = []
 
         for file_path, file_info in self.index_data["files"].items():
@@ -136,7 +145,7 @@ class SearchIndexer:
         hash_md5 = hashlib.md5()
         try:
             with open(file_path, "rb") as f:
-                chunk = f.read(8192)
+                chunk = f.read(INDEX_HASH_READ_CHUNK_SIZE)
                 hash_md5.update(chunk)
         except Exception:
             return ""
@@ -146,17 +155,17 @@ class SearchIndexer:
     def _match_search_terms(self, content: str, search_terms: List[str], search_type: str) -> bool:
         content_lower = content.lower()
 
-        if search_type == "AND":
+        if search_type == SEARCH_TYPE_AND:
             return all(term.lower() in content_lower for term in search_terms)
         else:  # OR
             return any(term.lower() in content_lower for term in search_terms)
 
     def _find_matches_in_content(self, content: str, search_terms: List[str],
-                               file_path: str, context_length: int = 100) -> List[Tuple[int, str]]:
+                               file_path: str, context_length: int = INDEX_DEFAULT_CONTEXT_LENGTH) -> List[Tuple[int, str]]:
         matches = []
 
-        if file_path.lower().endswith('.pdf'):
-            pages = content.split('\n\n')
+        if file_path.lower().endswith(FILE_EXTENSION_PDF):
+            pages = content.split(PDF_TEXT_PAGE_SEPARATOR)
             for page_num, page_content in enumerate(pages, 1):
                 for term in search_terms:
                     if term.lower() in page_content.lower():
@@ -164,7 +173,7 @@ class SearchIndexer:
                         matches.append((page_num, context))
                         break  # ページごとに1つのマッチのみ
         else:
-            lines = content.split('\n')
+            lines = content.split(TEXT_LINE_SEPARATOR)
             for line_num, line in enumerate(lines, 1):
                 for term in search_terms:
                     if term.lower() in line.lower():
@@ -172,7 +181,7 @@ class SearchIndexer:
                         matches.append((line_num, context))
                         break  # 行ごとに1つのマッチのみ
 
-        return matches[:200]
+        return matches[:INDEX_MAX_RESULTS]
 
     def _extract_context(self, text: str, search_term: str, context_length: int) -> str:
         term_index = text.lower().find(search_term.lower())

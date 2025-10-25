@@ -312,7 +312,7 @@ class ConfigManager:
         self._set_bool(CONFIG_SECTIONS['INDEX_SETTINGS'], CONFIG_KEYS['USE_INDEX_SEARCH'], use_index)
 
     def get_use_pdf_highlight(self) -> bool:
-        return self._get_bool('search', 'use_pdf_highlight')
+        return self._get_bool(CONFIG_SECTIONS['SEARCH'], CONFIG_KEYS['USE_PDF_HIGHLIGHT'])
 
     def set_use_pdf_highlight(self, value: bool) -> None:
-        self._set_bool('search', 'use_pdf_highlight', value)
+        self._set_bool(CONFIG_SECTIONS['SEARCH'], CONFIG_KEYS['USE_PDF_HIGHLIGHT'], value)

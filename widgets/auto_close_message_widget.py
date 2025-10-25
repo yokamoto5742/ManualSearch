@@ -3,6 +3,8 @@ from typing import Optional
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 
+from utils.constants import STYLESHEETS
+
 
 class AutoCloseMessage(QWidget):
     """指定時間後に自動的に閉じるメッセージウィジェット"""
@@ -13,11 +15,7 @@ class AutoCloseMessage(QWidget):
         親ウィジェットを指定して、常に手前に表示されるウィンドウを作成
         """
         super().__init__(parent, Qt.Window | Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        self.setStyleSheet(
-            "background-color: #f0f0f0; "
-            "border: 1px solid #cccccc; "
-            "border-radius: 5px;"
-        )
+        self.setStyleSheet(STYLESHEETS['AUTO_CLOSE_MESSAGE'])
         self._setup_ui()
 
     def _setup_ui(self) -> None:

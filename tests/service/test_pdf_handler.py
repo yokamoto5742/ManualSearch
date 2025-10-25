@@ -436,13 +436,13 @@ class TestPDFNavigator:
 
         PDFNavigator.navigate_to_page(page_number)
 
-        # ページ番号入力ダイアログを開く
-        assert mock_hotkey.call_args_list[0] == call('ctrl', 'shift', 'n')
+        # Find & Replace ダイアログを開く
+        assert mock_hotkey.call_args_list[0] == call('ctrl', 'h')
         # 既存の入力をクリア
         assert mock_hotkey.call_args_list[1] == call('ctrl', 'a')
         # ページ番号を入力
         mock_write.assert_called_once_with(str(page_number))
-        # Enterで確定
+        # Enter で確定
         mock_press.assert_called_once_with('enter')
 
     @patch('time.sleep')
