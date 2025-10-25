@@ -143,15 +143,15 @@ FILE_TYPES = {
 # テキストファイル処理：エンコーディング設定
 # ============================================================================
 
-ENCODING_CANDIDATES = ['utf-8', 'cp1252', 'latin-1']
-ENCODING_FALLBACK = 'latin-1'
+ENCODING_CANDIDATES = ['utf-8', 'cp932']
+ENCODING_FALLBACK = 'utf-8'
 
 PDF_TEXT_PAGE_SEPARATOR = '\n\n'
 TEXT_LINE_SEPARATOR = '\n'
 
 
 # ============================================================================
-# その他の設定
+# その他の設定(マークダウン、インデックス)
 # ============================================================================
 
 MARKDOWN_EXTENSIONS = ['nl2br']

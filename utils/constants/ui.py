@@ -17,9 +17,9 @@ DEFAULT_WINDOW_Y = 50
 # ============================================================================
 
 MIN_WINDOW_WIDTH = 800
-MAX_WINDOW_WIDTH = 3840
+MAX_WINDOW_WIDTH = 1920
 MIN_WINDOW_HEIGHT = 600
-MAX_WINDOW_HEIGHT = 2160
+MAX_WINDOW_HEIGHT = 1080
 
 
 # ============================================================================
