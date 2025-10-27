@@ -172,7 +172,7 @@ WINDOW_TITLE_TEMPLATE = 'マニュアル検索 v{version}'
 # ============================================================================
 
 ACROBAT_KEYBINDS = {
-    'FIND_AND_REPLACE': ['ctrl', 'h'],
+    'FIND_AND_REPLACE': ['ctrl', 'shift', 'n'],
     'SELECT_ALL': ['ctrl', 'a'],
     'CONFIRM': ['enter']
 }
