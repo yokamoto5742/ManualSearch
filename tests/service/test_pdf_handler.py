@@ -436,8 +436,7 @@ class TestPDFNavigator:
 
         PDFNavigator.navigate_to_page(page_number)
 
-        # Find & Replace ダイアログを開く
-        assert mock_hotkey.call_args_list[0] == call('ctrl', 'h')
+        assert mock_hotkey.call_args_list[0] == call('ctrl', 'shift', 'n')
         # 既存の入力をクリア
         assert mock_hotkey.call_args_list[1] == call('ctrl', 'a')
         # ページ番号を入力
