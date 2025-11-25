@@ -241,18 +241,26 @@ class ConfigManager:
     
     def get_acrobat_reader_x86_path(self) -> str:
         return self._get_str(CONFIG_SECTIONS['PATHS'], CONFIG_KEYS['ACROBAT_READER_X86_PATH'])
-    
+
     def find_available_acrobat_path(self) -> Optional[str]:
+        # 優先度の高い設定済のキーをチェック
         paths_to_check = [
             self.get_acrobat_path(),
             self.get_acrobat_reader_path(),
             self.get_acrobat_reader_x86_path(),
         ]
-        
+
+        # [Paths]セクションの他のすべての値もチェック
+        if CONFIG_SECTIONS['PATHS'] in self.config:
+            for key in self.config[CONFIG_SECTIONS['PATHS']]:
+                val = self.config[CONFIG_SECTIONS['PATHS']][key]
+                if val not in paths_to_check:
+                    paths_to_check.append(val)
+
         for path in paths_to_check:
-            if os.path.exists(path):
+            if path and os.path.exists(path):
                 return path
-        
+
         return None
     
     def get_directories(self) -> List[str]:
