@@ -56,11 +56,12 @@ class SearchWidget(QWidget):
         self.search_type_combo = self._create_search_type_combo()
         options_layout.addWidget(self.search_type_combo)
 
+        options_layout.addStretch()
+
         clear_button = QPushButton(UI_LABELS['CLEAR_BUTTON'])
         clear_button.clicked.connect(self.clear_requested.emit)
         options_layout.addWidget(clear_button)
 
-        options_layout.addStretch()
         return options_layout
 
     @staticmethod
