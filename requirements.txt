@@ -30,7 +30,7 @@ PyQt5-Qt5==5.15.2
 PyQt5-stubs==5.15.6.0
 PyQt5_sip==12.17.0
 PyRect==0.2.0
-pyright==1.1.406
+pyright==1.1.407
 PyScreeze==1.0.1
 pytest==8.4.1
 pytest-cov==6.2.1
@@ -40,5 +40,5 @@ pytweening==1.2.0
 pywin32-ctypes==0.2.3
 PyYAML==6.0.2
 setuptools==80.9.0
-typing_extensions==4.14.1
+typing_extensions==4.15.0
 uv==0.9.2
