@@ -3,7 +3,7 @@ from typing import List
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import (
-    QComboBox, QGridLayout, QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
+    QComboBox, QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
 )
 
 from utils.constants import (
@@ -37,8 +37,8 @@ class SearchWidget(QWidget):
         options_layout = self._create_options_layout()
         layout.addLayout(options_layout)
 
-    def _create_search_layout(self) -> QGridLayout:
-        search_layout = QGridLayout()
+    def _create_search_layout(self) -> QHBoxLayout:
+        search_layout = QHBoxLayout()
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText(UI_LABELS['SEARCH_PLACEHOLDER'])
         self.search_input.returnPressed.connect(self.search_requested.emit)
@@ -46,20 +46,20 @@ class SearchWidget(QWidget):
         search_button = QPushButton(UI_LABELS['SEARCH_BUTTON'])
         search_button.clicked.connect(self.search_requested.emit)
 
-        clear_button = QPushButton(UI_LABELS['CLEAR_BUTTON'])
-        clear_button.clicked.connect(self.clear_requested.emit)
-
-        search_layout.addWidget(self.search_input, 0, 0)
-        search_layout.addWidget(search_button, 0, 1)
-        search_layout.addWidget(clear_button, 1, 1)
+        search_layout.addWidget(self.search_input)
+        search_layout.addWidget(search_button)
         return search_layout
 
     def _create_options_layout(self) -> QHBoxLayout:
         options_layout = QHBoxLayout()
-        
+
         self.search_type_combo = self._create_search_type_combo()
         options_layout.addWidget(self.search_type_combo)
-        
+
+        clear_button = QPushButton(UI_LABELS['CLEAR_BUTTON'])
+        clear_button.clicked.connect(self.clear_requested.emit)
+        options_layout.addWidget(clear_button)
+
         options_layout.addStretch()
         return options_layout
 
