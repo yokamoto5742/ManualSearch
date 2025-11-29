@@ -4,7 +4,7 @@ import os
 import subprocess
 import tempfile
 import time
-from typing import List
+from typing import List, cast
 
 import fitz
 import psutil
@@ -223,10 +223,10 @@ class PDFHighlighter:
     def _highlight_term_in_page(page: fitz.Page, term: str, color_index: int) -> None:
         text_instances = []
         try:
-            text_instances = page.search_for(term.strip())
+            text_instances = cast(list, page.search_for(term.strip()))  # type: ignore[attr-defined]
         except AttributeError:
             try:
-                text_instances = page.get_text("blocks")
+                text_instances = cast(list, page.get_text("blocks"))  # type: ignore[attr-defined]
             except Exception:
                 pass
 

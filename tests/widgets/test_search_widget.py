@@ -429,3 +429,247 @@ class TestSearchWidget:
             qtbot.wait(50)
 
         assert signal_count == 5
+
+    # ========== クリアボタンテスト ==========
+
+    def test_clear_button_exists(self, search_widget):
+        """クリアボタンが存在することを検証"""
+        clear_buttons = [btn for btn in search_widget.findChildren(QPushButton)
+                        if btn.text() == UI_LABELS['CLEAR_BUTTON']]
+        assert len(clear_buttons) == 1
+
+    def test_clear_button_label(self, search_widget):
+        """クリアボタンのラベルが正しいことを検証"""
+        clear_buttons = [btn for btn in search_widget.findChildren(QPushButton)
+                        if btn.text() == UI_LABELS['CLEAR_BUTTON']]
+        assert clear_buttons[0].text() == 'クリア'
+
+    def test_clear_button_emits_clear_requested_signal(self, qtbot, search_widget):
+        """クリアボタンクリック時にclear_requestedシグナルが発行されることを検証"""
+        clear_buttons = [btn for btn in search_widget.findChildren(QPushButton)
+                        if btn.text() == UI_LABELS['CLEAR_BUTTON']]
+        clear_button = clear_buttons[0]
+
+        with qtbot.waitSignal(search_widget.clear_requested, timeout=1000):
+            clear_button.click()
+
+    def test_clear_requested_signal_defined(self, search_widget):
+        """clear_requestedシグナルが定義されていることを検証"""
+        assert hasattr(search_widget, 'clear_requested')
+
+    def test_clear_input_method_clears_search_field(self, search_widget):
+        """clear_input()メソッドが検索入力フィールドをクリアすることを検証"""
+        search_widget.search_input.setText('test search term')
+        assert search_widget.search_input.text() == 'test search term'
+
+        search_widget.clear_input()
+        assert search_widget.search_input.text() == ''
+
+    def test_clear_input_method_with_empty_field(self, search_widget):
+        """空の検索入力フィールドに対してclear_input()を呼び出しても問題ないことを検証"""
+        search_widget.search_input.setText('')
+        search_widget.clear_input()
+        assert search_widget.search_input.text() == ''
+
+    def test_clear_input_method_with_japanese_text(self, search_widget):
+        """日本語テキスト入力後のclear_input()動作を検証"""
+        search_widget.search_input.setText('テスト検索、プログラミング')
+        assert search_widget.search_input.text() == 'テスト検索、プログラミング'
+
+        search_widget.clear_input()
+        assert search_widget.search_input.text() == ''
+
+    def test_clear_input_method_with_special_characters(self, search_widget):
+        """特殊文字を含むテキスト入力後のclear_input()動作を検証"""
+        special_text = '!@#$%^&*()_+-=[]{}|;:,.<>?'
+        search_widget.search_input.setText(special_text)
+        assert search_widget.search_input.text() == special_text
+
+        search_widget.clear_input()
+        assert search_widget.search_input.text() == ''
+
+    def test_clear_input_method_multiple_times(self, search_widget):
+        """clear_input()を複数回呼び出しても問題ないことを検証"""
+        search_widget.search_input.setText('test')
+        search_widget.clear_input()
+        assert search_widget.search_input.text() == ''
+
+        search_widget.clear_input()
+        assert search_widget.search_input.text() == ''
+
+        search_widget.clear_input()
+        assert search_widget.search_input.text() == ''
+
+    def test_clear_button_initial_state(self, search_widget):
+        """クリアボタンの初期状態を検証"""
+        clear_buttons = [btn for btn in search_widget.findChildren(QPushButton)
+                        if btn.text() == UI_LABELS['CLEAR_BUTTON']]
+        clear_button = clear_buttons[0]
+
+        # ボタンが有効であることを確認
+        assert clear_button.isEnabled()
+        # ボタンが存在することを確認
+        assert clear_button is not None
+
+    def test_clear_button_functionality_workflow(self, qtbot, search_widget):
+        """クリアボタンの完全なワークフロー（入力→クリア→確認）を検証"""
+        # 検索語を入力
+        search_widget.search_input.setText('Python,Java,C++')
+        assert search_widget.get_search_terms() == ['Python', 'Java', 'C++']
+
+        # クリアボタンをクリック
+        clear_buttons = [btn for btn in search_widget.findChildren(QPushButton)
+                        if btn.text() == UI_LABELS['CLEAR_BUTTON']]
+        clear_button = clear_buttons[0]
+
+        with qtbot.waitSignal(search_widget.clear_requested, timeout=1000):
+            clear_button.click()
+
+        # シグナルは発行されるが、clear_input()は別途呼び出す必要がある
+        # （MainWindowなどで接続されることを想定）
+        search_widget.clear_input()
+        assert search_widget.search_input.text() == ''
+        assert search_widget.get_search_terms() == []
+
+    def test_clear_button_does_not_affect_search_type(self, qtbot, search_widget):
+        """クリアボタンが検索タイプに影響しないことを検証"""
+        # OR検索に設定
+        search_widget.search_type_combo.setCurrentIndex(1)
+        assert search_widget.get_search_type() == SEARCH_TYPE_OR
+
+        # 検索語を入力してクリア
+        search_widget.search_input.setText('test')
+        search_widget.clear_input()
+
+        # 検索タイプは変更されない
+        assert search_widget.get_search_type() == SEARCH_TYPE_OR
+
+    def test_clear_requested_signal_emission_count(self, qtbot, search_widget):
+        """clear_requestedシグナルが正しく1回だけ発行されることを検証"""
+        signal_count = 0
+
+        def on_clear_requested():
+            nonlocal signal_count
+            signal_count += 1
+
+        search_widget.clear_requested.connect(on_clear_requested)
+
+        clear_buttons = [btn for btn in search_widget.findChildren(QPushButton)
+                        if btn.text() == UI_LABELS['CLEAR_BUTTON']]
+        clear_button = clear_buttons[0]
+
+        clear_button.click()
+        qtbot.wait(100)
+
+        assert signal_count == 1
+
+    def test_multiple_clear_button_clicks(self, qtbot, search_widget):
+        """クリアボタンを複数回クリックしてもシグナルが正しく発行されることを検証"""
+        signal_count = 0
+
+        def on_clear_requested():
+            nonlocal signal_count
+            signal_count += 1
+
+        search_widget.clear_requested.connect(on_clear_requested)
+
+        clear_buttons = [btn for btn in search_widget.findChildren(QPushButton)
+                        if btn.text() == UI_LABELS['CLEAR_BUTTON']]
+        clear_button = clear_buttons[0]
+
+        # 複数回クリック
+        for _ in range(5):
+            clear_button.click()
+            qtbot.wait(50)
+
+        assert signal_count == 5
+
+    def test_clear_input_after_long_text(self, search_widget):
+        """非常に長いテキスト入力後のクリア動作を検証"""
+        long_text = 'test' * 1000
+        search_widget.search_input.setText(long_text)
+        assert len(search_widget.search_input.text()) > 0
+
+        search_widget.clear_input()
+        assert search_widget.search_input.text() == ''
+
+    def test_clear_input_preserves_placeholder(self, search_widget):
+        """clear_input()後もプレースホルダーテキストが保持されることを検証"""
+        expected_placeholder = UI_LABELS['SEARCH_PLACEHOLDER']
+
+        search_widget.search_input.setText('test')
+        search_widget.clear_input()
+
+        assert search_widget.search_input.text() == ''
+        assert search_widget.search_input.placeholderText() == expected_placeholder
+
+    def test_clear_button_position_in_layout(self, search_widget):
+        """クリアボタンがオプションレイアウトに正しく配置されていることを検証"""
+        clear_buttons = [btn for btn in search_widget.findChildren(QPushButton)
+                        if btn.text() == UI_LABELS['CLEAR_BUTTON']]
+        assert len(clear_buttons) == 1
+        clear_button = clear_buttons[0]
+
+        # ボタンがウィジェットの子要素であることを確認
+        assert clear_button.parent() is not None
+
+    def test_clear_workflow_with_search(self, qtbot, search_widget):
+        """検索→クリア→再検索のワークフローを検証"""
+        # 最初の検索
+        search_widget.search_input.setText('first search')
+        assert search_widget.get_search_terms() == ['first search']
+
+        # クリア
+        search_widget.clear_input()
+        assert search_widget.get_search_terms() == []
+
+        # 2回目の検索
+        search_widget.search_input.setText('second search')
+        assert search_widget.get_search_terms() == ['second search']
+
+        # 検索実行シグナル
+        with qtbot.waitSignal(search_widget.search_requested, timeout=1000):
+            qtbot.keyPress(search_widget.search_input, Qt.Key_Return)
+
+    def test_clear_input_with_unicode_emoji(self, search_widget):
+        """絵文字を含むテキストのクリア動作を検証"""
+        emoji_text = '検索🔍テスト😀Python🐍'
+        search_widget.search_input.setText(emoji_text)
+        assert search_widget.search_input.text() == emoji_text
+
+        search_widget.clear_input()
+        assert search_widget.search_input.text() == ''
+
+    def test_clear_button_and_search_button_independence(self, qtbot, search_widget):
+        """クリアボタンと検索ボタンが独立して動作することを検証"""
+        search_signal_count = 0
+        clear_signal_count = 0
+
+        def on_search_requested():
+            nonlocal search_signal_count
+            search_signal_count += 1
+
+        def on_clear_requested():
+            nonlocal clear_signal_count
+            clear_signal_count += 1
+
+        search_widget.search_requested.connect(on_search_requested)
+        search_widget.clear_requested.connect(on_clear_requested)
+
+        # 検索ボタンをクリック
+        search_buttons = [btn for btn in search_widget.findChildren(QPushButton)
+                         if btn.text() == UI_LABELS['SEARCH_BUTTON']]
+        search_buttons[0].click()
+        qtbot.wait(100)
+
+        assert search_signal_count == 1
+        assert clear_signal_count == 0
+
+        # クリアボタンをクリック
+        clear_buttons = [btn for btn in search_widget.findChildren(QPushButton)
+                        if btn.text() == UI_LABELS['CLEAR_BUTTON']]
+        clear_buttons[0].click()
+        qtbot.wait(100)
+
+        assert search_signal_count == 1
+        assert clear_signal_count == 1

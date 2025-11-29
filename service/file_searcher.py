@@ -1,7 +1,7 @@
 import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple, cast
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
@@ -195,7 +195,7 @@ class FileSearcher(QThread):
         if method_name:
             method = getattr(self, method_name, None)
             if callable(method):
-                return method
+                return cast(Callable[[str], Optional[Tuple[str, List[Tuple[int, str]]]]], method)
         return None
 
     def search_pdf(self, file_path: str) -> Optional[Tuple[str, List[Tuple[int, str]]]]:

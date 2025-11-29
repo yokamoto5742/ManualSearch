@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import cast
 
 import fitz
 
@@ -36,10 +37,10 @@ class ContentExtractor:
             with fitz.open(file_path) as doc:
                 for page in doc:
                     try:
-                        text = page.get_text()
+                        text = cast(str, page.get_text())  # type: ignore[attr-defined]
                     except AttributeError:
                         try:
-                            text = page.get_text("text")
+                            text = cast(str, page.get_text("text"))  # type: ignore[attr-defined]
                         except Exception:
                             text = ""
                     if text:

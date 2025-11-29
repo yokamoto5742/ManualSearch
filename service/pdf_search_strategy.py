@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 
 import fitz
 
@@ -29,10 +29,10 @@ class PDFSearchStrategy:
                 for page_num in range(page_count):
                     page = doc[page_num]
                     try:
-                        text = page.get_text()
+                        text = cast(str, page.get_text())  # type: ignore[attr-defined]
                     except AttributeError:
                         try:
-                            text = page.get_text("text")
+                            text = cast(str, page.get_text("text"))  # type: ignore[attr-defined]
                         except Exception:
                             text = ""
 
