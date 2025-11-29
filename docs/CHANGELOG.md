@@ -7,7 +7,18 @@
 
 ## [Unreleased]
 
-## [1.3.1] - 2025-10-25
+## [1.3.3] - 2025-11-29
+
+### 追加
+- 検索クリアボタン：検索入力フィールドをリセットする機能を実装
+
+### 変更
+- 検索ウィジェット：検索レイアウトを QHBoxLayout に統一し、ボタン配置を改善
+- ボタン配置：クリアボタンの右側にスペースを追加して UI の見栄えを向上
+- 型ヒント：型安全性を向上させるため、型ヒントをキャストで追加
+- 依存関係：pyright と typing_extensions を更新
+
+## [1.3.2] - 2025-10-25
 
 ### 変更
 - 一時ファイル管理（pdf_handler.py, file_opener.py, main_window.py）：temp_file_manager を統一的に使用してメモリリークを防止
@@ -20,7 +31,7 @@
 ### セキュリティ
 - PDFハンドラーの後方互換性エイリアス削除：セキュリティリスクを軽減し、統一的な一時ファイル管理を強制
 
-## [1.2.3] - 2025-10-20
+## [1.3.1] - 2025-10-20
 
 ### 追加
 - PDFハイライト機能：日本語ラベル「ハイライト付きPDF」をUI選択肢に追加
@@ -35,7 +46,6 @@
 
 ### 修正
 - エンドツーエンド検索テスト（test_integration.py）：コメントと関数定義の整合性を修正
-- バージョン番号を 1.2.3 に統一し、ドキュメント内の日付を 2025-10-20 に修正
 
 ### セキュリティ
 - 開発環境設定（.gitignore）：__pycache__と.ideaディレクトリをGit追跡対象外に設定
@@ -106,12 +116,3 @@
 
 ### 変更
 - UI デザイン：PyQt5 を使用した直感的なインターフェース設計
-
-[Unreleased]: https://github.com/yokam-oss/ManualSearch/compare/v1.3.0...HEAD
-[1.3.0]: https://github.com/yokam-oss/ManualSearch/compare/v1.2.3...v1.3.0
-[1.2.3]: https://github.com/yokam-oss/ManualSearch/compare/v1.2.2...v1.2.3
-[1.2.2]: https://github.com/yokam-oss/ManualSearch/compare/v1.2.1...v1.2.2
-[1.2.1]: https://github.com/yokam-oss/ManualSearch/compare/v1.2.0...v1.2.1
-[1.2.0]: https://github.com/yokam-oss/ManualSearch/compare/v1.1.0...v1.2.0
-[1.1.0]: https://github.com/yokam-oss/ManualSearch/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/yokam-oss/ManualSearch/releases/tag/v1.0.0
