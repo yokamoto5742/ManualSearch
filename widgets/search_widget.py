@@ -3,7 +3,7 @@ from typing import List
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import (
-    QComboBox, QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
+    QComboBox, QGridLayout, QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
 )
 
 from utils.constants import (
@@ -15,6 +15,7 @@ class SearchWidget(QWidget):
     """検索入力と検索オプションのUI"""
 
     search_requested = pyqtSignal()
+    clear_requested = pyqtSignal()
 
     def __init__(self, config_manager: object) -> None:
         """初期化
@@ -36,8 +37,8 @@ class SearchWidget(QWidget):
         options_layout = self._create_options_layout()
         layout.addLayout(options_layout)
 
-    def _create_search_layout(self) -> QHBoxLayout:
-        search_layout = QHBoxLayout()
+    def _create_search_layout(self) -> QGridLayout:
+        search_layout = QGridLayout()
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText(UI_LABELS['SEARCH_PLACEHOLDER'])
         self.search_input.returnPressed.connect(self.search_requested.emit)
@@ -45,8 +46,12 @@ class SearchWidget(QWidget):
         search_button = QPushButton(UI_LABELS['SEARCH_BUTTON'])
         search_button.clicked.connect(self.search_requested.emit)
 
-        search_layout.addWidget(self.search_input)
-        search_layout.addWidget(search_button)
+        clear_button = QPushButton(UI_LABELS['CLEAR_BUTTON'])
+        clear_button.clicked.connect(self.clear_requested.emit)
+
+        search_layout.addWidget(self.search_input, 0, 0)
+        search_layout.addWidget(search_button, 0, 1)
+        search_layout.addWidget(clear_button, 1, 1)
         return search_layout
 
     def _create_options_layout(self) -> QHBoxLayout:
@@ -98,4 +103,8 @@ class SearchWidget(QWidget):
         except AttributeError:
             print("検索タイプコンボボックスが正しく初期化されていません")
             return SEARCH_TYPE_AND
+
+    def clear_input(self) -> None:
+        """検索入力をクリア"""
+        self.search_input.clear()
 

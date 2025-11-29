@@ -139,6 +139,7 @@ AUTO_CLOSE_MESSAGE_DEFAULT_DURATION = 1000
 UI_LABELS = {
     'SEARCH_PLACEHOLDER': '検索語を入力 ( , または 、区切りで複数語検索)',
     'SEARCH_BUTTON': '検索',
+    'CLEAR_BUTTON': 'クリア',
     'CLOSE_BUTTON': '閉じる',
     'ADD_BUTTON': '追加',
     'EDIT_BUTTON': '編集',

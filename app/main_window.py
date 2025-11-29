@@ -98,6 +98,7 @@ class MainWindow(QMainWindow):
 
     def _connect_signals(self) -> None:
         self.search_widget.search_requested.connect(self.start_search)
+        self.search_widget.clear_requested.connect(self.clear_search)
         self.results_widget.result_selected.connect(self.enable_open_buttons)
         self.results_widget.file_open_requested.connect(self.open_file)
         self.directory_widget.open_folder_requested.connect(self.open_folder)
@@ -172,6 +173,11 @@ class MainWindow(QMainWindow):
             self.auto_close_message.show_message(
                 LOG_MESSAGE_TEMPLATES['SEARCH_ERROR'].format(error=str(e)), 5000
             )
+
+    def clear_search(self) -> None:
+        """検索語と検索結果をクリア"""
+        self.search_widget.clear_input()
+        self.results_widget.clear_results()
 
     def open_index_management(self) -> None:
         """インデックス管理ダイアログを表示する"""
