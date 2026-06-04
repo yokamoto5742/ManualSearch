@@ -30,6 +30,8 @@ from utils.constants import (
     MIN_WINDOW_HEIGHT,
     MIN_WINDOW_WIDTH,
     SUPPORTED_FILE_EXTENSIONS,
+    TEXT_VIEWER_DEFAULT_HEIGHT,
+    TEXT_VIEWER_DEFAULT_WIDTH,
 )
 from utils.helpers import read_file_with_auto_encoding
 
@@ -60,7 +62,9 @@ class ConfigValueValidator:
         'font_size': (MIN_FONT_SIZE, MAX_FONT_SIZE),
         'filename_font_size': (MIN_FONT_SIZE, MAX_FONT_SIZE),
         'result_detail_font_size': (MIN_FONT_SIZE, MAX_FONT_SIZE),
-        'html_font_size': (MIN_FONT_SIZE, MAX_FONT_SIZE),
+        'text_viewer_width': (MIN_WINDOW_WIDTH, MAX_WINDOW_WIDTH),
+        'text_viewer_height': (MIN_WINDOW_HEIGHT, MAX_WINDOW_HEIGHT),
+        'text_viewer_font_size': (MIN_FONT_SIZE, MAX_FONT_SIZE),
         'timeout': (MIN_PDF_TIMEOUT, MAX_PDF_TIMEOUT),
         'max_temp_files': (MIN_MAX_TEMP_FILES, MAX_MAX_TEMP_FILES),
     }
@@ -91,7 +95,9 @@ class ConfigManager:
         'font_size': DEFAULT_FONT_SIZE,
         'filename_font_size': DEFAULT_FONT_SIZE,
         'result_detail_font_size': DEFAULT_FONT_SIZE,
-        'html_font_size': DEFAULT_HTML_FONT_SIZE,
+        'text_viewer_width': TEXT_VIEWER_DEFAULT_WIDTH,
+        'text_viewer_height': TEXT_VIEWER_DEFAULT_HEIGHT,
+        'text_viewer_font_size': DEFAULT_HTML_FONT_SIZE,
         'context_length': DEFAULT_CONTEXT_LENGTH,
         'timeout': DEFAULT_PDF_TIMEOUT,
         'max_temp_files': DEFAULT_MAX_TEMP_FILES,
@@ -224,11 +230,23 @@ class ConfigManager:
     def set_result_detail_font_size(self, size: int) -> None:
         self._set_int(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['RESULT_DETAIL_FONT_SIZE'], size)
     
-    def get_html_font_size(self) -> int:
-        return self._get_int(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['HTML_FONT_SIZE'])
-    
-    def set_html_font_size(self, size: int) -> None:
-        self._set_int(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['HTML_FONT_SIZE'], size)
+    def get_text_viewer_width(self) -> int:
+        return self._get_int(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['TEXT_VIEWER_WIDTH'])
+
+    def set_text_viewer_width(self, width: int) -> None:
+        self._set_int(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['TEXT_VIEWER_WIDTH'], width)
+
+    def get_text_viewer_height(self) -> int:
+        return self._get_int(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['TEXT_VIEWER_HEIGHT'])
+
+    def set_text_viewer_height(self, height: int) -> None:
+        self._set_int(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['TEXT_VIEWER_HEIGHT'], height)
+
+    def get_text_viewer_font_size(self) -> int:
+        return self._get_int(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['TEXT_VIEWER_FONT_SIZE'])
+
+    def set_text_viewer_font_size(self, size: int) -> None:
+        self._set_int(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['TEXT_VIEWER_FONT_SIZE'], size)
     
     def get_acrobat_path(self) -> str:
         return self._get_str(CONFIG_SECTIONS['PATHS'], CONFIG_KEYS['ACROBAT_PATH'])

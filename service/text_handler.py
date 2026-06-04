@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from PyQt5.QtWidgets import QWidget
 
-from utils.constants import FILE_EXTENSION_MD
+from utils.constants import FILE_EXTENSION_MD, TEXT_VIEWER_DEFAULT_HEIGHT, TEXT_VIEWER_DEFAULT_WIDTH
 from utils.helpers import read_file_with_auto_encoding
 from widgets.text_viewer_widget import TextViewerWindow
 
@@ -20,6 +20,8 @@ def open_text_file(
     html_font_size: int,
     position: int = 0,
     parent: Optional[QWidget] = None,
+    width: int = TEXT_VIEWER_DEFAULT_WIDTH,
+    height: int = TEXT_VIEWER_DEFAULT_HEIGHT,
 ) -> None:
     """テキストファイルをアプリ内の別ウィンドウでハイライト付きで開く
 
@@ -29,6 +31,8 @@ def open_text_file(
         html_font_size: 表示フォントサイズ
         position: 検索ヒット行番号(1始まり、0でジャンプなし)
         parent: 親ウィジェット
+        width: ウィンドウ幅
+        height: ウィンドウ高さ
 
     Raises:
         Exception: ファイル処理エラー
@@ -47,6 +51,8 @@ def open_text_file(
             font_size=html_font_size,
             is_markdown=is_markdown,
             position=position,
+            width=width,
+            height=height,
             parent=parent,
         )
         viewer.destroyed.connect(lambda: _remove_viewer(viewer))

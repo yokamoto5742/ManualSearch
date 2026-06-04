@@ -18,7 +18,9 @@ class TestFileOpener:
         """ConfigManagerのモック"""
         mock_config = MagicMock()
         mock_config.find_available_acrobat_path.return_value = r'C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe'
-        mock_config.get_html_font_size.return_value = 16
+        mock_config.get_text_viewer_font_size.return_value = 16
+        mock_config.get_text_viewer_width.return_value = 800
+        mock_config.get_text_viewer_height.return_value = 600
         return mock_config
     
     @pytest.fixture
@@ -242,7 +244,7 @@ class TestFileOpener:
         
         file_opener._open_text_file(txt_path, ['test'])
 
-        mock_open_text.assert_called_once_with(txt_path, ['test'], 16, 0, None)
+        mock_open_text.assert_called_once_with(txt_path, ['test'], 16, 0, None, 800, 600)
 
     @patch('service.file_opener.open_text_file')
     def test_open_text_file_io_error(self, mock_open_text, file_opener, sample_files):
@@ -403,7 +405,9 @@ class TestFileOpenerEdgeCases:
         """エッジケーステスト用FileOpener"""
         mock_config = MagicMock()
         mock_config.find_available_acrobat_path.return_value = None  # Noneを返す（空のパスになる）
-        mock_config.get_html_font_size.return_value = 0  # 無効なフォントサイズ
+        mock_config.get_text_viewer_font_size.return_value = 0  # 無効なフォントサイズ
+        mock_config.get_text_viewer_width.return_value = 800
+        mock_config.get_text_viewer_height.return_value = 600
         return FileOpener(mock_config)
 
     def test_empty_acrobat_path(self, file_opener_edge, temp_dir):
@@ -428,7 +432,7 @@ class TestFileOpenerEdgeCases:
             file_opener_edge._open_text_file(txt_path, ['test'])
             
             # フォントサイズ0でも処理が続行されることを確認
-            mock_open_text.assert_called_once_with(txt_path, ['test'], 0, 0, None)
+            mock_open_text.assert_called_once_with(txt_path, ['test'], 0, 0, None, 800, 600)
 
     def test_large_position_value(self, temp_dir):
         """大きなposition値でのテスト"""
@@ -439,7 +443,9 @@ class TestFileOpenerEdgeCases:
         # 有効なAcrobatパスを持つFileOpenerを作成
         mock_config = MagicMock()
         mock_config.find_available_acrobat_path.return_value = r'C:\Program Files\Adobe\Acrobat.exe'
-        mock_config.get_html_font_size.return_value = 16
+        mock_config.get_text_viewer_font_size.return_value = 16
+        mock_config.get_text_viewer_width.return_value = 800
+        mock_config.get_text_viewer_height.return_value = 600
         file_opener = FileOpener(mock_config)
 
         large_position = 999999
@@ -463,7 +469,7 @@ class TestFileOpenerEdgeCases:
             file_opener_edge._open_text_file(txt_path, [])
             
             # 空の検索語でも処理が続行されることを確認
-            mock_open_text.assert_called_once_with(txt_path, [], 0, 0, None)
+            mock_open_text.assert_called_once_with(txt_path, [], 0, 0, None, 800, 600)
 
     def test_unicode_file_paths(self, file_opener_edge, temp_dir):
         """Unicode文字を含むファイルパスのテスト"""
@@ -474,7 +480,7 @@ class TestFileOpenerEdgeCases:
         with patch('service.file_opener.open_text_file') as mock_open_text:
             file_opener_edge._open_text_file(unicode_filename, ['test'])
             
-            mock_open_text.assert_called_once_with(unicode_filename, ['test'], 0, 0, None)
+            mock_open_text.assert_called_once_with(unicode_filename, ['test'], 0, 0, None, 800, 600)
 
     def test_special_characters_in_search_terms(self, file_opener_edge, temp_dir):
         """検索語に特殊文字が含まれる場合のテスト"""
@@ -487,4 +493,4 @@ class TestFileOpenerEdgeCases:
         with patch('service.file_opener.open_text_file') as mock_open_text:
             file_opener_edge._open_text_file(txt_path, special_terms)
             
-            mock_open_text.assert_called_once_with(txt_path, special_terms, 0, 0, None)
+            mock_open_text.assert_called_once_with(txt_path, special_terms, 0, 0, None, 800, 600)

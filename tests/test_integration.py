@@ -225,7 +225,8 @@ last_directory = {temp_dir}
             file_opener.open_file(txt_file, 1, ['Python'])
             
             mock_open_text.assert_called_once_with(
-                txt_file, ['Python'], config_manager.get_html_font_size(), 1, None
+                txt_file, ['Python'], config_manager.get_text_viewer_font_size(), 1, None,
+                config_manager.get_text_viewer_width(), config_manager.get_text_viewer_height()
             )
             assert file_opener._last_opened_file == txt_file
         
@@ -236,7 +237,8 @@ last_directory = {temp_dir}
             file_opener.open_file(md_file, 1, ['Python', '上級'])
             
             mock_open_text.assert_called_once_with(
-                md_file, ['Python', '上級'], config_manager.get_html_font_size(), 1, None
+                md_file, ['Python', '上級'], config_manager.get_text_viewer_font_size(), 1, None,
+                config_manager.get_text_viewer_width(), config_manager.get_text_viewer_height()
             )
 
 
@@ -260,7 +262,7 @@ font_size = 12
 context_length = 50
 
 [UISettings]
-html_font_size = 14
+text_viewer_font_size = 14
 
 [IndexSettings]
 use_index_search = False
@@ -317,28 +319,31 @@ use_index_search = False
         
         # 初期フォントサイズ確認
         assert config_manager.get_font_size() == 12
-        assert config_manager.get_html_font_size() == 14
-        
+        assert config_manager.get_text_viewer_font_size() == 14
+
         # フォントサイズ変更
         config_manager.set_font_size(18)
-        config_manager.set_html_font_size(20)
-        
+        config_manager.set_text_viewer_font_size(20)
+
         # 設定が永続化されることを確認
         config_manager2 = ConfigManager(setup['config_file'])
         assert config_manager2.get_font_size() == 18
-        assert config_manager2.get_html_font_size() == 20
-        
+        assert config_manager2.get_text_viewer_font_size() == 20
+
         # FileOpenerでの設定反映確認
         file_opener = FileOpener(config_manager2)
         test_file = os.path.join(setup['temp_dir'], 'test.txt')
         with open(test_file, 'w') as f:
             f.write('Test content')
-        
+
         with patch('service.file_opener.open_text_file') as mock_open:
             file_opener._open_text_file(test_file, ['test'])
-            
+
             # 新しいフォントサイズが使用されることを確認
-            mock_open.assert_called_with(test_file, ['test'], 20, 0, None)
+            mock_open.assert_called_with(
+                test_file, ['test'], 20, 0, None,
+                config_manager2.get_text_viewer_width(), config_manager2.get_text_viewer_height()
+            )
     
     def test_context_length_change_impact(self, config_setup):
         """コンテキスト長変更の影響テスト"""
@@ -608,7 +613,8 @@ use_index_search = True
             
             # FileOpenerが正しいパラメータで呼ばれることを確認
             mock_open.assert_called_once_with(
-                file_path, ['Python'], config_manager.get_html_font_size(), position, None
+                file_path, ['Python'], config_manager.get_text_viewer_font_size(), position, None,
+                config_manager.get_text_viewer_width(), config_manager.get_text_viewer_height()
             )
     
     def test_indexer_to_searcher_integration(self, cross_module_setup):
@@ -657,11 +663,11 @@ use_index_search = True
         test_file = setup['files']['module_test.md']
 
         with patch('service.text_handler.TextViewerWindow') as mock_viewer:
-            open_text_file(test_file, ['Python'], config_manager.get_html_font_size())
+            open_text_file(test_file, ['Python'], config_manager.get_text_viewer_font_size())
 
             # 設定のフォントサイズがビューアに渡されることを確認
             _, kwargs = mock_viewer.call_args
-            assert kwargs['font_size'] == config_manager.get_html_font_size()
+            assert kwargs['font_size'] == config_manager.get_text_viewer_font_size()
             assert kwargs['search_terms'] == ['Python']
             assert kwargs['is_markdown'] is True
 
@@ -716,9 +722,11 @@ use_index_search = True
                 mock_open.assert_called_once_with(
                     file_path,
                     ['Python', 'integration'],
-                    config_manager.get_html_font_size(),
+                    config_manager.get_text_viewer_font_size(),
                     position,
-                    None
+                    None,
+                    config_manager.get_text_viewer_width(),
+                    config_manager.get_text_viewer_height()
                 )
         
         # インデックス統計確認

@@ -136,8 +136,10 @@ class FileOpener:
             ValueError: ファイル処理エラー
         """
         try:
-            font_size = self.config_manager.get_html_font_size()
-            open_text_file(file_path, search_terms, font_size, position, self.parent_window)
+            font_size = self.config_manager.get_text_viewer_font_size()
+            width = self.config_manager.get_text_viewer_width()
+            height = self.config_manager.get_text_viewer_height()
+            open_text_file(file_path, search_terms, font_size, position, self.parent_window, width, height)
         except IOError as e:
             self._show_error(f"テキストファイルの読み込みに失敗しました: {e}")
             raise

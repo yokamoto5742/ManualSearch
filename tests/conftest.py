@@ -92,7 +92,6 @@ context_length = 100
 [UISettings]
 filename_font_size = 14
 result_detail_font_size = 14
-html_font_size = 16
 
 [Paths]
 acrobat_path = C:\\Program Files\\Adobe\\Acrobat DC\\Acrobat\\Acrobat.exe
@@ -136,7 +135,6 @@ context_length = 150
 [UISettings]
 filename_font_size = 15
 result_detail_font_size = 15
-html_font_size = 18
 
 [Paths]
 acrobat_path = C:\\Program Files\\Adobe\\Acrobat DC\\Acrobat\\Acrobat.exe

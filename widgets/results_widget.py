@@ -34,7 +34,6 @@ class ResultsWidget(QWidget):
         self._setup_fonts()
 
         self.search_term_colors: Dict[str, str] = {}
-        self.html_font_size: int = self.config_manager.get_html_font_size()
         self.current_file_path: Optional[str] = None
         self.current_position: Optional[int] = None
         self.searcher: Optional[FileSearcher] = None

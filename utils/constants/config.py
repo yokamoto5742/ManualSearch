@@ -99,13 +99,15 @@ CONFIG_KEYS = {
     'CONTEXT_LENGTH': 'context_length',
     'FILENAME_FONT_SIZE': 'filename_font_size',
     'RESULT_DETAIL_FONT_SIZE': 'result_detail_font_size',
-    'HTML_FONT_SIZE': 'html_font_size',
     'TIMEOUT': 'timeout',
     'CLEANUP_TEMP_FILES': 'cleanup_temp_files',
     'MAX_TEMP_FILES': 'max_temp_files',
     'INDEX_FILE_PATH': 'index_file_path',
     'USE_INDEX_SEARCH': 'use_index_search',
-    'USE_PDF_HIGHLIGHT': 'use_pdf_highlight'
+    'USE_PDF_HIGHLIGHT': 'use_pdf_highlight',
+    'TEXT_VIEWER_WIDTH': 'text_viewer_width',
+    'TEXT_VIEWER_HEIGHT': 'text_viewer_height',
+    'TEXT_VIEWER_FONT_SIZE': 'text_viewer_font_size',
 }
 
 

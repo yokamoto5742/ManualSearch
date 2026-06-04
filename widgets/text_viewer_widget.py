@@ -72,12 +72,14 @@ class TextViewerWindow(QMainWindow):
         font_size: int,
         is_markdown: bool = False,
         position: int = 0,
+        width: int = TEXT_VIEWER_DEFAULT_WIDTH,
+        height: int = TEXT_VIEWER_DEFAULT_HEIGHT,
         parent: Optional[QWidget] = None,
     ) -> None:
         super().__init__(parent)
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.setWindowTitle(title)
-        self.resize(TEXT_VIEWER_DEFAULT_WIDTH, TEXT_VIEWER_DEFAULT_HEIGHT)
+        self.resize(width, height)
 
         central = QWidget()
         self.setCentralWidget(central)

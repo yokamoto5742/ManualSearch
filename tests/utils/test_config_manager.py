@@ -82,7 +82,7 @@ class TestConfigManager:
 
         # デフォルト値の確認
         assert config.get_font_size() == 14
-        assert config.get_html_font_size() == 16
+        assert config.get_text_viewer_font_size() == 16
 
         # 設定と取得
         config.set_font_size(18)
