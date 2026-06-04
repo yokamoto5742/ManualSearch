@@ -10,7 +10,7 @@ from service.file_opener import FileOpener
 from service.file_searcher import FileSearcher
 from service.indexed_file_searcher import SmartFileSearcher, SearchMode
 from service.search_indexer import SearchIndexer
-from service.text_handler import highlight_text_file
+from service.text_handler import open_text_file
 from utils.config_manager import ConfigManager
 from utils.helpers import normalize_path
 
@@ -225,7 +225,7 @@ last_directory = {temp_dir}
             file_opener.open_file(txt_file, 1, ['Python'])
             
             mock_open_text.assert_called_once_with(
-                txt_file, ['Python'], config_manager.get_html_font_size()
+                txt_file, ['Python'], config_manager.get_html_font_size(), 1, None
             )
             assert file_opener._last_opened_file == txt_file
         
@@ -236,7 +236,7 @@ last_directory = {temp_dir}
             file_opener.open_file(md_file, 1, ['Python', '上級'])
             
             mock_open_text.assert_called_once_with(
-                md_file, ['Python', '上級'], config_manager.get_html_font_size()
+                md_file, ['Python', '上級'], config_manager.get_html_font_size(), 1, None
             )
 
 
@@ -337,8 +337,8 @@ use_index_search = False
         with patch('service.file_opener.open_text_file') as mock_open:
             file_opener._open_text_file(test_file, ['test'])
             
-            # 新しいフォントサイズが使用されることを確認  
-            mock_open.assert_called_with(test_file, ['test'], 20)
+            # 新しいフォントサイズが使用されることを確認
+            mock_open.assert_called_with(test_file, ['test'], 20, 0, None)
     
     def test_context_length_change_impact(self, config_setup):
         """コンテキスト長変更の影響テスト"""
@@ -454,27 +454,6 @@ class TestErrorRecoveryIntegration:
         assert len(results) >= 1
         assert 'recovery_test.txt' in results[0][0]
     
-    def test_missing_template_recovery(self, error_test_setup):
-        """テンプレートファイル欠損からの復旧テスト"""
-        setup = error_test_setup
-        
-        # テストファイル作成
-        test_file = os.path.join(setup['temp_dir'], 'template_test.txt')
-        with open(test_file, 'w') as f:
-            f.write('Template test content')
-        
-        # 存在しないテンプレートディレクトリを指定
-        fake_template_dir = os.path.join(setup['temp_dir'], 'nonexistent_templates')
-        
-        with patch('service.text_handler.get_template_directory', return_value=fake_template_dir):
-            # テンプレートファイル不存在でもエラーハンドリングされることを確認
-            try:
-                highlight_text_file(test_file, ['test'], 16)
-                assert False, "Should have raised an exception"
-            except (FileNotFoundError, Exception) as e:
-                # 適切な例外が発生することを確認
-                assert "テンプレート" in str(e) or "ファイル" in str(e)
-    
     def test_disk_space_error_handling(self, error_test_setup):
         """ディスク容量不足エラーハンドリングテスト"""
         setup = error_test_setup
@@ -530,23 +509,9 @@ class TestCrossModuleIntegration:
             'temp_dir': temp_dir,
             'config_file': os.path.join(temp_dir, 'cross_config.ini'),
             'index_file': os.path.join(temp_dir, 'cross_index.json'),
-            'template_dir': os.path.join(temp_dir, 'templates'),
             'files': {}
         }
-        
-        # テンプレートディレクトリとファイル作成
-        os.makedirs(setup['template_dir'])
-        template_content = """<!DOCTYPE html>
-<html>
-<head><title>{{ title }}</title></head>
-<body>
-<div>{{ content | safe }}</div>
-</body>
-</html>"""
-        
-        with open(os.path.join(setup['template_dir'], 'text_viewer.html'), 'w') as f:
-            f.write(template_content)
-        
+
         # 設定ファイル作成
         config_content = f"""[FileTypes]
 extensions = .txt,.md
@@ -643,7 +608,7 @@ use_index_search = True
             
             # FileOpenerが正しいパラメータで呼ばれることを確認
             mock_open.assert_called_once_with(
-                file_path, ['Python'], config_manager.get_html_font_size()
+                file_path, ['Python'], config_manager.get_html_font_size(), position, None
             )
     
     def test_indexer_to_searcher_integration(self, cross_module_setup):
@@ -685,36 +650,21 @@ use_index_search = True
     def test_config_to_text_handler_integration(self, cross_module_setup):
         """ConfigManager → TextHandler連携テスト"""
         setup = cross_module_setup
-        
+
         config_manager = ConfigManager(setup['config_file'])
-        
+
         # TextHandlerでの設定使用確認
         test_file = setup['files']['module_test.md']
-        
-        with patch('service.text_handler.get_template_directory', 
-                  return_value=setup['template_dir']):
-            result_path = highlight_text_file(
-                test_file, 
-                ['Python'], 
-                config_manager.get_html_font_size()
-            )
-            
-            # HTMLファイルが作成されることを確認
-            assert os.path.exists(result_path)
-            assert result_path.endswith('.html')
-            
-            # 内容確認
-            with open(result_path, encoding='utf-8') as f:
-                html_content = f.read()
-            
-            # Markdownが処理されていることを確認
-            assert '<h1>' in html_content
-            assert 'Python' in html_content
-            assert '<span style=' in html_content  # ハイライト
-            
-            # クリーンアップ
-            os.remove(result_path)
-    
+
+        with patch('service.text_handler.TextViewerWindow') as mock_viewer:
+            open_text_file(test_file, ['Python'], config_manager.get_html_font_size())
+
+            # 設定のフォントサイズがビューアに渡されることを確認
+            _, kwargs = mock_viewer.call_args
+            assert kwargs['font_size'] == config_manager.get_html_font_size()
+            assert kwargs['search_terms'] == ['Python']
+            assert kwargs['is_markdown'] is True
+
     def test_full_stack_integration(self, cross_module_setup, qapp):
         """フルスタック統合テスト"""
         setup = cross_module_setup
@@ -764,9 +714,11 @@ use_index_search = True
                 file_opener.open_file(file_path, position, ['Python', 'integration'])
                 
                 mock_open.assert_called_once_with(
-                    file_path, 
-                    ['Python', 'integration'], 
-                    config_manager.get_html_font_size()
+                    file_path,
+                    ['Python', 'integration'],
+                    config_manager.get_html_font_size(),
+                    position,
+                    None
                 )
         
         # インデックス統計確認

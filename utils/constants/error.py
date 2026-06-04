@@ -74,4 +74,3 @@ INDEX_OPERATION_LABELS = {
 
 ERROR_DIRECTORY_ACCESS = 'ディレクトリアクセスエラー: {directory} - {error}'
 ERROR_DIRECTORY_SEARCH = 'ディレクトリ検索エラー: {directory} - {error}'
-ERROR_TEMPLATE_NOT_FOUND = 'テンプレートファイルが見つかりません: {error}'

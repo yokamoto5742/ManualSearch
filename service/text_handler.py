@@ -1,188 +1,65 @@
-import html
 import logging
 import os
-import re
-import sys
-import tempfile
-import webbrowser
 from typing import List, Optional
 
-import markdown
-from jinja2 import Environment, FileSystemLoader, TemplateNotFound
+from PyQt5.QtWidgets import QWidget
 
-from utils.constants import (
-    ERROR_TEMPLATE_NOT_FOUND,
-    FILE_EXTENSION_HTML,
-    FILE_EXTENSION_MD,
-    FILE_TYPE_DISPLAY_NAMES,
-    HIGHLIGHT_COLORS,
-    HIGHLIGHT_STYLE_TEMPLATE,
-    MARKDOWN_EXTENSIONS,
-    MAX_FONT_SIZE,
-    MIN_FONT_SIZE,
-    TEMPLATE_DIRECTORY,
-    TEXT_VIEWER_TEMPLATE,
-)
+from utils.constants import FILE_EXTENSION_MD
 from utils.helpers import read_file_with_auto_encoding
+from widgets.text_viewer_widget import TextViewerWindow
 
 logger = logging.getLogger(__name__)
 
-
-def get_template_directory() -> str:
-    """テンプレートディレクトリパスを取得
-
-    Returns:
-        テンプレートディレクトリのパス
-    """
-    if getattr(sys, 'frozen', False):
-        meipass = getattr(sys, '_MEIPASS', None)
-        base_path = meipass or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    else:
-        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-    return os.path.join(base_path, TEMPLATE_DIRECTORY)
+# ウィンドウがGCで破棄されないよう参照を保持する
+_active_viewers: List[TextViewerWindow] = []
 
 
-def create_jinja_environment() -> Environment:
-    """Jinja2テンプレート環境を作成
-
-    Returns:
-        Jinja2環境インスタンス
-    """
-    template_dir = get_template_directory()
-
-    if not os.path.exists(template_dir):
-        os.makedirs(template_dir)
-
-    return Environment(
-        loader=FileSystemLoader(template_dir),
-        autoescape=True,
-        trim_blocks=True,
-        lstrip_blocks=True
-    )
-
-
-def open_text_file(file_path: str, search_terms: List[str], html_font_size: int) -> None:
-    """テキストファイルをハイライト付きで開く
+def open_text_file(
+    file_path: str,
+    search_terms: List[str],
+    html_font_size: int,
+    position: int = 0,
+    parent: Optional[QWidget] = None,
+) -> None:
+    """テキストファイルをアプリ内の別ウィンドウでハイライト付きで開く
 
     Args:
         file_path: ファイルパス
         search_terms: 検索語リスト
-        html_font_size: HTML表示フォントサイズ
+        html_font_size: 表示フォントサイズ
+        position: 検索ヒット行番号(1始まり、0でジャンプなし)
+        parent: 親ウィジェット
 
     Raises:
         Exception: ファイル処理エラー
     """
     try:
-        highlighted_html_path = highlight_text_file(file_path, search_terms, html_font_size)
-        webbrowser.open(f'file://{highlighted_html_path}')
+        content = read_file_with_auto_encoding(file_path)
+        if content is None:
+            content = ""
+
+        is_markdown = os.path.splitext(file_path)[1].lower() == FILE_EXTENSION_MD
+
+        viewer = TextViewerWindow(
+            title=os.path.basename(file_path),
+            content=content,
+            search_terms=search_terms,
+            font_size=html_font_size,
+            is_markdown=is_markdown,
+            position=position,
+            parent=parent,
+        )
+        viewer.destroyed.connect(lambda: _remove_viewer(viewer))
+        _active_viewers.append(viewer)
+
+        viewer.show()
+        viewer.raise_()
+        viewer.activateWindow()
+
     except Exception as e:
         raise Exception(f"テキストファイルを開けませんでした: {str(e)}")
 
 
-def highlight_text_file(file_path: str, search_terms: List[str], html_font_size: int) -> str:
-    try:
-        content = read_file_with_auto_encoding(file_path)
-    except ValueError as e:
-        raise ValueError(f"ファイルの読み込みに失敗しました: {file_path} - {str(e)}")
-
-    if content is None:
-        content = ""
-
-    file_extension = os.path.splitext(file_path)[1].lower()
-    is_markdown = file_extension == FILE_EXTENSION_MD
-
-    if is_markdown:
-        content = markdown.markdown(content, extensions=MARKDOWN_EXTENSIONS)
-    else:
-        content = html.escape(content)
-
-    content = highlight_search_terms(content, search_terms)
-
-    html_content = generate_html_content(file_path, content, is_markdown, html_font_size, search_terms)
-
-    return create_temp_html_file(html_content)
-
-
-def highlight_search_terms(content: str, search_terms: List[str]) -> str:
-    for i, term in enumerate(search_terms):
-        if not term.strip():
-            continue
-
-        color = HIGHLIGHT_COLORS[i % len(HIGHLIGHT_COLORS)]
-        try:
-            content = re.sub(
-                f'({re.escape(term.strip())})',
-                f'<span style="{HIGHLIGHT_STYLE_TEMPLATE.format(color=color)}">\\1</span>',
-                content,
-                flags=re.IGNORECASE
-            )
-        except re.error as e:
-            logger.warning(f"ハイライト処理でエラーが発生しました: {term} - {e}")
-            continue
-
-    return content
-
-
-def generate_html_content(
-        file_path: str,
-        content: str,
-        is_markdown: bool,
-        html_font_size: int,
-        search_terms: Optional[List[str]] = None,
-) -> str:
-    try:
-        env = create_jinja_environment()
-        template = env.get_template(TEXT_VIEWER_TEMPLATE)
-
-        file_extension = os.path.splitext(file_path)[1].lower()
-        file_type = get_file_type_display_name(file_extension)
-
-        template_vars = {
-            'title': os.path.basename(file_path),
-            'file_path': file_path,
-            'file_type': file_type,
-            'content': content,
-            'is_markdown': is_markdown,
-            'font_size': max(MIN_FONT_SIZE, min(MAX_FONT_SIZE, html_font_size or 16)),
-            'search_terms': search_terms or [],
-        }
-
-        return template.render(**template_vars)
-
-    except TemplateNotFound as e:
-        raise FileNotFoundError(ERROR_TEMPLATE_NOT_FOUND.format(error=e))
-    except Exception as e:
-        raise RuntimeError(f"HTMLテンプレートの処理中にエラーが発生しました: {e}")
-
-
-def create_temp_html_file(html_content: str) -> str:
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.html', mode='w', encoding='utf-8') as tmp_file:
-            tmp_file.write(html_content)
-            return tmp_file.name
-    except IOError as e:
-        raise IOError(f"一時HTMLファイルの作成に失敗しました: {e}")
-
-
-def get_file_type_display_name(file_extension: str) -> str:
-    return FILE_TYPE_DISPLAY_NAMES.get(file_extension.lower(), '不明なファイル')
-
-
-def validate_template_file() -> bool:
-    template_dir = get_template_directory()
-    template_path = os.path.join(template_dir, TEXT_VIEWER_TEMPLATE)
-    return os.path.exists(template_path)
-
-
-def get_available_templates() -> List[str]:
-    template_dir = get_template_directory()
-    if not os.path.exists(template_dir):
-        return []
-
-    templates = []
-    for file in os.listdir(template_dir):
-        if file.endswith('.html'):
-            templates.append(file)
-
-    return templates
+def _remove_viewer(viewer: TextViewerWindow) -> None:
+    if viewer in _active_viewers:
+        _active_viewers.remove(viewer)

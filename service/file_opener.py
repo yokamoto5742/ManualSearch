@@ -23,13 +23,15 @@ class FileOpener:
 
     SUPPORTED_EXTENSIONS = FILE_HANDLER_MAPPING
 
-    def __init__(self, config_manager) -> None:
+    def __init__(self, config_manager, parent_window=None) -> None:
         """初期化
 
         Args:
             config_manager: 設定マネージャーインスタンス
+            parent_window: テキストビューアの親ウィンドウ
         """
         self.config_manager = config_manager
+        self.parent_window = parent_window
         self.acrobat_path = self.config_manager.find_available_acrobat_path() or ""
         self._last_opened_file: str = ""
 
@@ -62,7 +64,7 @@ class FileOpener:
             if file_extension == '.pdf':
                 method(file_path, position, search_terms, use_highlight)
             else:
-                method(file_path, search_terms)
+                method(file_path, search_terms, position)
 
             self._last_opened_file = file_path
 
@@ -121,12 +123,13 @@ class FileOpener:
         except (IOError, OSError):
             return False
 
-    def _open_text_file(self, file_path: str, search_terms: List[str]) -> None:
+    def _open_text_file(self, file_path: str, search_terms: List[str], position: int = 0) -> None:
         """テキストファイルを開く
 
         Args:
             file_path: ファイルパス
             search_terms: 検索語リスト
+            position: 検索ヒット行番号(1始まり)
 
         Raises:
             IOError: ファイル読み込み失敗
@@ -134,7 +137,7 @@ class FileOpener:
         """
         try:
             font_size = self.config_manager.get_html_font_size()
-            open_text_file(file_path, search_terms, font_size)
+            open_text_file(file_path, search_terms, font_size, position, self.parent_window)
         except IOError as e:
             self._show_error(f"テキストファイルの読み込みに失敗しました: {e}")
             raise

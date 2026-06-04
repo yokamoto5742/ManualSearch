@@ -81,7 +81,7 @@ class MainWindow(QMainWindow):
         self.results_widget = ResultsWidget(self.config_manager)
         self.main_layout.addWidget(self.results_widget)
 
-        self.file_opener = FileOpener(self.config_manager)
+        self.file_opener = FileOpener(self.config_manager, self)
         self.auto_close_message = AutoCloseMessage(self)
         self.index_dialog = None
         self.use_index_search = False

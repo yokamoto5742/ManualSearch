@@ -27,17 +27,6 @@ SEARCH_METHODS_MAPPING = {
     '.md': 'search_text'
 }
 
-TEMPLATE_DIRECTORY = 'templates'
-TEXT_VIEWER_TEMPLATE = 'text_viewer.html'
-
-FILE_TYPE_DISPLAY_NAMES = {
-    '.txt': 'テキストファイル',
-    '.md': 'Markdownファイル',
-    '.pdf': 'PDFファイル',
-    '.html': 'HTMLファイル',
-    '.css': 'CSSファイル'
-}
-
 CONFIG_FILENAME = 'config.ini'
 DEFAULT_INDEX_FILE = "search_index.json"
 
@@ -151,10 +140,8 @@ TEXT_LINE_SEPARATOR = '\n'
 
 
 # ============================================================================
-# その他の設定(マークダウン、インデックス)
+# その他の設定(インデックス)
 # ============================================================================
-
-MARKDOWN_EXTENSIONS = ['nl2br']
 
 INDEX_DEFAULT_CONTEXT_LENGTH = 100
 INDEX_MAX_RESULTS = 200

@@ -253,47 +253,6 @@ def sample_pdf_mock_content():
 
 
 @pytest.fixture
-def template_directory(temp_dir):
-    """テンプレートディレクトリとファイルを作成"""
-    template_dir = os.path.join(temp_dir, 'templates')
-    os.makedirs(template_dir)
-
-    # 基本テンプレート
-    basic_template = """<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ title }}</title>
-    <style>
-        body { font-family: Arial, sans-serif; font-size: {{ font_size }}px; }
-        .highlight { background-color: yellow; }
-    </style>
-</head>
-<body>
-    <h1>{{ title }}</h1>
-    <div>{{ content | safe }}</div>
-</body>
-</html>"""
-
-    with open(os.path.join(template_dir, 'text_viewer.html'), 'w', encoding='utf-8') as f:
-        f.write(basic_template)
-
-    # カスタムテンプレート
-    custom_template = """<!DOCTYPE html>
-<html>
-<head><title>Custom - {{ title }}</title></head>
-<body>
-<div class="custom-content">{{ content | safe }}</div>
-</body>
-</html>"""
-
-    with open(os.path.join(template_dir, 'custom_template.html'), 'w', encoding='utf-8') as f:
-        f.write(custom_template)
-
-    yield template_dir
-
-
-@pytest.fixture
 def performance_dataset(large_temp_dir):
     """パフォーマンステスト用データセット"""
     dataset_info = {

@@ -150,13 +150,12 @@ ManualSearch/
 │   ├── results_widget.py            # 検索結果表示
 │   ├── directory_widget.py          # フォルダ選択管理
 │   ├── index_management_widget.py   # インデックス管理UI
+│   ├── text_viewer_widget.py        # テキスト表示ウィンドウ
 │   └── auto_close_message_widget.py # 自動クローズメッセージ
 ├── utils/
 │   ├── config_manager.py            # INI設定管理
 │   ├── helpers.py                   # ユーティリティ関数
 │   └── log_rotation.py              # ログローテーション
-├── templates/
-│   └── text_viewer.html             # テキスト表示テンプレート
 ├── tests/                           # テストコード
 
 ```
@@ -460,7 +459,6 @@ python -m cProfile -s cumtime main.py
 | PyQt5 | 5.15.11 | GUIフレームワーク |
 | PyMuPDF (fitz) | 1.26.3 | PDFテキスト抽出 |
 | chardet | 5.2.0 | 文字エンコーディング自動検出 |
-| Jinja2 | 3.1.6 | HTMLテンプレートレンダリング |
 | psutil | 7.0.0 | プロセス監視管理 |
 
 詳細は `requirements.txt` を参照してください。

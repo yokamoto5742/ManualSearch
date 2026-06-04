@@ -120,8 +120,8 @@ class TestFileOpener:
         
         with patch.object(file_opener, '_open_text_file') as mock_open_text:
             file_opener.open_file(txt_path, 1, ['test'])
-            
-            mock_open_text.assert_called_once_with(txt_path, ['test'])
+
+            mock_open_text.assert_called_once_with(txt_path, ['test'], 1)
             assert file_opener._last_opened_file == txt_path
 
     def test_open_file_markdown_success(self, file_opener, sample_files):
@@ -130,8 +130,8 @@ class TestFileOpener:
         
         with patch.object(file_opener, '_open_text_file') as mock_open_text:
             file_opener.open_file(md_path, 1, ['test'])
-            
-            mock_open_text.assert_called_once_with(md_path, ['test'])
+
+            mock_open_text.assert_called_once_with(md_path, ['test'], 1)
             assert file_opener._last_opened_file == md_path
 
     @patch('service.file_opener.temp_file_manager.cleanup_all')
@@ -241,8 +241,8 @@ class TestFileOpener:
         txt_path = sample_files['txt']
         
         file_opener._open_text_file(txt_path, ['test'])
-        
-        mock_open_text.assert_called_once_with(txt_path, ['test'], 16)
+
+        mock_open_text.assert_called_once_with(txt_path, ['test'], 16, 0, None)
 
     @patch('service.file_opener.open_text_file')
     def test_open_text_file_io_error(self, mock_open_text, file_opener, sample_files):
@@ -428,7 +428,7 @@ class TestFileOpenerEdgeCases:
             file_opener_edge._open_text_file(txt_path, ['test'])
             
             # フォントサイズ0でも処理が続行されることを確認
-            mock_open_text.assert_called_once_with(txt_path, ['test'], 0)
+            mock_open_text.assert_called_once_with(txt_path, ['test'], 0, 0, None)
 
     def test_large_position_value(self, temp_dir):
         """大きなposition値でのテスト"""
@@ -463,7 +463,7 @@ class TestFileOpenerEdgeCases:
             file_opener_edge._open_text_file(txt_path, [])
             
             # 空の検索語でも処理が続行されることを確認
-            mock_open_text.assert_called_once_with(txt_path, [], 0)
+            mock_open_text.assert_called_once_with(txt_path, [], 0, 0, None)
 
     def test_unicode_file_paths(self, file_opener_edge, temp_dir):
         """Unicode文字を含むファイルパスのテスト"""
@@ -474,7 +474,7 @@ class TestFileOpenerEdgeCases:
         with patch('service.file_opener.open_text_file') as mock_open_text:
             file_opener_edge._open_text_file(unicode_filename, ['test'])
             
-            mock_open_text.assert_called_once_with(unicode_filename, ['test'], 0)
+            mock_open_text.assert_called_once_with(unicode_filename, ['test'], 0, 0, None)
 
     def test_special_characters_in_search_terms(self, file_opener_edge, temp_dir):
         """検索語に特殊文字が含まれる場合のテスト"""
@@ -487,4 +487,4 @@ class TestFileOpenerEdgeCases:
         with patch('service.file_opener.open_text_file') as mock_open_text:
             file_opener_edge._open_text_file(txt_path, special_terms)
             
-            mock_open_text.assert_called_once_with(txt_path, special_terms, 0)
+            mock_open_text.assert_called_once_with(txt_path, special_terms, 0, 0, None)
