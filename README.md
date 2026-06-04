@@ -3,7 +3,6 @@
 PyQt5ベースのデスクトップアプリケーション。PDF、テキスト、Markdownファイルの全文検索、マルチスレッド検索エンジン、インデックスベースの高速検索、Adobe Acrobat連携による検索語ハイライト表示を実現します。
 
 
-
 ## 目次
 
 1. [主要機能](#主要機能)
@@ -15,8 +14,6 @@ PyQt5ベースのデスクトップアプリケーション。PDF、テキスト
 7. [設定](#設定)
 8. [開発者向け情報](#開発者向け情報)
 9. [トラブルシューティング](#トラブルシューティング)
-10. [バージョン情報](#バージョン情報)
-11. [ライセンス](#ライセンス)
 
 ---
 
@@ -37,7 +34,7 @@ PyQt5ベースのデスクトップアプリケーション。PDF、テキスト
 ### システム要件
 
 - **OS**: Windows 10/11
-- **Python**: 3.11以上（推奨: 3.12）
+- **Python**: 3.12以上
 - **Adobe Acrobat Reader DC**: PDF表示機能に必要
 
 ### 最小要件
@@ -134,10 +131,7 @@ results = indexed_searcher.search()
 ```
 ManualSearch/
 ├── main.py                          # アプリケーションエントリーポイント
-├── constants.py                     # グローバル定数とマッピング
-├── requirements.txt                 # 依存関係
 ├── app/
-│   ├── __init__.py
 │   └── main_window.py               # メインウィンドウとUI統制
 ├── service/                         # コアビジネスロジック
 │   ├── file_searcher.py             # マルチスレッド検索エンジン
@@ -164,11 +158,7 @@ ManualSearch/
 ├── templates/
 │   └── text_viewer.html             # テキスト表示テンプレート
 ├── tests/                           # テストコード
-├── logs/                            # ログディレクトリ
-└── docs/
-    ├── README.md                    # このファイル
-    ├── CHANGELOG.md                 # バージョン履歴
-    └── LICENSE                      # ライセンス情報
+
 ```
 
 ---
@@ -398,46 +388,6 @@ pyright
 pytest --cov=. --cov-report=term-missing
 ```
 
-### コーディング規約（CLAUDE.md参照）
-
-- **Python**: PEP 8に準拠
-- **Import順序**: 標準ライブラリ → サードパーティ → カスタムモジュール（各セクション内でアルファベット順）
-- **命名規則**:
-  - クラス名: PascalCase（例: `FileSearcher`）
-  - 関数/変数: snake_case（例: `search_files`）
-- **型ヒント**: すべての関数に型アノテーション記載
-- **Docstring**: Google形式で簡潔に記載
-- **コメント**: 日本語で必要最小限に
-
-### テスト構成
-
-```
-tests/
-├── conftest.py                    # pytest共通設定
-├── test_integration.py            # エンドツーエンドテスト
-├── service/
-│   ├── test_file_searcher.py      # FileSearcherテスト
-│   ├── test_indexed_file_searcher.py
-│   ├── test_search_indexer.py
-│   ├── test_pdf_handler.py
-│   └── test_handlers.py
-├── utils/
-│   ├── test_config_manager.py
-│   └── test_helpers.py
-└── widgets/
-    └── test_search_widget.py
-```
-
-### 主要な開発タスク
-
-```bash
-# ログの確認
-tail -f logs/manual_search.log
-
-# デバッグログレベルで実行
-LOG_LEVEL=DEBUG python main.py
-```
-
 ---
 
 ## トラブルシューティング
@@ -512,20 +462,15 @@ python -m cProfile -s cumtime main.py
 | chardet | 5.2.0 | 文字エンコーディング自動検出 |
 | Jinja2 | 3.1.6 | HTMLテンプレートレンダリング |
 | psutil | 7.0.0 | プロセス監視管理 |
-| pytest | 8.4.1 | テストフレームワーク |
-| pytest-qt | 4.5.0 | Qtテスト支援 |
-| pytest-cov | 6.2.1 | カバレッジ測定 |
-| pyinstaller | 6.14.2 | 実行可能ファイル生成 |
 
 詳細は `requirements.txt` を参照してください。
 
 ---
 
-## バージョン情報
-
-- **現在のバージョン**: 1.3.3
-- **最終更新日**: 2025年11月29日
-
 ## ライセンス
 
-このプロジェクトのライセンス情報については、`docs/LICENSE`を参照してください。
+このプロジェクトのライセンス情報については、 [LICENSE](docs/LICENSE) を参照してください。
+
+## 更新履歴
+
+更新履歴は [CHANGELOG.md](docs/CHANGELOG.md) を参照してください。
