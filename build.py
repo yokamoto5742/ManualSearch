@@ -1,10 +1,7 @@
 import subprocess
 
-from scripts.version_manager import update_version
-
 
 def build_executable():
-    new_version = update_version()
     subprocess.run([
         "pyinstaller",
         "--name=マニュアル検索",
@@ -15,7 +12,7 @@ def build_executable():
         "main.py"
     ])
 
-    print(f"Executable built successfully. Version: {new_version}")
+    print(f"Executable built successfully.")
     return new_version
 
 
