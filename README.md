@@ -1,6 +1,6 @@
 # ManualSearch
 
-PyQt5ベースのデスクトップアプリケーション。PDF、テキスト、Markdownファイルの全文検索、マルチスレッド検索エンジン、インデックスベースの高速検索、Adobe Acrobat連携による検索語ハイライト表示を実現します。
+PyQt5ベースのデスクトップアプリケーション。PDF、テキスト、Markdownファイルの全文検索、マルチスレッド検索エンジン、インデックスベースの高速検索、Adobe Acrobat連携による検索語ハイライト表示を実現します。テキストファイルは独立したビューアウィンドウで検索語をハイライト表示して表示します。
 
 
 ## 目次
@@ -23,7 +23,8 @@ PyQt5ベースのデスクトップアプリケーション。PDF、テキスト
 - **マルチスレッド全文検索**: ThreadPoolExecutorを使用した並列検索
 - **インデックスベース高速検索**: 事前にインデックスを作成して高速検索を実現
 - **フォルダ横断検索**: 複数フォルダを対象とした横断検索対応
-- **Adobe Acrobat連携**: 検索語を自動ハイライト表示
+- **Adobe Acrobat連携**: PDFの検索語を自動ハイライト表示
+- **テキストビューア機能**: テキスト・Markdownファイルを独立ウィンドウで表示、検索語をハイライト
 - **柔軟な検索条件**: AND/OR検索、サブフォルダ検索対応
 - **ハイライト表示**: 検索結果を視覚的に強調表示
 
@@ -150,7 +151,7 @@ ManualSearch/
 │   ├── results_widget.py            # 検索結果表示
 │   ├── directory_widget.py          # フォルダ選択管理
 │   ├── index_management_widget.py   # インデックス管理UI
-│   ├── text_viewer_widget.py        # テキスト表示ウィンドウ
+│   ├── text_viewer_widget.py        # テキストビューアウィンドウ
 │   └── auto_close_message_widget.py # 自動クローズメッセージ
 ├── utils/
 │   ├── config_manager.py            # INI設定管理
@@ -243,6 +244,28 @@ indexer.update_index(
 - JSON形式での永続化
 - インデックス統計情報提供
 
+### テキスト処理・ビューア機能
+
+```python
+# テキストファイルを別ウィンドウで開く
+from service.text_handler import open_text_file
+
+open_text_file(
+    file_path="document.txt",
+    search_terms=["重要", "確認"],
+    html_font_size=16,
+    position=0,
+    width=1000,
+    height=600
+)
+```
+
+**テキストビューア機能**:
+- テキスト・Markdownファイルを独立ウィンドウで表示
+- 検索語のカラーハイライト表示
+- ズイン/ズームアウト機能
+- 複数ビューアウィンドウの同時表示対応
+
 ### PDF処理・Adobe連携
 
 ```python
@@ -266,6 +289,7 @@ highlighted_path = highlight_pdf(
 - **DirectoryWidget**: フォルダ管理（追加・削除・リスト表示）
 - **ResultsWidget**: 検索結果表示、ハイライト表示、ファイルオープン
 - **IndexManagementWidget**: インデックス作成・更新・管理UI
+- **TextViewerWindow**: テキスト・Markdownファイル表示、検索語ハイライト、ズーム機能
 
 ### スレッドモデル
 
@@ -308,6 +332,11 @@ use_index_search = False
 [SearchSettings]
 context_length = 100
 
+[TextViewer]
+window_width = 1000
+window_height = 600
+html_font_size = 16
+
 [LOGGING]
 log_level = INFO
 log_directory = logs
@@ -318,13 +347,16 @@ log_retention_days = 7
 
 | 設定項目 | 説明 | デフォルト値 |
 |---------|------|-----------|
-| window_width | ウィンドウ幅（ピクセル） | 1150 |
-| window_height | ウィンドウ高さ（ピクセル） | 800 |
+| window_width | メインウィンドウ幅（ピクセル） | 1150 |
+| window_height | メインウィンドウ高さ（ピクセル） | 800 |
 | font_size | UI文字サイズ | 14 |
 | acrobat_path | Adobe Acrobatの実行ファイルパス | 自動検出 |
 | index_file_path | インデックスファイルの保存先 | search_index.json |
 | use_index_search | インデックス検索の有効化 | False |
 | context_length | 検索結果の前後文字数 | 100 |
+| TextViewer window_width | テキストビューアウィンドウ幅（ピクセル） | 1000 |
+| TextViewer window_height | テキストビューアウィンドウ高さ（ピクセル） | 600 |
+| TextViewer html_font_size | テキストビューアのフォントサイズ | 16 |
 | log_level | ログレベル (DEBUG/INFO/WARNING/ERROR) | INFO |
 
 ---
@@ -471,4 +503,9 @@ python -m cProfile -s cumtime main.py
 
 ## 更新履歴
 
-更新履歴は [CHANGELOG.md](docs/CHANGELOG.md) を参照してください。
+### v1.4.0 (2026-05-10)
+- テキスト・Markdownファイルを別ウィンドウで表示する機能に移行
+- テキストビューア設定セクション（TextViewer）を追加
+- ズイン/ズームアウト機能をテキストビューアに追加
+
+詳細は [CHANGELOG.md](docs/CHANGELOG.md) を参照してください。
