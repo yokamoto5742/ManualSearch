@@ -13,7 +13,6 @@ def build_executable():
     ])
 
     print(f"Executable built successfully.")
-    return new_version
 
 
 if __name__ == "__main__":
