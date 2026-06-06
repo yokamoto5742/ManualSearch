@@ -264,6 +264,7 @@ open_text_file(
 - テキスト・Markdownファイルを独立ウィンドウで表示
 - 検索語のカラーハイライト表示
 - ズイン/ズームアウト機能
+- ファイルを開く・閉じるボタン
 - 複数ビューアウィンドウの同時表示対応
 
 ### PDF処理・Adobe連携
@@ -289,7 +290,7 @@ highlighted_path = highlight_pdf(
 - **DirectoryWidget**: フォルダ管理（追加・削除・リスト表示）
 - **ResultsWidget**: 検索結果表示、ハイライト表示、ファイルオープン
 - **IndexManagementWidget**: インデックス作成・更新・管理UI
-- **TextViewerWindow**: テキスト・Markdownファイル表示、検索語ハイライト、ズーム機能
+- **TextViewerWindow**: テキスト・Markdownファイル表示、検索語ハイライト、ズーム機能、ファイルを開く・閉じるボタン
 
 ### スレッドモデル
 
@@ -503,9 +504,4 @@ python -m cProfile -s cumtime main.py
 
 ## 更新履歴
 
-### v1.4.0 (2026-05-10)
-- テキスト・Markdownファイルを別ウィンドウで表示する機能に移行
-- テキストビューア設定セクション（TextViewer）を追加
-- ズイン/ズームアウト機能をテキストビューアに追加
-
-詳細は [CHANGELOG.md](docs/CHANGELOG.md) を参照してください。
+更新履歴は [CHANGELOG.md](docs/CHANGELOG.md) を参照してください。
