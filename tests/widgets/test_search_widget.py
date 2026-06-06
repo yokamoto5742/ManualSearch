@@ -138,15 +138,14 @@ class TestSearchWidget:
         terms = search_widget.get_search_terms()
         assert terms == ['test@example.com', 'user#123']
 
-    def test_get_search_terms_regex_error_handling(self, search_widget, capsys):
+    def test_get_search_terms_regex_error_handling(self, search_widget, caplog):
         """正規表現エラー時に空リストを返し、エラーメッセージを出力することを検証"""
         with patch('re.split', side_effect=re.error('Test regex error')):
             terms = search_widget.get_search_terms()
             assert terms == []
-            captured = capsys.readouterr()
-            assert '正規表現エラー' in captured.out
+            assert '正規表現エラー' in caplog.text
 
-    def test_get_search_terms_attribute_error_handling(self, search_widget, capsys):
+    def test_get_search_terms_attribute_error_handling(self, search_widget, caplog):
         """search_input未初期化時のAttributeError処理を検証"""
         # search_inputを一時的に削除
         original_input = search_widget.search_input
@@ -154,8 +153,7 @@ class TestSearchWidget:
 
         terms = search_widget.get_search_terms()
         assert terms == []
-        captured = capsys.readouterr()
-        assert '検索入力フィールドが正しく初期化されていません' in captured.out
+        assert '検索入力フィールドが正しく初期化されていません' in caplog.text
 
         # 復元
         search_widget.search_input = original_input
@@ -180,7 +178,7 @@ class TestSearchWidget:
         search_type = search_widget.get_search_type()
         assert search_type == SEARCH_TYPE_AND
 
-    def test_get_search_type_attribute_error_handling(self, search_widget, capsys):
+    def test_get_search_type_attribute_error_handling(self, search_widget, caplog):
         """search_type_combo未初期化時のAttributeError処理を検証"""
         # search_type_comboを一時的に削除
         original_combo = search_widget.search_type_combo
@@ -188,8 +186,7 @@ class TestSearchWidget:
 
         search_type = search_widget.get_search_type()
         assert search_type == SEARCH_TYPE_AND  # デフォルト値
-        captured = capsys.readouterr()
-        assert '検索タイプコンボボックスが正しく初期化されていません' in captured.out
+        assert '検索タイプコンボボックスが正しく初期化されていません' in caplog.text
 
         # 復元
         search_widget.search_type_combo = original_combo

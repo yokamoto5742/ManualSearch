@@ -78,7 +78,7 @@ def main():
         else:
             index_file_path = config_manager.get_index_file_path()
         
-        print(f"インデックス再構築スクリプト")
+        print("インデックス再構築スクリプト")
         print(f"インデックスファイル: {index_file_path}")
         print(f"設定ファイル: {config_manager.config_file}")
         print("-" * 50)
@@ -134,7 +134,7 @@ def main():
             
             # 統計情報の表示
             stats = indexer.get_index_stats()
-            print(f"\n=== インデックス統計 ===")
+            print("\n=== インデックス統計 ===")
             print(f"インデックス化されたファイル数: {stats['files_count']}")
             print(f"総ファイルサイズ: {stats['total_size_mb']:.2f} MB")
             print(f"インデックスファイルサイズ: {stats['index_file_size_mb']:.2f} MB")

@@ -18,6 +18,7 @@ from utils.constants import (
     ACROBAT_WAIT_TIMEOUT,
     DIALOG_MESSAGES,
     LOG_MESSAGE_TEMPLATES,
+    PDF_HANDLER_ERROR_TEMPLATES,
     PAGE_NAVIGATION_DELAY,
     PAGE_NAVIGATION_RETRY_COUNT,
     PDF_HIGHLIGHT_COLORS,
@@ -133,12 +134,8 @@ class AcrobatProcessManager:
                     continue
 
                 time.sleep(ACROBAT_WAIT_INTERVAL)
-                
-                try:
-                    return True
-                except Exception:
-                    pass
-                
+                return True
+
             except psutil.NoSuchProcess:
                 return False
             except Exception as e:
@@ -148,11 +145,6 @@ class AcrobatProcessManager:
 
         logger.warning(LOG_MESSAGE_TEMPLATES['ACROBAT_TIMEOUT'].format(timeout=timeout))
         return False
-    
-    @staticmethod
-    def _is_acrobat_window(window_title: str) -> bool:
-        window_lower = window_title.lower()
-        return any(keyword in window_lower for keyword in ['acrobat', 'adobe'])
 
 
 class PDFNavigator:
@@ -199,7 +191,7 @@ class PDFHighlighter:
         except fitz.FileDataError as e:
             raise ValueError(DIALOG_MESSAGES['INVALID_PDF'].format(pdf_path=pdf_path)) from e
         except Exception as e:
-            raise RuntimeError(f"PDFのハイライト処理中にエラー: {e}") from e
+            raise RuntimeError(PDF_HANDLER_ERROR_TEMPLATES['HIGHLIGHT_FAILED'].format(error=e)) from e
     
     @staticmethod
     def _create_temp_file() -> str:
@@ -268,8 +260,10 @@ def open_pdf(
             logger.warning("Acrobatの起動確認に失敗しました")
     
     except FileNotFoundError as e:
-        raise FileNotFoundError(f"指定されたファイルが見つかりません: {file_path}") from e
+        raise FileNotFoundError(
+            PDF_HANDLER_ERROR_TEMPLATES['FILE_NOT_FOUND'].format(file_path=file_path)
+        ) from e
     except subprocess.SubprocessError as e:
-        raise RuntimeError(f"Acrobat Readerの起動に失敗しました: {e}") from e
+        raise RuntimeError(PDF_HANDLER_ERROR_TEMPLATES['ACROBAT_START_FAILED'].format(error=e)) from e
     except Exception as e:
-        raise RuntimeError(f"PDFを開く際に予期せぬエラーが発生しました: {e}") from e
+        raise RuntimeError(PDF_HANDLER_ERROR_TEMPLATES['UNEXPECTED_ERROR'].format(error=e)) from e

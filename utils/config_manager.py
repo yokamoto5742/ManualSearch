@@ -1,4 +1,5 @@
 import configparser
+import logging
 import os
 import sys
 from typing import Any, Dict, List, Optional, Tuple
@@ -34,6 +35,8 @@ from utils.constants import (
     TEXT_VIEWER_DEFAULT_WIDTH,
 )
 from utils.helpers import read_file_with_auto_encoding
+
+logger = logging.getLogger(__name__)
 
 
 def get_config_path() -> str:
@@ -131,7 +134,7 @@ class ConfigManager:
             with open(self.config_file, 'w', encoding='utf-8') as configfile:
                 self.config.write(configfile)
         except IOError as e:
-            print(f"設定の保存に失敗: {e}")
+            logger.error(f"設定の保存に失敗: {e}")
 
     def _get_int(self, section: str, key: str, validate: bool = True) -> int:
         default = self.DEFAULTS.get(key, 0)

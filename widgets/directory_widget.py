@@ -1,3 +1,4 @@
+import logging
 import os
 
 from PyQt5.QtCore import pyqtSignal
@@ -9,6 +10,8 @@ from PyQt5.QtWidgets import (
 from utils.config_manager import ConfigManager
 from utils.constants import DIALOG_TITLES, DIALOG_MESSAGES, FOLDER_PATH_INPUT_MIN_WIDTH, STYLESHEETS, UI_LABELS
 from utils.helpers import create_confirmation_dialog
+
+logger = logging.getLogger(__name__)
 
 
 class DirectoryWidget(QWidget):
@@ -146,7 +149,7 @@ class DirectoryWidget(QWidget):
         try:
             return self.pdf_highlight_checkbox.isChecked()
         except AttributeError:
-            print("PDFハイライトチェックボックスが正しく初期化されていません")
+            logger.error("PDFハイライトチェックボックスが正しく初期化されていません")
             return True
 
     def _on_pdf_highlight_toggled(self, checked: bool) -> None:
@@ -158,7 +161,7 @@ class DirectoryWidget(QWidget):
         try:
             self.config_manager.set_use_pdf_highlight(checked)
         except Exception as e:
-            print(f"PDFハイライト設定の保存に失敗しました: {e}")
+            logger.error(f"PDFハイライト設定の保存に失敗しました: {e}")
 
     def update_last_directory(self, directory: str) -> None:
         """最後に選択したディレクトリを更新

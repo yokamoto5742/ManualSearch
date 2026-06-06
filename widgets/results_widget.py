@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from typing import Dict, List, Optional, Tuple
@@ -15,6 +16,8 @@ from utils.constants import (
     FILE_EXTENSION_PDF, HIGHLIGHT_COLORS, INDEX_STATUS_DISPLAY_TIMEOUT, INDEX_STATUS_ICON,
     PDF_PAGE_LABEL, STYLESHEETS, TEXT_LINE_LABEL, UI_LABELS
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ResultsWidget(QWidget):
@@ -71,92 +74,46 @@ class ResultsWidget(QWidget):
 
     def perform_search(self, directory: str, search_terms: List[str],
                        include_subdirs: bool, search_type: str) -> None:
-        self._setup_search_colors(search_terms)
-        self._setup_searcher(directory, search_terms, include_subdirs, search_type)
-        self._setup_progress_dialog()
-        if self.searcher:
-            self.searcher.start()
-
-    def perform_index_search(self, directory: str, search_terms: List[str],
-                             include_subdirs: bool, search_type: str) -> None:
-        self._setup_search_colors(search_terms)
-        self._setup_index_searcher(directory, search_terms, include_subdirs, search_type)
-        self._setup_progress_dialog()
-        if self.index_searcher:
-            self.index_searcher.start()
+        self._start_file_search([directory], search_terms, include_subdirs, search_type,
+                                global_search=False)
 
     def perform_global_search(self, directories: List[str], search_terms: List[str],
                               include_subdirs: bool, search_type: str) -> None:
-        self._setup_search_colors(search_terms)
-        self._setup_global_searcher(directories, search_terms, include_subdirs, search_type)
-        self._setup_progress_dialog()
-        if self.searcher:
-            self.searcher.start()
+        self._start_file_search(directories, search_terms, include_subdirs, search_type,
+                                global_search=True)
+
+    def perform_index_search(self, directory: str, search_terms: List[str],
+                             include_subdirs: bool, search_type: str) -> None:
+        self._start_index_search([directory], search_terms, include_subdirs, search_type,
+                                 cross_folder=False)
 
     def perform_global_index_search(self, directories: List[str], search_terms: List[str],
                                     include_subdirs: bool, search_type: str) -> None:
+        self._start_index_search(directories, search_terms, include_subdirs, search_type,
+                                 cross_folder=True)
+
+    def _start_file_search(self, directories: List[str], search_terms: List[str],
+                           include_subdirs: bool, search_type: str, global_search: bool) -> None:
         self._setup_search_colors(search_terms)
-        self._setup_global_index_searcher(directories, search_terms, include_subdirs, search_type)
-        self._setup_progress_dialog()
-        if self.index_searcher:
-            self.index_searcher.start()
-
-    def _setup_search_colors(self, search_terms: List[str]) -> None:
-        self.search_term_colors = {
-            term: HIGHLIGHT_COLORS[i % len(HIGHLIGHT_COLORS)]
-            for i, term in enumerate(search_terms)
-        }
-
-    def _setup_searcher(self, directory: str, search_terms: List[str],
-                        include_subdirs: bool, search_type: str) -> None:
-        file_extensions = self.config_manager.get_file_extensions()
-        context_length = self.config_manager.get_context_length()
-        self.searcher = FileSearcher(directory, search_terms, include_subdirs,
-                                     search_type, file_extensions, context_length)
-        self.searcher.result_found.connect(self.add_result)
-        self.searcher.progress_update.connect(self.update_progress)
-        self.searcher.search_completed.connect(self.search_completed)
-
-    def _setup_global_searcher(self, directories: List[str], search_terms: List[str],
-                               include_subdirs: bool, search_type: str) -> None:
-        file_extensions = self.config_manager.get_file_extensions()
-        context_length = self.config_manager.get_context_length()
 
         base_directory = directories[0] if directories else ""
-        self.searcher = FileSearcher(base_directory, search_terms, include_subdirs,
-                                     search_type, file_extensions, context_length,
-                                     global_search=True, global_directories=directories)
+        self.searcher = FileSearcher(
+            base_directory, search_terms, include_subdirs, search_type,
+            self.config_manager.get_file_extensions(),
+            self.config_manager.get_context_length(),
+            global_search=global_search,
+            global_directories=directories if global_search else None
+        )
         self.searcher.result_found.connect(self.add_result)
         self.searcher.progress_update.connect(self.update_progress)
         self.searcher.search_completed.connect(self.search_completed)
 
-    def _setup_index_searcher(self, directory: str, search_terms: List[str],
-                              include_subdirs: bool, search_type: str) -> None:
-        file_extensions = self.config_manager.get_file_extensions()
-        context_length = self.config_manager.get_context_length()
-        index_file_path = self.config_manager.get_index_file_path()
+        self._setup_progress_dialog()
+        self.searcher.start()
 
-        self.index_searcher = SmartFileSearcher(
-            directory=directory,
-            search_terms=search_terms,
-            include_subdirs=include_subdirs,
-            search_type=search_type,
-            file_extensions=file_extensions,
-            context_length=context_length,
-            use_index=True,
-            index_file_path=index_file_path
-        )
-
-        self.index_searcher.result_found.connect(self.add_result)
-        self.index_searcher.progress_update.connect(self.update_progress)
-        self.index_searcher.search_completed.connect(self.search_completed)
-        self.index_searcher.index_status_changed.connect(self.update_index_status)
-
-    def _setup_global_index_searcher(self, directories: List[str], search_terms: List[str],
-                                     include_subdirs: bool, search_type: str) -> None:
-        file_extensions = self.config_manager.get_file_extensions()
-        context_length = self.config_manager.get_context_length()
-        index_file_path = self.config_manager.get_index_file_path()
+    def _start_index_search(self, directories: List[str], search_terms: List[str],
+                            include_subdirs: bool, search_type: str, cross_folder: bool) -> None:
+        self._setup_search_colors(search_terms)
 
         base_directory = directories[0] if directories else ""
         self.index_searcher = SmartFileSearcher(
@@ -164,17 +121,25 @@ class ResultsWidget(QWidget):
             search_terms=search_terms,
             include_subdirs=include_subdirs,
             search_type=search_type,
-            file_extensions=file_extensions,
-            context_length=context_length,
+            file_extensions=self.config_manager.get_file_extensions(),
+            context_length=self.config_manager.get_context_length(),
             use_index=True,
-            index_file_path=index_file_path,
-            cross_folder_search=True
+            index_file_path=self.config_manager.get_index_file_path(),
+            cross_folder_search=cross_folder
         )
-
         self.index_searcher.result_found.connect(self.add_result)
         self.index_searcher.progress_update.connect(self.update_progress)
         self.index_searcher.search_completed.connect(self.search_completed)
         self.index_searcher.index_status_changed.connect(self.update_index_status)
+
+        self._setup_progress_dialog()
+        self.index_searcher.start()
+
+    def _setup_search_colors(self, search_terms: List[str]) -> None:
+        self.search_term_colors = {
+            term: HIGHLIGHT_COLORS[i % len(HIGHLIGHT_COLORS)]
+            for i, term in enumerate(search_terms)
+        }
 
     def _setup_progress_dialog(self) -> None:
         self.progress_dialog = QProgressDialog(
@@ -232,9 +197,9 @@ class ResultsWidget(QWidget):
             self.current_position = position
             self.file_open_requested.emit()
         except (AttributeError, TypeError) as e:
-            print(f"エラー: ダブルクリック処理中にエラーが発生しました: {e}")
+            logger.error(f"ダブルクリック処理中にエラーが発生しました: {e}")
         except Exception as e:
-            print(f"予期せぬエラーが発生しました: {e}")
+            logger.error(f"予期せぬエラーが発生しました: {e}")
 
     def show_result(self, item: QListWidgetItem) -> None:
         try:
@@ -247,9 +212,9 @@ class ResultsWidget(QWidget):
             self.current_position = position
             self.result_selected.emit()
         except AttributeError:
-            print("エラー: 無効な項目データ")
+            logger.error("無効な項目データ")
         except Exception as e:
-            print(f"show_resultで予期せぬエラーが発生しました: {e}")
+            logger.error(f"show_resultで予期せぬエラーが発生しました: {e}")
 
     def _create_result_html(self, file_path: str, position: int, highlighted_content: str) -> str:
         result_html = f'<span style="font-size:{self.result_detail_font.pointSize()}pt;">'
@@ -271,7 +236,7 @@ class ResultsWidget(QWidget):
                     flags=re.IGNORECASE
                 )
             except re.error:
-                print(f"正規表現エラー: term={term}")
+                logger.error(f"正規表現エラー: term={term}")
         return highlighted
 
     def clear_results(self) -> None:

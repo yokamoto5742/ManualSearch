@@ -7,7 +7,7 @@ def build_executable():
         "scripts/rebuild_index.py"
     ])
 
-    print(f"Executable built successfully.")
+    print("Executable built successfully.")
 
 
 if __name__ == "__main__":

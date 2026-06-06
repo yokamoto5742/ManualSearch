@@ -14,7 +14,7 @@ from utils.config_manager import ConfigManager
 from utils.constants import (
     WINDOW_TITLE_TEMPLATE, MAIN_WINDOW_LAYOUT_SPACING, MAIN_WINDOW_LAYOUT_MARGIN,
     MAIN_LAYOUT_STRETCH_FACTOR, UI_LABELS, ERROR_MESSAGES, DIALOG_TITLES,
-    DIALOG_MESSAGES, LOG_MESSAGE_TEMPLATES
+    DIALOG_MESSAGES, FILE_OPEN_ERROR_TEMPLATES, LOG_MESSAGE_TEMPLATES
 )
 from utils.helpers import create_confirmation_dialog
 from widgets.auto_close_message_widget import AutoCloseMessage
@@ -221,7 +221,7 @@ class MainWindow(QMainWindow):
         except FileNotFoundError:
             self._show_error_message(ERROR_MESSAGES['FILE_NOT_FOUND'])
         except Exception as e:
-            self._show_error_message(f"ファイルを開く際にエラーが発生しました: {e}")
+            self._show_error_message(FILE_OPEN_ERROR_TEMPLATES['FILE_OPEN_ERROR'].format(error=e))
 
     def _show_error_message(self, message: str) -> None:
         self.auto_close_message.show_message(message, 2000)

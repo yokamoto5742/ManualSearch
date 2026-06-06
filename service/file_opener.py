@@ -9,8 +9,10 @@ from PyQt5.QtWidgets import QMessageBox
 from service.pdf_handler import open_pdf, temp_file_manager
 from service.text_handler import open_text_file
 from utils.constants import (
-    FILE_HANDLER_MAPPING,
+    DIALOG_TITLES,
     ERROR_MESSAGES,
+    FILE_HANDLER_MAPPING,
+    FILE_OPEN_ERROR_TEMPLATES,
     PROCESS_CLEANUP_DELAY
 )
 from utils.helpers import is_network_file
@@ -69,7 +71,7 @@ class FileOpener:
             self._last_opened_file = file_path
 
         except Exception as e:
-            self._show_error(f"ファイルを開く際にエラーが発生しました: {e}")
+            self._show_error(FILE_OPEN_ERROR_TEMPLATES['FILE_OPEN_ERROR'].format(error=e))
             if file_extension == '.pdf':
                 temp_file_manager.cleanup_all()
 
@@ -96,13 +98,14 @@ class FileOpener:
             open_pdf(file_path, self.acrobat_path, position, search_terms, use_highlight)
 
         except IOError as e:
-            self._show_error(f"PDFの処理に失敗しました: {e}")
+            self._show_error(FILE_OPEN_ERROR_TEMPLATES['PDF_PROCESS_FAILED'].format(error=e))
             raise
         except subprocess.SubprocessError as e:
-            self._show_error(f"{ERROR_MESSAGES['ACROBAT_START_FAILED']}: {e}")
+            self._show_error(FILE_OPEN_ERROR_TEMPLATES['ACROBAT_START_FAILED'].format(
+                message=ERROR_MESSAGES['ACROBAT_START_FAILED'], error=e))
             raise
         except Exception as e:
-            self._show_error(f"PDFの操作中にエラーが発生しました: {e}")
+            self._show_error(FILE_OPEN_ERROR_TEMPLATES['PDF_OPERATION_ERROR'].format(error=e))
             raise
 
     def _check_pdf_accessibility(self, file_path: str) -> bool:
@@ -141,10 +144,10 @@ class FileOpener:
             height = self.config_manager.get_text_viewer_height()
             open_text_file(file_path, search_terms, font_size, position, self.parent_window, width, height)
         except IOError as e:
-            self._show_error(f"テキストファイルの読み込みに失敗しました: {e}")
+            self._show_error(FILE_OPEN_ERROR_TEMPLATES['TEXT_READ_FAILED'].format(error=e))
             raise
         except ValueError as e:
-            self._show_error(f"テキストファイルの処理中にエラーが発生しました: {e}")
+            self._show_error(FILE_OPEN_ERROR_TEMPLATES['TEXT_PROCESS_ERROR'].format(error=e))
             raise
 
     def open_folder(self, folder_path: str) -> None:
@@ -163,9 +166,10 @@ class FileOpener:
         except FileNotFoundError:
             self._show_error(ERROR_MESSAGES['FOLDER_NOT_FOUND'])
         except OSError as e:
-            self._show_error(f"{ERROR_MESSAGES['FOLDER_OPEN_FAILED']}: {e}")
+            self._show_error(FILE_OPEN_ERROR_TEMPLATES['FOLDER_OPEN_FAILED'].format(
+                message=ERROR_MESSAGES['FOLDER_OPEN_FAILED'], error=e))
         except Exception as e:
-            self._show_error(f"フォルダを開く際にエラーが発生しました: {e}")
+            self._show_error(FILE_OPEN_ERROR_TEMPLATES['FOLDER_OPEN_ERROR'].format(error=e))
 
     def cleanup_resources(self) -> None:
         """リソースをクリーンアップ"""
@@ -182,4 +186,4 @@ class FileOpener:
         Args:
             message: エラーメッセージ
         """
-        QMessageBox.warning(None, "エラー", message)
+        QMessageBox.warning(None, DIALOG_TITLES['ERROR'], message)

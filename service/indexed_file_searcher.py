@@ -6,6 +6,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 
 from service.file_searcher import FileSearcher as OriginalFileSearcher
 from service.search_indexer import SearchIndexer
+from utils.constants import INDEX_STATUS_MESSAGES, INDEX_STATUS_TEMPLATES
 
 logger = logging.getLogger(__name__)
 
@@ -58,12 +59,12 @@ class IndexedFileSearcher(QThread):
 
     def _is_index_available(self) -> bool:
         if not os.path.exists(self.indexer.storage.index_file_path):
-            self.index_status_changed.emit("インデックスファイルが見つかりません")
+            self.index_status_changed.emit(INDEX_STATUS_MESSAGES['FILE_NOT_FOUND'])
             return False
 
         stats = self.indexer.get_index_stats()
         if stats["files_count"] == 0:
-            self.index_status_changed.emit("インデックスが空です")
+            self.index_status_changed.emit(INDEX_STATUS_MESSAGES['EMPTY'])
             return False
 
         return True
@@ -73,25 +74,23 @@ class IndexedFileSearcher(QThread):
             results = self.indexer.search_in_index(self.search_terms, self.search_type)
 
             total_results = len(results)
-            emitted_count = 0
             for i, (file_path, matches) in enumerate(results):
                 if self.cancel_flag:
                     break
 
                 if self._should_include_file(file_path):
                     self.result_found.emit(file_path, matches)
-                    emitted_count += 1
 
                 progress = int((i + 1) / total_results * 100) if total_results > 0 else 100
                 self.progress_update.emit(progress)
 
         except Exception as e:
             logger.error(f"インデックス検索でエラー: {e}")
-            self.index_status_changed.emit("インデックス検索でエラーが発生しました")
+            self.index_status_changed.emit(INDEX_STATUS_MESSAGES['SEARCH_ERROR'])
             self._search_without_index()
 
     def _search_without_index(self) -> None:
-        self.index_status_changed.emit("インデックスなしで検索中...")
+        self.index_status_changed.emit(INDEX_STATUS_MESSAGES['SEARCHING_WITHOUT_INDEX'])
 
         self.fallback_searcher = OriginalFileSearcher(
             self.directory,
@@ -144,19 +143,21 @@ class IndexedFileSearcher(QThread):
             self.fallback_searcher.cancel_search()
 
     def create_or_update_index(self, directories: List[str], progress_callback: Optional[Callable[[int, int], None]] = None) -> None:
-        self.index_status_changed.emit("インデックスを作成中...")
+        self.index_status_changed.emit(INDEX_STATUS_MESSAGES['CREATING'])
 
         try:
             self.indexer.create_index(directories, progress_callback=progress_callback)
 
             stats = self.indexer.get_index_stats()
             self.index_status_changed.emit(
-                f"インデックス作成完了: {stats['files_count']} ファイル, "
-                f"{stats['index_file_size_mb']:.1f}MB"
+                INDEX_STATUS_TEMPLATES['CREATE_COMPLETE'].format(
+                    files_count=stats['files_count'],
+                    size_mb=stats['index_file_size_mb']
+                )
             )
 
         except Exception as e:
-            self.index_status_changed.emit(f"インデックス作成エラー: {e}")
+            self.index_status_changed.emit(INDEX_STATUS_TEMPLATES['CREATE_ERROR'].format(error=e))
             logger.error(f"インデックス作成エラー: {e}")
 
     def get_index_stats(self) -> dict:
@@ -165,9 +166,11 @@ class IndexedFileSearcher(QThread):
     def cleanup_index(self) -> None:
         try:
             removed_count = self.indexer.remove_missing_files()
-            self.index_status_changed.emit(f"インデックスクリーンアップ完了: {removed_count} ファイルを削除")
+            self.index_status_changed.emit(
+                INDEX_STATUS_TEMPLATES['CLEANUP_COMPLETE'].format(count=removed_count)
+            )
         except Exception as e:
-            self.index_status_changed.emit(f"インデックスクリーンアップエラー: {e}")
+            self.index_status_changed.emit(INDEX_STATUS_TEMPLATES['CLEANUP_ERROR'].format(error=e))
 
     def rebuild_index(self, directories: List[str]) -> None:
         try:
@@ -175,7 +178,7 @@ class IndexedFileSearcher(QThread):
             self.create_or_update_index(directories)
 
         except Exception as e:
-            self.index_status_changed.emit(f"インデックス再構築エラー: {e}")
+            self.index_status_changed.emit(INDEX_STATUS_TEMPLATES['REBUILD_ERROR'].format(error=e))
 
 
 class SearchMode:
@@ -200,7 +203,7 @@ class SmartFileSearcher(IndexedFileSearcher):
             if self._is_index_available():
                 self._search_with_index()
             else:
-                self.index_status_changed.emit("インデックスが利用できません")
+                self.index_status_changed.emit(INDEX_STATUS_MESSAGES['UNAVAILABLE'])
                 self.search_completed.emit()
         else:
             super().run()
@@ -210,7 +213,7 @@ class SmartFileSearcher(IndexedFileSearcher):
             stats = self.get_index_stats()
 
             if stats["files_count"] == 0:
-                self.index_status_changed.emit("インデックスを新規作成します...")
+                self.index_status_changed.emit(INDEX_STATUS_MESSAGES['CREATING_NEW'])
                 self.create_or_update_index(directories)
                 return True
 

@@ -306,33 +306,6 @@ class TestAcrobatProcessManager:
 
         mock_find.assert_called_once()
 
-    def test_is_acrobat_window_valid_titles(self):
-        """Acrobatウィンドウタイトルの判定が正しく動作することを確認"""
-        valid_titles = [
-            "Adobe Acrobat Reader DC",
-            "Adobe Acrobat Pro DC",
-            "document.pdf - Acrobat Reader",
-            "file.pdf - Adobe Acrobat",
-            "ADOBE ACROBAT",  # 大文字
-            "acrobat reader",  # 小文字
-        ]
-
-        for title in valid_titles:
-            assert AcrobatProcessManager._is_acrobat_window(title) is True
-
-    def test_is_acrobat_window_invalid_titles(self):
-        """Acrobat以外のウィンドウタイトルが正しく判定されることを確認"""
-        invalid_titles = [
-            "Google Chrome",
-            "Microsoft Word",
-            "Notepad++",
-            "File Explorer",
-            "",  # 空文字列
-        ]
-
-        for title in invalid_titles:
-            assert AcrobatProcessManager._is_acrobat_window(title) is False
-
     @patch('time.sleep')
     @patch('pyautogui.getActiveWindowTitle')
     @patch('psutil.Process')

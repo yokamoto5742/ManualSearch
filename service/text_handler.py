@@ -53,6 +53,7 @@ def open_text_file(
             position=position,
             width=width,
             height=height,
+            file_path=file_path,
             parent=parent,
         )
         viewer.destroyed.connect(lambda: _remove_viewer(viewer))

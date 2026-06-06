@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import socket
@@ -15,6 +16,8 @@ from utils.constants import (
     ERROR_MESSAGES,
     UI_LABELS
 )
+
+logger = logging.getLogger(__name__)
 
 
 def normalize_path(file_path: str) -> str:
@@ -197,4 +200,4 @@ def move_cursor_to_yes_button(yes_button) -> None:
 
             QCursor.setPos(global_center)
     except Exception as e:
-        print(f"マウスカーソル移動中にエラーが発生しました: {e}")
+        logger.error(f"マウスカーソル移動中にエラーが発生しました: {e}")

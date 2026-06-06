@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import List, Optional, Tuple
 
 from PyQt5.QtCore import QRegularExpression, Qt
@@ -22,8 +23,10 @@ from utils.constants import (
     HIGHLIGHT_COLORS,
     MAX_FONT_SIZE,
     MIN_FONT_SIZE,
+    TEXT_VIEWER_CLOSE_LABEL,
     TEXT_VIEWER_DEFAULT_HEIGHT,
     TEXT_VIEWER_DEFAULT_WIDTH,
+    TEXT_VIEWER_OPEN_FILE_LABEL,
     TEXT_VIEWER_ZOOM_IN_LABEL,
     TEXT_VIEWER_ZOOM_OUT_LABEL,
 )
@@ -74,12 +77,14 @@ class TextViewerWindow(QMainWindow):
         position: int = 0,
         width: int = TEXT_VIEWER_DEFAULT_WIDTH,
         height: int = TEXT_VIEWER_DEFAULT_HEIGHT,
+        file_path: str = "",
         parent: Optional[QWidget] = None,
     ) -> None:
         super().__init__(parent)
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.setWindowTitle(title)
         self.resize(width, height)
+        self._file_path = file_path
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -108,12 +113,22 @@ class TextViewerWindow(QMainWindow):
         bar = QHBoxLayout()
         zoom_in_button = QPushButton(TEXT_VIEWER_ZOOM_IN_LABEL)
         zoom_out_button = QPushButton(TEXT_VIEWER_ZOOM_OUT_LABEL)
+        open_file_button = QPushButton(TEXT_VIEWER_OPEN_FILE_LABEL)
+        close_button = QPushButton(TEXT_VIEWER_CLOSE_LABEL)
         zoom_in_button.clicked.connect(self.zoom_in)
         zoom_out_button.clicked.connect(self.zoom_out)
+        open_file_button.clicked.connect(self._open_file)
+        close_button.clicked.connect(self.close)
         bar.addWidget(zoom_in_button)
         bar.addWidget(zoom_out_button)
+        bar.addWidget(open_file_button)
+        bar.addWidget(close_button)
         bar.addStretch()
         return bar
+
+    def _open_file(self) -> None:
+        if self._file_path:
+            os.startfile(self._file_path)
 
     def _apply_font_size(self, font_size: int) -> None:
         size = max(MIN_FONT_SIZE, min(MAX_FONT_SIZE, font_size or DEFAULT_HTML_FONT_SIZE))

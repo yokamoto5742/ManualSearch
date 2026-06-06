@@ -1,3 +1,4 @@
+import logging
 import re
 from typing import List
 
@@ -9,6 +10,8 @@ from PyQt5.QtWidgets import (
 from utils.constants import (
     SEARCH_TERM_SEPARATOR_PATTERN, SEARCH_TYPE_AND, SEARCH_TYPE_OR, UI_LABELS
 )
+
+logger = logging.getLogger(__name__)
 
 
 class SearchWidget(QWidget):
@@ -87,10 +90,10 @@ class SearchWidget(QWidget):
                 if term.strip()
             ]
         except re.error as e:
-            print(f"正規表現エラー: {e}")
+            logger.error(f"正規表現エラー: {e}")
             return []
         except AttributeError:
-            print("検索入力フィールドが正しく初期化されていません")
+            logger.error("検索入力フィールドが正しく初期化されていません")
             return []
 
     def get_search_type(self) -> str:
@@ -102,7 +105,7 @@ class SearchWidget(QWidget):
         try:
             return SEARCH_TYPE_AND if self.search_type_combo.currentText().startswith("AND") else SEARCH_TYPE_OR
         except AttributeError:
-            print("検索タイプコンボボックスが正しく初期化されていません")
+            logger.error("検索タイプコンボボックスが正しく初期化されていません")
             return SEARCH_TYPE_AND
 
     def clear_input(self) -> None:

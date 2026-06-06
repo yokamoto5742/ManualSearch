@@ -74,3 +74,49 @@ INDEX_OPERATION_LABELS = {
 
 ERROR_DIRECTORY_ACCESS = 'ディレクトリアクセスエラー: {directory} - {error}'
 ERROR_DIRECTORY_SEARCH = 'ディレクトリ検索エラー: {directory} - {error}'
+
+
+# ============================================================================
+# インデックス検索ステータスメッセージ（UI表示）
+# ============================================================================
+
+INDEX_STATUS_MESSAGES = {
+    'FILE_NOT_FOUND': 'インデックスファイルが見つかりません',
+    'EMPTY': 'インデックスが空です',
+    'SEARCHING_WITHOUT_INDEX': 'インデックスなしで検索中...',
+    'SEARCH_ERROR': 'インデックス検索でエラーが発生しました',
+    'CREATING': 'インデックスを作成中...',
+    'UNAVAILABLE': 'インデックスが利用できません',
+    'CREATING_NEW': 'インデックスを新規作成します...',
+}
+
+INDEX_STATUS_TEMPLATES = {
+    'CREATE_COMPLETE': 'インデックス作成完了: {files_count} ファイル, {size_mb:.1f}MB',
+    'CREATE_ERROR': 'インデックス作成エラー: {error}',
+    'CLEANUP_COMPLETE': 'インデックスクリーンアップ完了: {count} ファイルを削除',
+    'CLEANUP_ERROR': 'インデックスクリーンアップエラー: {error}',
+    'REBUILD_ERROR': 'インデックス再構築エラー: {error}',
+}
+
+
+# ============================================================================
+# ファイルオープン時のエラーメッセージテンプレート（UI表示）
+# ============================================================================
+
+PDF_HANDLER_ERROR_TEMPLATES = {
+    'HIGHLIGHT_FAILED': 'PDFのハイライト処理中にエラー: {error}',
+    'FILE_NOT_FOUND': '指定されたファイルが見つかりません: {file_path}',
+    'ACROBAT_START_FAILED': 'Acrobat Readerの起動に失敗しました: {error}',
+    'UNEXPECTED_ERROR': 'PDFを開く際に予期せぬエラーが発生しました: {error}',
+}
+
+FILE_OPEN_ERROR_TEMPLATES = {
+    'PDF_PROCESS_FAILED': 'PDFの処理に失敗しました: {error}',
+    'ACROBAT_START_FAILED': '{message}: {error}',
+    'PDF_OPERATION_ERROR': 'PDFの操作中にエラーが発生しました: {error}',
+    'TEXT_READ_FAILED': 'テキストファイルの読み込みに失敗しました: {error}',
+    'TEXT_PROCESS_ERROR': 'テキストファイルの処理中にエラーが発生しました: {error}',
+    'FOLDER_OPEN_FAILED': '{message}: {error}',
+    'FOLDER_OPEN_ERROR': 'フォルダを開く際にエラーが発生しました: {error}',
+    'FILE_OPEN_ERROR': 'ファイルを開く際にエラーが発生しました: {error}',
+}
