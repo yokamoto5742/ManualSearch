@@ -34,6 +34,8 @@ ManualSearch は、PDF・テキスト・Markdownを横断して全文検索し�
 
 > 「あの人に聞かないとわからない」が「だれでもいつでも検索できる」に変わります。
 
+<div align="right"><a href="#目次">▲ 目次へ戻る</a></div>
+
 ---
 
 ## 活用シーン
@@ -41,6 +43,8 @@ ManualSearch は、PDF・テキスト・Markdownを横断して全文検索し�
 - **大量の業務マニュアルから記載箇所を一発で探す** — 数百のPDF・手順書を横断し、該当ページを開いた瞬間にハイライトで該当箇所が分かる
 - **共有ドライブの資料を新人が自力で検索・自己解決** — ベテランに聞かなくても過去の手順や事例を引けるため、属人化した引継ぎコストを下げる
 - **Shift_JIS混在の現場ファイルでも文字化けせず検索** — エンコーディングを自動判定し、日本語環境の「検索できない」を防ぐ
+
+<div align="right"><a href="#目次">▲ 目次へ戻る</a></div>
 
 ---
 
@@ -54,6 +58,8 @@ ManualSearch は、PDF・テキスト・Markdownを横断して全文検索し�
 - **テキストビューア機能**: テキスト・Markdownファイルを独立ウィンドウで表示、検索語をハイライト
 - **柔軟な検索条件**: AND/OR検索、サブフォルダ検索対応
 - **日本語エンコーディング自動判定**: chardetによりShift_JIS/UTF-8を自動検出
+
+<div align="right"><a href="#目次">▲ 目次へ戻る</a></div>
 
 ---
 
@@ -69,6 +75,8 @@ ManualSearch は、PDF・テキスト・Markdownを横断して全文検索し�
 
 - RAM: 4GB以上推奨
 - ストレージ: インデックスファイル用に追加容量が必要
+
+<div align="right"><a href="#目次">▲ 目次へ戻る</a></div>
 
 ---
 
@@ -105,6 +113,8 @@ pip install -r requirements.txt
 ```bash
 python main.py
 ```
+
+<div align="right"><a href="#目次">▲ 目次へ戻る</a></div>
 
 ---
 
@@ -153,6 +163,8 @@ results = indexed_searcher.search()
 - **サブフォルダ検索**: 指定フォルダ以下を再帰的に検索
 - **インデックス検索**: 大規模データセットでの高速化を実現
 
+<div align="right"><a href="#目次">▲ 目次へ戻る</a></div>
+
 ---
 
 ## プロジェクト構造
@@ -188,6 +200,8 @@ ManualSearch/
 ├── tests/                           # テストコード
 
 ```
+
+<div align="right"><a href="#目次">▲ 目次へ戻る</a></div>
 
 ---
 
@@ -333,6 +347,8 @@ FileSearcher Thread   SearchIndexer Thread
  ・マッチング処理     ・統計情報生成
 ```
 
+<div align="right"><a href="#目次">▲ 目次へ戻る</a></div>
+
 ---
 
 ## 設定
@@ -367,6 +383,8 @@ log_level = INFO
 log_directory = logs
 log_retention_days = 7
 ```
+
+<div align="right"><a href="#目次">▲ 目次へ戻る</a></div>
 
 ---
 
@@ -416,6 +434,8 @@ pyright
 # テストカバレッジ確認
 pytest --cov=. --cov-report=term-missing
 ```
+
+<div align="right"><a href="#目次">▲ 目次へ戻る</a></div>
 
 ---
 
@@ -480,6 +500,8 @@ python -m pytest tests/service/test_file_searcher.py -v --durations=5
 python -m cProfile -s cumtime main.py
 ```
 
+<div align="right"><a href="#目次">▲ 目次へ戻る</a></div>
+
 ---
 
 ## 主要依存ライブラリ
@@ -492,6 +514,8 @@ python -m cProfile -s cumtime main.py
 
 詳細は `requirements.txt` を参照してください。
 
+<div align="right"><a href="#目次">▲ 目次へ戻る</a></div>
+
 ---
 
 ## ライセンス
@@ -501,3 +525,5 @@ python -m cProfile -s cumtime main.py
 ## 更新履歴
 
 更新履歴は [CHANGELOG.md](docs/CHANGELOG.md) を参照してください。
+
+<div align="right"><a href="#目次">▲ 目次へ戻る</a></div>
