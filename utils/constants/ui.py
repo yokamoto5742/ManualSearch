@@ -82,6 +82,7 @@ DIALOG_TITLES = {
     'CONFIRM': '確認',
     'SELECT_FOLDER': 'フォルダを選択',
     'EDIT_FOLDER_PATH': 'フォルダパスの編集',
+    'DIRECTORY_MANAGEMENT': 'フォルダ設定',
     'INDEX_MANAGEMENT': 'インデックス管理',
     'ERROR': 'エラー',
     'WARNING': '警告'
@@ -99,7 +100,6 @@ DIALOG_MESSAGES = {
 # ============================================================================
 
 STYLESHEETS = {
-    'INVALID_DIRECTORY_BACKGROUND': 'background-color: #FFCCCC;',
     'INDEX_STATUS_LABEL': 'color: blue; font-size: 12px; padding: 2px;',
     'AUTO_CLOSE_MESSAGE': 'background-color: #f0f0f0; border: 1px solid #cccccc; border-radius: 5px;'
 }
@@ -110,6 +110,8 @@ STYLESHEETS = {
 # ============================================================================
 
 FOLDER_PATH_INPUT_MIN_WIDTH = 1100
+DIRECTORY_MANAGEMENT_DIALOG_WIDTH = 600
+DIRECTORY_MANAGEMENT_DIALOG_HEIGHT = 400
 INDEX_MANAGEMENT_DIALOG_WIDTH = 600
 INDEX_MANAGEMENT_DIALOG_HEIGHT = 500
 INDEX_LOG_MAX_HEIGHT = 150
@@ -146,6 +148,9 @@ UI_LABELS = {
     'EDIT_BUTTON': '編集',
     'DELETE_BUTTON': '削除',
     'INCLUDE_SUBDIRS': 'サブフォルダ含む',
+    'FOLDER_SETTINGS': 'フォルダ設定...',
+    'SEARCH_TARGET': '検索対象: {count}フォルダ',
+    'SEARCH_TARGET_EMPTY': '検索対象フォルダが未登録です',
     'OPEN_FOLDER': 'フォルダを開く',
     'AND_SEARCH_LABEL': 'AND検索(複数の検索語をすべて含む)',
     'OR_SEARCH_LABEL': 'OR検索(複数の検索語のいずれかを含む)',

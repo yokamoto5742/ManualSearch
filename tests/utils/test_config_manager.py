@@ -98,16 +98,11 @@ class TestConfigManager:
 
         # 初期状態
         assert config.get_directories() == []
-        assert config.get_last_directory() == ''
 
         # ディレクトリの設定
         dirs = ['/path/to/dir1', '/path/to/dir2']
         config.set_directories(dirs)
         assert config.get_directories() == dirs
-
-        # 最後のディレクトリ
-        config.set_last_directory('/path/to/dir1')
-        assert config.get_last_directory() == '/path/to/dir1'
 
     def test_index_settings(self, temp_config_file):
         """インデックス設定のテスト"""

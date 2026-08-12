@@ -235,22 +235,17 @@ class PDFHighlighter:
 
 
 def open_pdf(
-    file_path: str, 
-    acrobat_path: str, 
-    current_position: int, 
-    search_terms: List[str],
-    use_highlight: bool = True
+    file_path: str,
+    acrobat_path: str,
+    current_position: int,
+    search_terms: List[str]
 ) -> None:
     try:
         # 既存のAcrobatプロセスを終了
         AcrobatProcessManager.close_all_processes()
-        
-        # ハイライトの有無に応じてPDFパスを決定
-        if use_highlight:
-            pdf_path = PDFHighlighter.highlight_pdf(file_path, search_terms)
-        else:
-            pdf_path = file_path
-        
+
+        pdf_path = PDFHighlighter.highlight_pdf(file_path, search_terms)
+
         # Acrobatで開く
         process = subprocess.Popen([acrobat_path, pdf_path])
         

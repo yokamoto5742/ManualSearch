@@ -98,7 +98,6 @@ acrobat_path = C:\\Program Files\\Adobe\\Acrobat DC\\Acrobat\\Acrobat.exe
 
 [Directories]
 list = 
-last_directory = 
 
 [PDFSettings]
 timeout = 30
@@ -141,7 +140,6 @@ acrobat_path = C:\\Program Files\\Adobe\\Acrobat DC\\Acrobat\\Acrobat.exe
 
 [Directories]
 list = {temp_dir}
-last_directory = {temp_dir}
 
 [PDFSettings]
 timeout = 45

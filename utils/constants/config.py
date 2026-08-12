@@ -94,7 +94,6 @@ CONFIG_KEYS = {
     'ACROBAT_READER_PATH': 'acrobat_reader_path',
     'ACROBAT_READER_X86_PATH': 'acrobat_reader_x86_path',
     'DIRECTORY_LIST': 'list',
-    'LAST_DIRECTORY': 'last_directory',
     'CONTEXT_LENGTH': 'context_length',
     'FILENAME_FONT_SIZE': 'filename_font_size',
     'RESULT_DETAIL_FONT_SIZE': 'result_detail_font_size',

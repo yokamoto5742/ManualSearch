@@ -290,12 +290,6 @@ class ConfigManager:
     def set_directories(self, directories: List[str]) -> None:
         self._set_str(CONFIG_SECTIONS['DIRECTORIES'], CONFIG_KEYS['DIRECTORY_LIST'], ','.join(directories))
     
-    def get_last_directory(self) -> str:
-        return self._get_str(CONFIG_SECTIONS['DIRECTORIES'], CONFIG_KEYS['LAST_DIRECTORY'])
-    
-    def set_last_directory(self, directory: str) -> None:
-        self._set_str(CONFIG_SECTIONS['DIRECTORIES'], CONFIG_KEYS['LAST_DIRECTORY'], directory)
-    
     def get_file_extensions(self) -> List[str]:
         extensions_str = self._get_str(CONFIG_SECTIONS['FILE_TYPES'], CONFIG_KEYS['EXTENSIONS'])
         return [ext.strip() for ext in extensions_str.split(',') if ext.strip()]

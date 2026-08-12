@@ -70,7 +70,6 @@ use_index_search = True
 
 [Directories]
 list = {temp_dir}
-last_directory = {temp_dir}
 """
         
         with open(setup['config_file'], 'w', encoding='utf-8') as f:

@@ -37,14 +37,13 @@ class FileOpener:
         self.acrobat_path = self.config_manager.find_available_acrobat_path() or ""
         self._last_opened_file: str = ""
 
-    def open_file(self, file_path: str, position: int, search_terms: List[str], use_highlight: bool = True) -> None:
+    def open_file(self, file_path: str, position: int, search_terms: List[str]) -> None:
         """ファイルを開く
 
         Args:
             file_path: ファイルパス
             position: ページ/行位置
             search_terms: 検索語リスト
-            use_highlight: ハイライトを使用するか
         """
         if not os.path.exists(file_path):
             self._show_error(ERROR_MESSAGES['FILE_NOT_FOUND'])
@@ -64,7 +63,7 @@ class FileOpener:
         try:
             method = getattr(self, handler_method)
             if file_extension == '.pdf':
-                method(file_path, position, search_terms, use_highlight)
+                method(file_path, position, search_terms)
             else:
                 method(file_path, search_terms, position)
 
@@ -75,14 +74,13 @@ class FileOpener:
             if file_extension == '.pdf':
                 temp_file_manager.cleanup_all()
 
-    def _open_pdf_file(self, file_path: str, position: int, search_terms: List[str], use_highlight: bool = True) -> None:
+    def _open_pdf_file(self, file_path: str, position: int, search_terms: List[str]) -> None:
         """PDFファイルを開く
 
         Args:
             file_path: PDFファイルパス
             position: ページ番号
             search_terms: 検索語リスト
-            use_highlight: ハイライトを使用するかどうか
 
         Raises:
             IOError: ファイルアクセス失敗
@@ -95,7 +93,7 @@ class FileOpener:
             if not self.acrobat_path or not os.path.exists(self.acrobat_path):
                 raise FileNotFoundError(ERROR_MESSAGES['ALL_ACROBAT_PATHS_NOT_FOUND'])
 
-            open_pdf(file_path, self.acrobat_path, position, search_terms, use_highlight)
+            open_pdf(file_path, self.acrobat_path, position, search_terms)
 
         except IOError as e:
             self._show_error(FILE_OPEN_ERROR_TEMPLATES['PDF_PROCESS_FAILED'].format(error=e))
