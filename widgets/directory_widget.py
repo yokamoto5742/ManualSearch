@@ -1,5 +1,5 @@
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QPushButton, QWidget
+from PyQt5.QtWidgets import QCheckBox, QHBoxLayout, QPushButton, QWidget
 
 from utils.config_manager import ConfigManager
 from utils.constants import UI_LABELS
@@ -21,14 +21,11 @@ class DirectoryWidget(QWidget):
         super().__init__()
         self.config_manager = config_manager
         self._setup_ui()
-        self._update_target_label()
 
     def _setup_ui(self) -> None:
         """UIレイアウトを構築"""
         layout = QHBoxLayout()
         self.setLayout(layout)
-
-        self.target_label = QLabel()
 
         settings_button = QPushButton(UI_LABELS['FOLDER_SETTINGS'])
         settings_button.clicked.connect(self.open_directory_settings)
@@ -40,26 +37,14 @@ class DirectoryWidget(QWidget):
         self.open_folder_button.clicked.connect(self.open_folder_requested.emit)
         self.open_folder_button.setEnabled(False)
 
-        layout.addWidget(self.target_label)
         layout.addWidget(settings_button)
         layout.addWidget(self.include_subdirs_checkbox)
         layout.addStretch(1)
         layout.addWidget(self.open_folder_button)
 
-    def _update_target_label(self) -> None:
-        """検索対象フォルダ数の表示を更新"""
-        directories = self.config_manager.get_directories()
-        if directories:
-            self.target_label.setText(UI_LABELS['SEARCH_TARGET'].format(count=len(directories)))
-            self.target_label.setToolTip('\n'.join(directories))
-        else:
-            self.target_label.setText(UI_LABELS['SEARCH_TARGET_EMPTY'])
-            self.target_label.setToolTip('')
-
     def open_directory_settings(self) -> None:
-        """フォルダ設定ダイアログを表示"""
+        """検索フォルダ設定ダイアログを表示"""
         DirectoryManagementDialog(self.config_manager, self).exec_()
-        self._update_target_label()
 
     def enable_open_folder_button(self) -> None:
         """フォルダ開くボタンを有効にする"""

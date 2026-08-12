@@ -105,6 +105,8 @@ CONFIG_KEYS = {
     'TEXT_VIEWER_WIDTH': 'text_viewer_width',
     'TEXT_VIEWER_HEIGHT': 'text_viewer_height',
     'TEXT_VIEWER_FONT_SIZE': 'text_viewer_font_size',
+    'FOLDER_SETTINGS_DIALOG_WIDTH': 'folder_settings_dialog_width',
+    'FOLDER_SETTINGS_DIALOG_HEIGHT': 'folder_settings_dialog_height',
 }
 
 

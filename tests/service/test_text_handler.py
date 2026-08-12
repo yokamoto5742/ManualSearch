@@ -12,9 +12,9 @@ from utils.constants import (
     MIN_FONT_SIZE,
     TEXT_VIEWER_CLOSE_LABEL,
     TEXT_VIEWER_OPEN_FILE_LABEL,
+    TEXT_VIEWER_PRINT_DIALOG_TITLE,
     TEXT_VIEWER_PRINT_ERROR_TEMPLATES,
     TEXT_VIEWER_PRINT_LABEL,
-    TEXT_VIEWER_PRINT_PREVIEW_TITLE,
 )
 from widgets import text_viewer_widget
 from widgets.text_viewer_widget import TextViewerWindow
@@ -198,48 +198,54 @@ class _FakePrinter:
     HighResolution = 0
     valid = True
 
-    def __init__(self, mode=None):
-        self.mode = mode
+    def __init__(self, *args):
+        self.args = args
 
     def isValid(self):
         return self.valid
 
 
-class _FakePreviewDialog:
-    """QPrintPreviewDialogの代替。実ダイアログを開かずに呼び出しを記録する"""
+class _FakePrinterInfo:
+    """QPrinterInfoの代替。利用可能なプリンタ一覧をテストから制御する"""
 
+    available = []
+
+    @classmethod
+    def availablePrinters(cls):
+        return cls.available
+
+
+class _FakePrintDialog:
+    """QPrintDialogの代替。実ダイアログを開かずに呼び出しを記録する"""
+
+    Accepted = 1
     instances = []
+    result = 1
 
     def __init__(self, printer, parent=None):
         self.printer = printer
         self.parent = parent
         self.title = ''
-        self.connected_slot = None
-        self.exec_called = False
-        self.paintRequested = self
-        _FakePreviewDialog.instances.append(self)
-
-    def connect(self, slot):
-        self.connected_slot = slot
+        _FakePrintDialog.instances.append(self)
 
     def setWindowTitle(self, title):
         self.title = title
 
-    def resize(self, width, height):
-        self.size = (width, height)
-
     def exec_(self):
-        self.exec_called = True
+        return _FakePrintDialog.result
 
 
 @pytest.fixture
 def fake_print_dialog(monkeypatch):
     """印刷ダイアログとプリンタをテスト用の代替に差し替える"""
-    _FakePreviewDialog.instances.clear()
+    _FakePrintDialog.instances.clear()
+    _FakePrintDialog.result = _FakePrintDialog.Accepted
     _FakePrinter.valid = True
+    _FakePrinterInfo.available = []
     monkeypatch.setattr(text_viewer_widget, 'QPrinter', _FakePrinter)
-    monkeypatch.setattr(text_viewer_widget, 'QPrintPreviewDialog', _FakePreviewDialog)
-    return _FakePreviewDialog
+    monkeypatch.setattr(text_viewer_widget, 'QPrinterInfo', _FakePrinterInfo)
+    monkeypatch.setattr(text_viewer_widget, 'QPrintDialog', _FakePrintDialog)
+    return _FakePrintDialog
 
 
 @pytest.mark.unit
@@ -264,20 +270,44 @@ class TestTextViewerPrint:
             TEXT_VIEWER_CLOSE_LABEL,
         ]
 
-    def test_print_opens_preview_dialog(self, make_viewer, fake_print_dialog):
-        """印刷でプレビューダイアログが開き、描画要求がビューアに接続される"""
+    def test_print_opens_print_dialog(self, make_viewer, fake_print_dialog, monkeypatch):
+        """印刷でプリンター選択ダイアログが開き、承諾時に印刷される"""
+        viewer = make_viewer('t', 'x', [], 16)
+        printed = []
+        monkeypatch.setattr(viewer.text_browser, 'print_', printed.append)
+
+        viewer._print_document()
+
+        dialog = fake_print_dialog.instances[0]
+        assert dialog.title == TEXT_VIEWER_PRINT_DIALOG_TITLE
+        assert printed == [dialog.printer]
+
+    def test_print_cancelled_does_not_print(self, make_viewer, fake_print_dialog, monkeypatch):
+        """ダイアログをキャンセルした場合は印刷しない"""
+        fake_print_dialog.result = 0
+        viewer = make_viewer('t', 'x', [], 16)
+        printed = []
+        monkeypatch.setattr(viewer.text_browser, 'print_', printed.append)
+
+        viewer._print_document()
+
+        assert printed == []
+
+    def test_print_uses_available_printer_without_default(self, make_viewer, fake_print_dialog):
+        """通常使うプリンターが未設定でも利用可能なプリンタで印刷できる"""
+        _FakePrinter.valid = False
+        _FakePrinterInfo.available = ['printer1']
         viewer = make_viewer('t', 'x', [], 16)
 
         viewer._print_document()
 
         dialog = fake_print_dialog.instances[0]
-        assert dialog.exec_called
-        assert dialog.title == TEXT_VIEWER_PRINT_PREVIEW_TITLE
-        assert dialog.connected_slot == viewer.text_browser.print_
+        assert dialog.printer.args[0] == 'printer1'
 
     def test_print_without_printer_shows_message(self, make_viewer, fake_print_dialog):
-        """プリンタが無い場合はメッセージを表示しダイアログを開かない"""
+        """プリンタが1台も無い場合はメッセージを表示しダイアログを開かない"""
         _FakePrinter.valid = False
+        _FakePrinterInfo.available = []
         viewer = make_viewer('t', 'x', [], 16)
 
         viewer._print_document()
@@ -292,7 +322,7 @@ class TestTextViewerPrint:
         def _raise(*args, **kwargs):
             raise RuntimeError('印刷失敗')
 
-        monkeypatch.setattr(text_viewer_widget, 'QPrintPreviewDialog', _raise)
+        monkeypatch.setattr(text_viewer_widget, 'QPrintDialog', _raise)
         viewer = make_viewer('t', 'x', [], 16)
 
         viewer._print_document()

@@ -16,6 +16,8 @@ from utils.constants import (
     DEFAULT_MAX_TEMP_FILES,
     DEFAULT_PDF_TIMEOUT,
     DEFAULT_USE_INDEX_SEARCH,
+    DIRECTORY_MANAGEMENT_DIALOG_HEIGHT,
+    DIRECTORY_MANAGEMENT_DIALOG_WIDTH,
     DEFAULT_WINDOW_HEIGHT,
     DEFAULT_WINDOW_WIDTH,
     DEFAULT_WINDOW_X,
@@ -101,6 +103,8 @@ class ConfigManager:
         'text_viewer_width': TEXT_VIEWER_DEFAULT_WIDTH,
         'text_viewer_height': TEXT_VIEWER_DEFAULT_HEIGHT,
         'text_viewer_font_size': DEFAULT_HTML_FONT_SIZE,
+        'folder_settings_dialog_width': DIRECTORY_MANAGEMENT_DIALOG_WIDTH,
+        'folder_settings_dialog_height': DIRECTORY_MANAGEMENT_DIALOG_HEIGHT,
         'context_length': DEFAULT_CONTEXT_LENGTH,
         'timeout': DEFAULT_PDF_TIMEOUT,
         'max_temp_files': DEFAULT_MAX_TEMP_FILES,
@@ -250,6 +254,18 @@ class ConfigManager:
     def set_text_viewer_font_size(self, size: int) -> None:
         self._set_int(CONFIG_SECTIONS['UI_SETTINGS'], CONFIG_KEYS['TEXT_VIEWER_FONT_SIZE'], size)
     
+    def get_folder_settings_dialog_size(self) -> Tuple[int, int]:
+        """検索フォルダ設定ダイアログの幅と高さを取得
+
+        Returns:
+            (幅, 高さ)
+        """
+        section = CONFIG_SECTIONS['UI_SETTINGS']
+        return (
+            self._get_int(section, CONFIG_KEYS['FOLDER_SETTINGS_DIALOG_WIDTH'], validate=False),
+            self._get_int(section, CONFIG_KEYS['FOLDER_SETTINGS_DIALOG_HEIGHT'], validate=False),
+        )
+
     def get_acrobat_path(self) -> str:
         return self._get_str(CONFIG_SECTIONS['PATHS'], CONFIG_KEYS['ACROBAT_PATH'])
     

@@ -10,8 +10,6 @@ from utils.config_manager import ConfigManager
 from utils.constants import (
     DIALOG_MESSAGES,
     DIALOG_TITLES,
-    DIRECTORY_MANAGEMENT_DIALOG_HEIGHT,
-    DIRECTORY_MANAGEMENT_DIALOG_WIDTH,
     FOLDER_PATH_INPUT_MIN_WIDTH,
     UI_LABELS
 )
@@ -33,7 +31,7 @@ class DirectoryManagementDialog(QDialog):
 
         self.setWindowTitle(DIALOG_TITLES['DIRECTORY_MANAGEMENT'])
         self.setModal(True)
-        self.resize(DIRECTORY_MANAGEMENT_DIALOG_WIDTH, DIRECTORY_MANAGEMENT_DIALOG_HEIGHT)
+        self.resize(*config_manager.get_folder_settings_dialog_size())
 
         self._setup_ui()
 

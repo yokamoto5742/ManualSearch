@@ -10,7 +10,7 @@ from PyQt5.QtGui import (
     QTextCursor,
     QTextDocument,
 )
-from PyQt5.QtPrintSupport import QPrinter, QPrintPreviewDialog
+from PyQt5.QtPrintSupport import QPrintDialog, QPrinter, QPrinterInfo
 from PyQt5.QtWidgets import (
     QHBoxLayout,
     QMainWindow,
@@ -29,11 +29,9 @@ from utils.constants import (
     TEXT_VIEWER_DEFAULT_HEIGHT,
     TEXT_VIEWER_DEFAULT_WIDTH,
     TEXT_VIEWER_OPEN_FILE_LABEL,
+    TEXT_VIEWER_PRINT_DIALOG_TITLE,
     TEXT_VIEWER_PRINT_ERROR_TEMPLATES,
     TEXT_VIEWER_PRINT_LABEL,
-    TEXT_VIEWER_PRINT_PREVIEW_HEIGHT,
-    TEXT_VIEWER_PRINT_PREVIEW_TITLE,
-    TEXT_VIEWER_PRINT_PREVIEW_WIDTH,
     TEXT_VIEWER_ZOOM_IN_LABEL,
     TEXT_VIEWER_ZOOM_OUT_LABEL,
 )
@@ -142,11 +140,30 @@ class TextViewerWindow(QMainWindow):
         if self._file_path:
             os.startfile(self._file_path)
 
+    @staticmethod
+    def _create_printer() -> Optional[QPrinter]:
+        """印刷先プリンタを用意する
+
+        通常使うプリンターが未設定の場合は利用可能な先頭のプリンタを使う。
+
+        Returns:
+            プリンタ。1台も利用できない場合はNone
+        """
+        printer = QPrinter(QPrinter.HighResolution)
+        if printer.isValid():
+            return printer
+
+        available = QPrinterInfo.availablePrinters()
+        if not available:
+            return None
+
+        return QPrinter(available[0], QPrinter.HighResolution)
+
     def _print_document(self) -> None:
-        """表示中の内容を印刷プレビュー経由で印刷する"""
+        """表示中の内容をプリンター選択ダイアログ経由で印刷する"""
         try:
-            printer = QPrinter(QPrinter.HighResolution)
-            if not printer.isValid():
+            printer = self._create_printer()
+            if printer is None:
                 logger.warning("利用可能なプリンタが見つかりません")
                 self.auto_close_message.show_message(
                     TEXT_VIEWER_PRINT_ERROR_TEMPLATES['PRINTER_NOT_FOUND'],
@@ -154,11 +171,10 @@ class TextViewerWindow(QMainWindow):
                 )
                 return
 
-            dialog = QPrintPreviewDialog(printer, self)
-            dialog.setWindowTitle(TEXT_VIEWER_PRINT_PREVIEW_TITLE)
-            dialog.resize(TEXT_VIEWER_PRINT_PREVIEW_WIDTH, TEXT_VIEWER_PRINT_PREVIEW_HEIGHT)
-            dialog.paintRequested.connect(self.text_browser.print_)
-            dialog.exec_()
+            dialog = QPrintDialog(printer, self)
+            dialog.setWindowTitle(TEXT_VIEWER_PRINT_DIALOG_TITLE)
+            if dialog.exec_() == QPrintDialog.Accepted:
+                self.text_browser.print_(printer)
 
         except Exception as e:
             logger.error(f"印刷処理でエラーが発生しました: {e}")

@@ -110,6 +110,7 @@ STYLESHEETS = {
 # ============================================================================
 
 FOLDER_PATH_INPUT_MIN_WIDTH = 1100
+# config.iniの[UISettings]で上書き可能なダイアログサイズの既定値
 DIRECTORY_MANAGEMENT_DIALOG_WIDTH = 600
 DIRECTORY_MANAGEMENT_DIALOG_HEIGHT = 400
 INDEX_MANAGEMENT_DIALOG_WIDTH = 600
@@ -148,9 +149,7 @@ UI_LABELS = {
     'EDIT_BUTTON': '編集',
     'DELETE_BUTTON': '削除',
     'INCLUDE_SUBDIRS': 'サブフォルダ含む',
-    'FOLDER_SETTINGS': 'フォルダ設定...',
-    'SEARCH_TARGET': '検索対象: {count}フォルダ',
-    'SEARCH_TARGET_EMPTY': '検索対象フォルダが未登録です',
+    'FOLDER_SETTINGS': '検索フォルダ設定',
     'OPEN_FOLDER': 'フォルダを開く',
     'AND_SEARCH_LABEL': 'AND検索(複数の検索語をすべて含む)',
     'OR_SEARCH_LABEL': 'OR検索(複数の検索語のいずれかを含む)',
@@ -183,9 +182,7 @@ TEXT_VIEWER_ZOOM_OUT_LABEL = '文字を小さく'
 TEXT_VIEWER_OPEN_FILE_LABEL = 'ファイルを開く'
 TEXT_VIEWER_PRINT_LABEL = '印刷'
 TEXT_VIEWER_CLOSE_LABEL = '閉じる'
-TEXT_VIEWER_PRINT_PREVIEW_TITLE = '印刷プレビュー'
-TEXT_VIEWER_PRINT_PREVIEW_WIDTH = 900
-TEXT_VIEWER_PRINT_PREVIEW_HEIGHT = 700
+TEXT_VIEWER_PRINT_DIALOG_TITLE = '印刷'
 
 
 # ============================================================================
