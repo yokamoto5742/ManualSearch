@@ -23,6 +23,7 @@ from utils.constants import (
     ACROBAT_WAIT_TIMEOUT,
     PAGE_NAVIGATION_DELAY,
     PAGE_NAVIGATION_RETRY_COUNT,
+    PDF_ANNOT_FLAG_SCREEN_ONLY,
     PDF_HIGHLIGHT_COLORS,
     PROCESS_CLEANUP_DELAY,
     PROCESS_TERMINATE_TIMEOUT,
@@ -615,6 +616,37 @@ class TestPDFHighlighter:
 
         mock_page.search_for.assert_called_once_with('nonexistent')
         mock_page.add_highlight_annot.assert_not_called()
+
+    def test_highlight_term_in_page_sets_screen_only_flag(self):
+        """ハイライト注釈が印刷対象外フラグで作成されることを確認"""
+        mock_page = Mock(spec=fitz.Page)
+        mock_page.search_for.return_value = [fitz.Rect(0, 0, 100, 20)]
+
+        mock_highlight = Mock()
+        mock_page.add_highlight_annot.return_value = mock_highlight
+
+        PDFHighlighter._highlight_term_in_page(mock_page, 'test', 0)
+
+        mock_highlight.set_flags.assert_called_once_with(PDF_ANNOT_FLAG_SCREEN_ONLY)
+
+    def test_highlight_pdf_annotations_are_not_printable(self, tmp_path):
+        """生成PDFの全ハイライト注釈が印刷されない設定であることを確認"""
+        source_path = str(tmp_path / 'source.pdf')
+        with fitz.open() as source_doc:
+            page = source_doc.new_page()
+            page.insert_text((72, 72), 'keyword sample text')
+            source_doc.save(source_path)
+
+        highlighted_path = PDFHighlighter.highlight_pdf(source_path, ['keyword'])
+
+        try:
+            with fitz.open(highlighted_path) as doc:
+                # 注釈オブジェクトはページを離れると無効になるため、フラグ値のみ収集する
+                flags = [annot.flags for page in doc for annot in page.annots()]
+                assert flags
+                assert all(flag == PDF_ANNOT_FLAG_SCREEN_ONLY for flag in flags)
+        finally:
+            temp_file_manager.cleanup_single(highlighted_path)
 
 
 @pytest.mark.unit

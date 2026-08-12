@@ -52,6 +52,9 @@ PDF_HIGHLIGHT_COLORS = [
     (1, 0.7, 0.7)   # ピンク
 ]
 
+# ハイライト注釈を画面表示のみにする注釈フラグ（Acrobatでの印刷対象外）
+PDF_ANNOT_FLAG_SCREEN_ONLY = 0
+
 
 # ============================================================================
 # メッセージ表示時間（ミリ秒）
@@ -143,8 +146,6 @@ UI_LABELS = {
     'EDIT_BUTTON': '編集',
     'DELETE_BUTTON': '削除',
     'INCLUDE_SUBDIRS': 'サブフォルダ含む',
-    'GLOBAL_SEARCH': 'フォルダ横断検索',
-    'PDF_HIGHLIGHT': 'ハイライト付きPDF',
     'OPEN_FOLDER': 'フォルダを開く',
     'AND_SEARCH_LABEL': 'AND検索(複数の検索語をすべて含む)',
     'OR_SEARCH_LABEL': 'OR検索(複数の検索語のいずれかを含む)',

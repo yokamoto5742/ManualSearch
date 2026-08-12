@@ -81,7 +81,6 @@ CONFIG_SECTIONS = {
     'DIRECTORIES': 'Directories',
     'PDF_SETTINGS': 'PDFSettings',
     'INDEX_SETTINGS': 'IndexSettings',
-    'SEARCH': 'search'
 }
 
 CONFIG_KEYS = {
@@ -104,7 +103,6 @@ CONFIG_KEYS = {
     'MAX_TEMP_FILES': 'max_temp_files',
     'INDEX_FILE_PATH': 'index_file_path',
     'USE_INDEX_SEARCH': 'use_index_search',
-    'USE_PDF_HIGHLIGHT': 'use_pdf_highlight',
     'TEXT_VIEWER_WIDTH': 'text_viewer_width',
     'TEXT_VIEWER_HEIGHT': 'text_viewer_height',
     'TEXT_VIEWER_FONT_SIZE': 'text_viewer_font_size',

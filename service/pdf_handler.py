@@ -21,6 +21,7 @@ from utils.constants import (
     PDF_HANDLER_ERROR_TEMPLATES,
     PAGE_NAVIGATION_DELAY,
     PAGE_NAVIGATION_RETRY_COUNT,
+    PDF_ANNOT_FLAG_SCREEN_ONLY,
     PDF_HIGHLIGHT_COLORS,
     PROCESS_CLEANUP_DELAY,
     PROCESS_TERMINATE_TIMEOUT,
@@ -227,6 +228,7 @@ class PDFHighlighter:
                 highlight = page.add_highlight_annot(inst)
                 color = PDF_HIGHLIGHT_COLORS[color_index % len(PDF_HIGHLIGHT_COLORS)]
                 highlight.set_colors(stroke=color)
+                highlight.set_flags(PDF_ANNOT_FLAG_SCREEN_ONLY)
                 highlight.update()
             except Exception as e:
                 logger.warning(f"ハイライト追加エラー (term: {term}): {e}")

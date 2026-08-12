@@ -1,4 +1,3 @@
-import logging
 import os
 
 from PyQt5.QtCore import pyqtSignal
@@ -10,8 +9,6 @@ from PyQt5.QtWidgets import (
 from utils.config_manager import ConfigManager
 from utils.constants import DIALOG_TITLES, DIALOG_MESSAGES, FOLDER_PATH_INPUT_MIN_WIDTH, STYLESHEETS, UI_LABELS
 from utils.helpers import create_confirmation_dialog
-
-logger = logging.getLogger(__name__)
 
 
 class DirectoryWidget(QWidget):
@@ -80,18 +77,6 @@ class DirectoryWidget(QWidget):
         self.include_subdirs_checkbox = QCheckBox(UI_LABELS['INCLUDE_SUBDIRS'])
         self.include_subdirs_checkbox.setChecked(True)
 
-        self.global_search_checkbox = QCheckBox(UI_LABELS['GLOBAL_SEARCH'])
-        self.global_search_checkbox.setChecked(True)
-
-        # PDFハイライト設定
-        self.pdf_highlight_checkbox = QCheckBox(UI_LABELS['PDF_HIGHLIGHT'])
-        self.pdf_highlight_checkbox.setChecked(
-            self.config_manager.get_use_pdf_highlight()
-        )
-        self.pdf_highlight_checkbox.toggled.connect(
-            self._on_pdf_highlight_toggled
-        )
-
         # フォルダ開くボタン
         self.open_folder_button = QPushButton(UI_LABELS['OPEN_FOLDER'])
         self.open_folder_button.clicked.connect(self.open_folder_requested.emit)
@@ -101,8 +86,6 @@ class DirectoryWidget(QWidget):
         button_layout.addWidget(dir_edit_button)
         button_layout.addWidget(dir_delete_button)
         button_layout.addWidget(self.include_subdirs_checkbox)
-        button_layout.addWidget(self.global_search_checkbox)
-        button_layout.addWidget(self.pdf_highlight_checkbox)
         button_layout.addStretch(1)
         button_layout.addWidget(self.open_folder_button)
 
@@ -116,14 +99,6 @@ class DirectoryWidget(QWidget):
         """フォルダ開くボタンを無効にする"""
         self.open_folder_button.setEnabled(False)
 
-    def get_selected_directory(self) -> str:
-        """選択されたディレクトリパスを取得
-
-        Returns:
-            ディレクトリパス
-        """
-        return self.dir_combo.currentText()
-
     def include_subdirs(self) -> bool:
         """サブディレクトリを含むかを取得
 
@@ -131,37 +106,6 @@ class DirectoryWidget(QWidget):
             含む場合True
         """
         return self.include_subdirs_checkbox.isChecked()
-
-    def is_global_search(self) -> bool:
-        """グローバル検索が有効かを取得
-
-        Returns:
-            有効な場合True
-        """
-        return self.global_search_checkbox.isChecked()
-
-    def get_use_pdf_highlight(self) -> bool:
-        """PDFハイライト機能が有効かを取得
-
-        Returns:
-            有効な場合True
-        """
-        try:
-            return self.pdf_highlight_checkbox.isChecked()
-        except AttributeError:
-            logger.error("PDFハイライトチェックボックスが正しく初期化されていません")
-            return True
-
-    def _on_pdf_highlight_toggled(self, checked: bool) -> None:
-        """PDFハイライト設定の変更を処理
-
-        Args:
-            checked: チェック状態
-        """
-        try:
-            self.config_manager.set_use_pdf_highlight(checked)
-        except Exception as e:
-            logger.error(f"PDFハイライト設定の保存に失敗しました: {e}")
 
     def update_last_directory(self, directory: str) -> None:
         """最後に選択したディレクトリを更新

@@ -26,7 +26,7 @@ ERROR_MESSAGES = {
 # ============================================================================
 
 LOG_MESSAGE_TEMPLATES = {
-    'SEARCH_START': '検索開始: 検索語={search_terms}, タイプ={search_type}, グローバル検索={is_global_search}',
+    'SEARCH_START': '検索開始: 検索語={search_terms}, タイプ={search_type}',
     'INDEX_CONFIG_LOAD_ERROR': 'インデックス設定の読み込みに失敗: {error}',
     'INDEX_TOGGLE': 'インデックス検索を{status}にしました',
     'SEARCH_ERROR': '検索中にエラーが発生しました: {error}',

@@ -72,28 +72,8 @@ class ResultsWidget(QWidget):
         self.result_detail_font.setPointSize(self.config_manager.get_result_detail_font_size())
         self.result_display.setFont(self.result_detail_font)
 
-    def perform_search(self, directory: str, search_terms: List[str],
-                       include_subdirs: bool, search_type: str) -> None:
-        self._start_file_search([directory], search_terms, include_subdirs, search_type,
-                                global_search=False)
-
     def perform_global_search(self, directories: List[str], search_terms: List[str],
                               include_subdirs: bool, search_type: str) -> None:
-        self._start_file_search(directories, search_terms, include_subdirs, search_type,
-                                global_search=True)
-
-    def perform_index_search(self, directory: str, search_terms: List[str],
-                             include_subdirs: bool, search_type: str) -> None:
-        self._start_index_search([directory], search_terms, include_subdirs, search_type,
-                                 cross_folder=False)
-
-    def perform_global_index_search(self, directories: List[str], search_terms: List[str],
-                                    include_subdirs: bool, search_type: str) -> None:
-        self._start_index_search(directories, search_terms, include_subdirs, search_type,
-                                 cross_folder=True)
-
-    def _start_file_search(self, directories: List[str], search_terms: List[str],
-                           include_subdirs: bool, search_type: str, global_search: bool) -> None:
         self._setup_search_colors(search_terms)
 
         base_directory = directories[0] if directories else ""
@@ -101,8 +81,8 @@ class ResultsWidget(QWidget):
             base_directory, search_terms, include_subdirs, search_type,
             self.config_manager.get_file_extensions(),
             self.config_manager.get_context_length(),
-            global_search=global_search,
-            global_directories=directories if global_search else None
+            global_search=True,
+            global_directories=directories
         )
         self.searcher.result_found.connect(self.add_result)
         self.searcher.progress_update.connect(self.update_progress)
@@ -111,8 +91,8 @@ class ResultsWidget(QWidget):
         self._setup_progress_dialog()
         self.searcher.start()
 
-    def _start_index_search(self, directories: List[str], search_terms: List[str],
-                            include_subdirs: bool, search_type: str, cross_folder: bool) -> None:
+    def perform_global_index_search(self, directories: List[str], search_terms: List[str],
+                                    include_subdirs: bool, search_type: str) -> None:
         self._setup_search_colors(search_terms)
 
         base_directory = directories[0] if directories else ""
@@ -125,7 +105,7 @@ class ResultsWidget(QWidget):
             context_length=self.config_manager.get_context_length(),
             use_index=True,
             index_file_path=self.config_manager.get_index_file_path(),
-            cross_folder_search=cross_folder
+            cross_folder_search=True
         )
         self.index_searcher.result_found.connect(self.add_result)
         self.index_searcher.progress_update.connect(self.update_progress)

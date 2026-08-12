@@ -132,43 +132,28 @@ class MainWindow(QMainWindow):
         インデックス検索が有効な場合は利用し、無効時は全ファイル検索を実施.
         """
         search_terms = self.search_widget.get_search_terms()
-        directory = self.directory_widget.get_selected_directory()
         include_subdirs = self.directory_widget.include_subdirs()
         search_type = self.search_widget.get_search_type()
-        is_global_search = self.directory_widget.is_global_search()
 
         if not search_terms:
             return
 
-        if not is_global_search and not directory:
-            return
-
         logger.info(LOG_MESSAGE_TEMPLATES['SEARCH_START'].format(
-            search_terms=search_terms, search_type=search_type, is_global_search=is_global_search
+            search_terms=search_terms, search_type=search_type
         ))
         self.results_widget.clear_results()
         self.directory_widget.disable_open_folder_button()
 
         try:
-            if is_global_search:
-                global_directories = self.config_manager.get_directories()
-                if self.use_index_search:
-                    self.results_widget.perform_global_index_search(
-                        global_directories, search_terms, include_subdirs, search_type
-                    )
-                else:
-                    self.results_widget.perform_global_search(
-                        global_directories, search_terms, include_subdirs, search_type
-                    )
+            directories = self.config_manager.get_directories()
+            if self.use_index_search:
+                self.results_widget.perform_global_index_search(
+                    directories, search_terms, include_subdirs, search_type
+                )
             else:
-                if self.use_index_search:
-                    self.results_widget.perform_index_search(
-                        directory, search_terms, include_subdirs, search_type
-                    )
-                else:
-                    self.results_widget.perform_search(
-                        directory, search_terms, include_subdirs, search_type
-                    )
+                self.results_widget.perform_global_search(
+                    directories, search_terms, include_subdirs, search_type
+                )
         except Exception as e:
             self.auto_close_message.show_message(
                 LOG_MESSAGE_TEMPLATES['SEARCH_ERROR'].format(error=str(e)), 5000
@@ -216,8 +201,7 @@ class MainWindow(QMainWindow):
             if not file_path:
                 return
             search_terms = self.search_widget.get_search_terms()
-            use_highlight = self.directory_widget.get_use_pdf_highlight()
-            self.file_opener.open_file(file_path, position or 0, search_terms, use_highlight)
+            self.file_opener.open_file(file_path, position or 0, search_terms)
         except FileNotFoundError:
             self._show_error_message(ERROR_MESSAGES['FILE_NOT_FOUND'])
         except Exception as e:
