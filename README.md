@@ -55,7 +55,7 @@ ManualSearch は、PDF・テキスト・Markdownを横断して全文検索し�
 - **複数ファイル形式対応**: PDF、TXT、Markdownファイルの横断検索
 - **フォルダ横断検索**: 複数フォルダ（共有フォルダ含む）を対象とした横断検索対応
 - **マルチスレッド全文検索**: ThreadPoolExecutorを使用した並列検索
-- **テキストビューア機能**: テキスト・Markdownファイルを独立ウィンドウで表示、検索語をハイライト
+- **テキストビューア機能**: テキスト・Markdownファイルを独立ウィンドウで表示、検索語をハイライト、印刷機能搭載
 - **柔軟な検索条件**: AND/OR検索、サブフォルダ検索対応
 - **日本語エンコーディング自動判定**: chardetによりShift_JIS/UTF-8を自動検出
 
@@ -307,6 +307,7 @@ open_text_file(
 - テキスト・Markdownファイルを独立ウィンドウで表示
 - 検索語のカラーハイライト表示
 - ズームイン/ズームアウト機能
+- 印刷機能（プレビュー対応）
 
 ### PDF処理・Adobe連携
 
@@ -319,7 +320,7 @@ highlighted_path = highlight_pdf(
 ```
 
 **機能**:
-- 検索語の自動ハイライト
+- 検索語の自動ハイライト（画面表示のみ、印刷対象外）
 - Adobe Acrobat Reader DC統合
 - 一時ファイル自動クリーンアップ
 
@@ -330,7 +331,7 @@ highlighted_path = highlight_pdf(
 - **DirectoryManagementDialog**: 検索対象フォルダの追加・編集・削除
 - **ResultsWidget**: 検索結果表示、ハイライト表示、ファイルオープン
 - **IndexManagementWidget**: インデックス作成・更新・管理UI
-- **TextViewerWindow**: テキスト・Markdownファイル表示、検索語ハイライト、ズーム機能、ファイルを開く・印刷・閉じるボタン
+- **TextViewerWindow**: テキスト・Markdownファイル表示、検索語ハイライト、ズーム機能、ファイルを開く・印刷・閉じるボタン（印刷プレビュー対応）
 
 ### スレッドモデル
 
