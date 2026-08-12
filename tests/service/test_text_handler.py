@@ -6,7 +6,17 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QApplication
 
 from service.text_handler import _active_viewers, open_text_file
-from utils.constants import HIGHLIGHT_COLORS, MAX_FONT_SIZE, MIN_FONT_SIZE
+from utils.constants import (
+    HIGHLIGHT_COLORS,
+    MAX_FONT_SIZE,
+    MIN_FONT_SIZE,
+    TEXT_VIEWER_CLOSE_LABEL,
+    TEXT_VIEWER_OPEN_FILE_LABEL,
+    TEXT_VIEWER_PRINT_ERROR_TEMPLATES,
+    TEXT_VIEWER_PRINT_LABEL,
+    TEXT_VIEWER_PRINT_PREVIEW_TITLE,
+)
+from widgets import text_viewer_widget
 from widgets.text_viewer_widget import TextViewerWindow
 
 
@@ -180,3 +190,111 @@ class TestTextViewerWindow:
         viewer = make_viewer('t', 'content', [], 16)
 
         assert not hasattr(viewer, 'highlighter')
+
+
+class _FakePrinter:
+    """QPrinterの代替。isValidの戻り値をテストから制御する"""
+
+    HighResolution = 0
+    valid = True
+
+    def __init__(self, mode=None):
+        self.mode = mode
+
+    def isValid(self):
+        return self.valid
+
+
+class _FakePreviewDialog:
+    """QPrintPreviewDialogの代替。実ダイアログを開かずに呼び出しを記録する"""
+
+    instances = []
+
+    def __init__(self, printer, parent=None):
+        self.printer = printer
+        self.parent = parent
+        self.title = ''
+        self.connected_slot = None
+        self.exec_called = False
+        self.paintRequested = self
+        _FakePreviewDialog.instances.append(self)
+
+    def connect(self, slot):
+        self.connected_slot = slot
+
+    def setWindowTitle(self, title):
+        self.title = title
+
+    def resize(self, width, height):
+        self.size = (width, height)
+
+    def exec_(self):
+        self.exec_called = True
+
+
+@pytest.fixture
+def fake_print_dialog(monkeypatch):
+    """印刷ダイアログとプリンタをテスト用の代替に差し替える"""
+    _FakePreviewDialog.instances.clear()
+    _FakePrinter.valid = True
+    monkeypatch.setattr(text_viewer_widget, 'QPrinter', _FakePrinter)
+    monkeypatch.setattr(text_viewer_widget, 'QPrintPreviewDialog', _FakePreviewDialog)
+    return _FakePreviewDialog
+
+
+@pytest.mark.unit
+class TestTextViewerPrint:
+    """テキストビューアの印刷機能のテスト"""
+
+    @staticmethod
+    def _button_labels(viewer):
+        bar = viewer.centralWidget().layout().itemAt(0).layout()
+        widgets = [bar.itemAt(i).widget() for i in range(bar.count())]
+        return [w.text() for w in widgets if w is not None]
+
+    def test_print_button_between_open_and_close(self, make_viewer):
+        """印刷ボタンがファイルを開くボタンと閉じるボタンの間にある"""
+        viewer = make_viewer('t', 'x', [], 16)
+
+        labels = self._button_labels(viewer)
+
+        assert labels[-3:] == [
+            TEXT_VIEWER_OPEN_FILE_LABEL,
+            TEXT_VIEWER_PRINT_LABEL,
+            TEXT_VIEWER_CLOSE_LABEL,
+        ]
+
+    def test_print_opens_preview_dialog(self, make_viewer, fake_print_dialog):
+        """印刷でプレビューダイアログが開き、描画要求がビューアに接続される"""
+        viewer = make_viewer('t', 'x', [], 16)
+
+        viewer._print_document()
+
+        dialog = fake_print_dialog.instances[0]
+        assert dialog.exec_called
+        assert dialog.title == TEXT_VIEWER_PRINT_PREVIEW_TITLE
+        assert dialog.connected_slot == viewer.text_browser.print_
+
+    def test_print_without_printer_shows_message(self, make_viewer, fake_print_dialog):
+        """プリンタが無い場合はメッセージを表示しダイアログを開かない"""
+        _FakePrinter.valid = False
+        viewer = make_viewer('t', 'x', [], 16)
+
+        viewer._print_document()
+
+        assert fake_print_dialog.instances == []
+        assert viewer.auto_close_message.label.text() == (
+            TEXT_VIEWER_PRINT_ERROR_TEMPLATES['PRINTER_NOT_FOUND']
+        )
+
+    def test_print_failure_shows_message(self, make_viewer, fake_print_dialog, monkeypatch):
+        """印刷処理で例外が発生した場合はエラーメッセージを表示する"""
+        def _raise(*args, **kwargs):
+            raise RuntimeError('印刷失敗')
+
+        monkeypatch.setattr(text_viewer_widget, 'QPrintPreviewDialog', _raise)
+        viewer = make_viewer('t', 'x', [], 16)
+
+        viewer._print_document()
+
+        assert '印刷失敗' in viewer.auto_close_message.label.text()

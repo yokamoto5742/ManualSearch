@@ -328,7 +328,7 @@ highlighted_path = highlight_pdf(
 - **DirectoryWidget**: フォルダ管理（追加・削除・リスト表示）
 - **ResultsWidget**: 検索結果表示、ハイライト表示、ファイルオープン
 - **IndexManagementWidget**: インデックス作成・更新・管理UI
-- **TextViewerWindow**: テキスト・Markdownファイル表示、検索語ハイライト、ズーム機能、ファイルを開く・閉じるボタン
+- **TextViewerWindow**: テキスト・Markdownファイル表示、検索語ハイライト、ズーム機能、ファイルを開く・印刷・閉じるボタン
 
 ### スレッドモデル
 
