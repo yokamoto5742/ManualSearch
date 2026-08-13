@@ -12,7 +12,6 @@ from utils.constants import (
     MIN_FONT_SIZE,
     TEXT_VIEWER_CLOSE_LABEL,
     TEXT_VIEWER_OPEN_FILE_LABEL,
-    TEXT_VIEWER_PRINT_DIALOG_TITLE,
     TEXT_VIEWER_PRINT_ERROR_TEMPLATES,
     TEXT_VIEWER_PRINT_LABEL,
 )
@@ -225,11 +224,7 @@ class _FakePrintDialog:
     def __init__(self, printer, parent=None):
         self.printer = printer
         self.parent = parent
-        self.title = ''
         _FakePrintDialog.instances.append(self)
-
-    def setWindowTitle(self, title):
-        self.title = title
 
     def exec_(self):
         return _FakePrintDialog.result
@@ -279,7 +274,6 @@ class TestTextViewerPrint:
         viewer._print_document()
 
         dialog = fake_print_dialog.instances[0]
-        assert dialog.title == TEXT_VIEWER_PRINT_DIALOG_TITLE
         assert printed == [dialog.printer]
 
     def test_print_cancelled_does_not_print(self, make_viewer, fake_print_dialog, monkeypatch):

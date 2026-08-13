@@ -29,7 +29,6 @@ from utils.constants import (
     TEXT_VIEWER_DEFAULT_HEIGHT,
     TEXT_VIEWER_DEFAULT_WIDTH,
     TEXT_VIEWER_OPEN_FILE_LABEL,
-    TEXT_VIEWER_PRINT_DIALOG_TITLE,
     TEXT_VIEWER_PRINT_ERROR_TEMPLATES,
     TEXT_VIEWER_PRINT_LABEL,
     TEXT_VIEWER_ZOOM_IN_LABEL,
@@ -172,7 +171,6 @@ class TextViewerWindow(QMainWindow):
                 return
 
             dialog = QPrintDialog(printer, self)
-            dialog.setWindowTitle(TEXT_VIEWER_PRINT_DIALOG_TITLE)
             if dialog.exec_() == QPrintDialog.Accepted:
                 self.text_browser.print_(printer)
 
