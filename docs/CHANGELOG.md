@@ -7,6 +7,11 @@
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-08-13
+
+### 削除
+- DirectoryWidgetの廃止（widgets/directory_widget.py）：UIコンポーネント（DirectoryWidget）をSearchWidgetに統合。UIの構成をシンプルにし、コードの保守性を向上
+
 ## [1.5.0] - 2026-08-12
 
 ### 変更

@@ -187,9 +187,8 @@ ManualSearch/
 │   ├── pdf_search_strategy.py       # PDF検索戦略
 │   └── text_search_strategy.py      # テキスト検索戦略
 ├── widgets/                         # UIコンポーネント
-│   ├── search_widget.py             # 検索入力とコントロール
+│   ├── search_widget.py             # 検索入力、フォルダ状態表示、検索オプション
 │   ├── results_widget.py            # 検索結果表示
-│   ├── directory_widget.py          # 検索対象フォルダの状態表示と検索オプション
 │   ├── directory_management_widget.py # フォルダ設定ダイアログ
 │   ├── index_management_widget.py   # インデックス管理UI
 │   ├── text_viewer_widget.py        # テキストビューアウィンドウ
@@ -326,9 +325,8 @@ highlighted_path = highlight_pdf(
 
 ### UI層（Widgets）
 
-- **SearchWidget**: 検索語入力、AND/OR選択、検索オプション
-- **DirectoryWidget**: 検索対象フォルダ数の表示、サブフォルダ検索の切替、フォルダ設定ダイアログの起動
-- **DirectoryManagementDialog**: 検索対象フォルダの追加・編集・削除
+- **SearchWidget**: 検索語入力、AND/OR選択、検索オプション、検索対象フォルダ数表示、フォルダ設定ダイアログの起動
+- **DirectoryManagementWidget**: 検索対象フォルダの追加・編集・削除
 - **ResultsWidget**: 検索結果表示、ハイライト表示、ファイルオープン
 - **IndexManagementWidget**: インデックス作成・更新・管理UI
 - **TextViewerWindow**: テキスト・Markdownファイル表示、検索語ハイライト、ズーム機能、ファイルを開く・印刷・閉じるボタン（印刷プレビュー対応）
