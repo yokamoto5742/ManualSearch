@@ -180,9 +180,9 @@ TEXT_VIEWER_DEFAULT_HEIGHT = 600
 TEXT_VIEWER_ZOOM_IN_LABEL = '文字を大きく'
 TEXT_VIEWER_ZOOM_OUT_LABEL = '文字を小さく'
 TEXT_VIEWER_OPEN_FILE_LABEL = 'ファイルを開く'
-TEXT_VIEWER_PRINT_LABEL = '印刷'
+TEXT_VIEWER_PRINT_LABEL = 'ハイライトなし印刷'
 TEXT_VIEWER_CLOSE_LABEL = '閉じる'
-TEXT_VIEWER_PRINT_DIALOG_TITLE = '印刷'
+TEXT_VIEWER_PRINT_DIALOG_TITLE = 'ハイライトなし印刷'
 
 
 # ============================================================================

@@ -18,7 +18,6 @@ from utils.constants import (
 )
 from utils.helpers import create_confirmation_dialog
 from widgets.auto_close_message_widget import AutoCloseMessage
-from widgets.directory_widget import DirectoryWidget
 from widgets.index_management_widget import IndexManagementDialog
 from widgets.results_widget import ResultsWidget
 from widgets.search_widget import SearchWidget
@@ -76,8 +75,6 @@ class MainWindow(QMainWindow):
     def _setup_widgets(self) -> None:
         self.search_widget = SearchWidget(self.config_manager)
         self.main_layout.addWidget(self.search_widget)
-        self.directory_widget = DirectoryWidget(self.config_manager)
-        self.main_layout.addWidget(self.directory_widget)
         self.results_widget = ResultsWidget(self.config_manager)
         self.main_layout.addWidget(self.results_widget)
 
@@ -101,7 +98,7 @@ class MainWindow(QMainWindow):
         self.search_widget.clear_requested.connect(self.clear_search)
         self.results_widget.result_selected.connect(self.enable_open_buttons)
         self.results_widget.file_open_requested.connect(self.open_file)
-        self.directory_widget.open_folder_requested.connect(self.open_folder)
+        self.search_widget.open_folder_requested.connect(self.open_folder)
 
     def _setup_index_management_ui(self) -> None:
         index_button_layout = QHBoxLayout()
@@ -132,7 +129,7 @@ class MainWindow(QMainWindow):
         インデックス検索が有効な場合は利用し、無効時は全ファイル検索を実施.
         """
         search_terms = self.search_widget.get_search_terms()
-        include_subdirs = self.directory_widget.include_subdirs()
+        include_subdirs = self.search_widget.include_subdirs()
         search_type = self.search_widget.get_search_type()
 
         if not search_terms:
@@ -142,7 +139,7 @@ class MainWindow(QMainWindow):
             search_terms=search_terms, search_type=search_type
         ))
         self.results_widget.clear_results()
-        self.directory_widget.disable_open_folder_button()
+        self.search_widget.disable_open_folder_button()
 
         try:
             directories = self.config_manager.get_directories()
@@ -192,7 +189,7 @@ class MainWindow(QMainWindow):
             self.index_search_checkbox.setChecked(enabled)
 
     def enable_open_buttons(self) -> None:
-        self.directory_widget.enable_open_folder_button()
+        self.search_widget.enable_open_folder_button()
 
     def open_file(self) -> None:
         """選択されたファイルを開く"""
