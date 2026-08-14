@@ -265,11 +265,18 @@ class TestTextViewerPrint:
             TEXT_VIEWER_CLOSE_LABEL,
         ]
 
+    @staticmethod
+    def _patch_print_document(viewer, monkeypatch):
+        """印刷対象の文書を記録用の代替に差し替える"""
+        printed = []
+        document = type('_FakeDocument', (), {'print_': printed.append})()
+        monkeypatch.setattr(viewer, '_create_print_document', lambda: document)
+        return printed
+
     def test_print_opens_print_dialog(self, make_viewer, fake_print_dialog, monkeypatch):
         """印刷でプリンター選択ダイアログが開き、承諾時に印刷される"""
         viewer = make_viewer('t', 'x', [], 16)
-        printed = []
-        monkeypatch.setattr(viewer.text_browser, 'print_', printed.append)
+        printed = self._patch_print_document(viewer, monkeypatch)
 
         viewer._print_document()
 
@@ -280,12 +287,23 @@ class TestTextViewerPrint:
         """ダイアログをキャンセルした場合は印刷しない"""
         fake_print_dialog.result = 0
         viewer = make_viewer('t', 'x', [], 16)
-        printed = []
-        monkeypatch.setattr(viewer.text_browser, 'print_', printed.append)
+        printed = self._patch_print_document(viewer, monkeypatch)
 
         viewer._print_document()
 
         assert printed == []
+
+    def test_print_document_has_no_highlight(self, make_viewer):
+        """印刷用の文書には検索ハイライトが含まれない"""
+        viewer = make_viewer('t', 'abc', ['abc'], 16)
+        viewer.highlighter.rehighlight()
+        source_block = viewer.text_browser.document().firstBlock()
+        assert source_block.layout().formats()  # 表示中はハイライトあり
+
+        print_document = viewer._create_print_document()
+
+        assert print_document.toPlainText() == 'abc'
+        assert print_document.firstBlock().layout().formats() == []
 
     def test_print_uses_available_printer_without_default(self, make_viewer, fake_print_dialog):
         """通常使うプリンターが未設定でも利用可能なプリンタで印刷できる"""
@@ -322,3 +340,30 @@ class TestTextViewerPrint:
         viewer._print_document()
 
         assert '印刷失敗' in viewer.auto_close_message.label.text()
+
+
+@pytest.mark.unit
+class TestTextViewerOpenFile:
+    """テキストビューアの「ファイルを開く」機能のテスト"""
+
+    def test_open_file_uses_windows_path(self, make_viewer, monkeypatch):
+        """スラッシュ区切りのUNCパスはWindows表記に変換して渡す"""
+        opened = []
+        monkeypatch.setattr(os, 'startfile', opened.append, raising=False)
+        viewer = make_viewer('t', 'x', [], 16, file_path='//server/share/manual.txt')
+
+        viewer._open_file()
+
+        assert opened == [r'\\server\share\manual.txt']
+
+    def test_open_file_error_shows_message(self, make_viewer, monkeypatch):
+        """ファイルを開けない場合もクラッシュせずメッセージを表示する"""
+        def _raise(_path):
+            raise OSError('関連付けなし')
+
+        monkeypatch.setattr(os, 'startfile', _raise, raising=False)
+        viewer = make_viewer('t', 'x', [], 16, file_path='C:/manuals/manual.txt')
+
+        viewer._open_file()
+
+        assert '関連付けなし' in viewer.auto_close_message.label.text()

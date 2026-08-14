@@ -22,6 +22,7 @@ from PyQt5.QtWidgets import (
 
 from utils.constants import (
     AUTO_CLOSE_MESSAGE_DURATION,
+    FILE_OPEN_ERROR_TEMPLATES,
     HIGHLIGHT_COLORS,
     MAX_FONT_SIZE,
     MIN_FONT_SIZE,
@@ -136,8 +137,22 @@ class TextViewerWindow(QMainWindow):
         return bar
 
     def _open_file(self) -> None:
-        if self._file_path:
-            os.startfile(self._file_path)
+        """既定のアプリケーションでファイルを開く"""
+        if not self._file_path:
+            return
+
+        # 検索結果のパスは区切り文字が「/」に正規化されており、
+        # UNCパスのままではos.startfileが解釈できないためWindows表記へ戻す
+        native_path = os.path.normpath(self._file_path)
+
+        try:
+            os.startfile(native_path)
+        except OSError as e:
+            logger.error(f"ファイルを開けませんでした: {native_path} - {e}")
+            self.auto_close_message.show_message(
+                FILE_OPEN_ERROR_TEMPLATES['FILE_OPEN_ERROR'].format(error=e),
+                AUTO_CLOSE_MESSAGE_DURATION,
+            )
 
     @staticmethod
     def _create_printer() -> Optional[QPrinter]:
@@ -158,6 +173,18 @@ class TextViewerWindow(QMainWindow):
 
         return QPrinter(available[0], QPrinter.HighResolution)
 
+    def _create_print_document(self) -> QTextDocument:
+        """ハイライトを除いた印刷用の文書を作成する
+
+        検索ハイライトはQSyntaxHighlighterが各ブロックのレイアウトへ付与するため、
+        表示中の文書をそのまま印刷するとハイライトも印刷される。
+        複製した文書にはレイアウトの書式が引き継がれないためハイライトなしで印刷できる。
+
+        Returns:
+            印刷用の文書
+        """
+        return self.text_browser.document().clone()
+
     def _print_document(self) -> None:
         """表示中の内容をプリンター選択ダイアログ経由で印刷する"""
         try:
@@ -172,7 +199,7 @@ class TextViewerWindow(QMainWindow):
 
             dialog = QPrintDialog(printer, self)
             if dialog.exec_() == QPrintDialog.Accepted:
-                self.text_browser.print_(printer)
+                self._create_print_document().print_(printer)
 
         except Exception as e:
             logger.error(f"印刷処理でエラーが発生しました: {e}")
